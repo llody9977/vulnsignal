@@ -96,8 +96,9 @@ npm run data:sync
 npm run data:check
 ```
 
-The first refresh downloads the annual NVD archives and can take several
-minutes. Later runs consult NVD metadata and reuse `.cache/` where possible.
+The first refresh downloads the annual NVD archives and can take 30 minutes or
+more, depending on source and runner throughput. Later runs consult NVD
+metadata and reuse `.cache/` where possible.
 Use an earlier starting year only when intentionally expanding coverage:
 
 ```bash
