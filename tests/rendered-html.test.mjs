@@ -40,7 +40,12 @@ test("server-renders the VulnSignal intelligence dashboard", async () => {
   assert.match(html, /NVD JSON 2\.0/);
   assert.match(html, /CISA/);
   assert.match(html, /Reported minimum, not prevalence/);
-  assert.match(html, /LLM points mark first-party report or reveal dates/);
+  assert.match(html, /LLM disclosure events/);
+  assert.match(html, /Missing months mean undisclosed, not zero/);
+  assert.match(html, /chart-point--event/);
+  assert.match(html, /≥ 28/);
+  assert.match(html, /not zero LLM discoveries/);
+  assert.doesNotMatch(html, /LLM CVE evidence disclosed/);
   assert.doesNotMatch(html, /T2K \/ P50|T2K \/ P75/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton|Starter Project/i);
 });

@@ -683,6 +683,34 @@ main {
   background: repeating-linear-gradient(90deg, var(--series) 0 5px, transparent 5px 8px);
 }
 
+.series-legend button i.is-event {
+  background: transparent;
+  height: 20px;
+  position: relative;
+  width: 26px;
+}
+
+.series-legend button i.is-event::before {
+  background: var(--panel);
+  border: 2px solid var(--series);
+  content: "";
+  height: 8px;
+  left: 9px;
+  position: absolute;
+  top: 1px;
+  transform: rotate(45deg);
+  width: 8px;
+}
+
+.series-legend button i.is-event::after {
+  border-left: 2px dashed var(--series);
+  bottom: 0;
+  content: "";
+  height: 10px;
+  left: 13px;
+  position: absolute;
+}
+
 .unified-chart {
   margin-top: 18px;
 }
@@ -816,6 +844,30 @@ main {
 .chart-point--diamond::before {
   border-radius: 0;
   transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.chart-point--event::before {
+  background: var(--panel);
+  height: 12px;
+  width: 12px;
+}
+
+.chart-event-label {
+  background: var(--panel);
+  border: 1px solid var(--series);
+  color: var(--teal);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  font-weight: 700;
+  left: var(--x);
+  line-height: 1.25;
+  padding: 2px 5px;
+  pointer-events: none;
+  position: absolute;
+  top: var(--y);
+  transform: translate(-50%, 17px);
+  white-space: nowrap;
+  z-index: 5;
 }
 
 .chart-point:hover::before,
@@ -972,6 +1024,19 @@ main {
 
 .signal-matrix tbody td {
   background: rgb(36 87 214 / var(--heat-opacity));
+}
+
+.signal-matrix td.is-no-event {
+  color: var(--muted);
+}
+
+.matrix-note {
+  border-top: 1px solid var(--rule);
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0;
+  padding: 10px 12px;
 }
 
 .signal-matrix th:first-child {
