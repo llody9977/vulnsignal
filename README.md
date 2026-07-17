@@ -5,17 +5,21 @@
 
 VulnSignal is an open vulnerability-trend dashboard for CVE publication,
 severity, public exploit signals, and CISA Known Exploited Vulnerabilities
-(KEV). Its tile-based views pair current indicators with trend lines and a
-clearly bounded comparison around the public ChatGPT release.
+(KEV). Its interactive report aligns current indicators, monthly values, and
+trend lines on one shared time grid.
+
+**Live dashboard:** [llody9977.github.io/vulnsignal](https://llody9977.github.io/vulnsignal/)
 
 The recommended GitHub repository name is `vulnsignal`; the product name is
 **VulnSignal**.
 
 ## What the dashboard reports
 
-- CVEs published by month, with month-over-month movement.
-- Critical and high severity counts and share of scored records.
-- Public exploit-reference signals and new KEV additions.
+- Year, month-focus, and aligned year-over-year report modes.
+- A unified CVE, KEV, exploit-reference, and documented LLM-evidence chart.
+- Critical, high, medium, low, and unscored monthly severity lines.
+- An exact-value signal matrix aligned to the chart months.
+- Filtered publication volume, severity, exploit, KEV, coverage, peak, and momentum indicators.
 - KEV conversion and time-to-KEV for mature CVE cohorts.
 - A fixed 36-month comparison before and after the public ChatGPT release.
 - A documented lower bound for LLM-assisted CVEs plus the count of public, ID-level records.
@@ -48,6 +52,7 @@ the NVD. NVD content can change as records are enriched or reassessed.
 | KEV | CISA has placed the CVE in its Known Exploited Vulnerabilities catalog. This is distinct from an exploit-tagged reference. |
 | Added to KEV within 90 days | The CVE was added to the KEV catalog within 90 days of its NVD publication timestamp. This is catalog-entry timing, not the unknown date exploitation began. Recent CVEs without a complete 90-day observation period are excluded from the denominator. |
 | Pre/post comparison | December 2019–November 2022 versus December 2022–November 2025, split at the public ChatGPT release on 2022-11-30. |
+| LLM evidence timeline | Sparse first-party program-report or public-CVE-ID reveal events. These are evidence publication dates, not vulnerability discovery dates, and program totals are never summed. |
 
 > [!IMPORTANT]
 > The pre/post view is descriptive, not causal. CVE volume can change because
