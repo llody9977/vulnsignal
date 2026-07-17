@@ -3,6 +3,7 @@ import unittest
 
 from scripts.sync_vulnerability_data import (
     Vulnerability,
+    build_llm_events,
     cvss_details,
     has_public_exploit_reference,
     metric_window,
@@ -83,6 +84,35 @@ class PipelineUnitTests(unittest.TestCase):
         }
         with self.assertRaisesRegex(ValueError, "unique"):
             validate_llm_evidence(evidence)
+
+    def test_llm_timeline_keeps_reveal_and_report_semantics_separate(self):
+        events = build_llm_events(
+            [
+                {
+                    "identifier": "CVE-2026-1000",
+                    "revealed_at": "2026-05-20T07:40:37Z",
+                },
+                {
+                    "identifier": "CVE-2026-1001",
+                    "revealed_at": "2026-05-20T08:40:37Z",
+                },
+            ],
+            [
+                {
+                    "publisher": "Example",
+                    "program": "Research preview",
+                    "count": 10,
+                    "published": "2025-10-30",
+                    "sourceUrl": "https://example.test/report",
+                }
+            ],
+            "curated_non_exhaustive",
+        )
+        self.assertEqual(events[0]["kind"], "program_report")
+        self.assertEqual(events[0]["reportedMinimum"], 10)
+        self.assertEqual(events[1]["kind"], "public_id_revealed")
+        self.assertEqual(events[1]["count"], 2)
+        self.assertEqual(events[1]["dateSemantics"], "first_party_revealed_at")
 
 
 if __name__ == "__main__":

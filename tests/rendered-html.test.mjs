@@ -21,14 +21,17 @@ test("server-renders the VulnSignal intelligence dashboard", async () => {
 
   const html = await response.text();
   assert.match(html, /<title>VulnSignal — CVE &amp; KEV Trend Intelligence<\/title>/i);
-  assert.match(html, /See the shift/);
-  assert.match(html, /Latest complete month/);
+  assert.match(html, /One timeline/);
+  assert.match(html, /Interactive report/);
+  assert.match(html, /Year vs year/);
+  assert.match(html, /All indicators, one time grid/);
   assert.match(html, /Before and after public ChatGPT/);
   assert.match(html, /Recently confirmed exploitation/);
   assert.match(html, /CVE List V5/);
-assert.match(html, /NVD JSON 2\.0/);
+  assert.match(html, /NVD JSON 2\.0/);
   assert.match(html, /CISA/);
-  assert.match(html, /First-party lower bound/);
+  assert.match(html, /Reported minimum, not prevalence/);
+  assert.match(html, /LLM points mark first-party report or reveal dates/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton|Starter Project/i);
 });
 
@@ -52,6 +55,9 @@ test("project metadata and generated dataset are repo-ready", async () => {
   assert.ok(dataset.recentKev.length > 0);
   assert.ok(dataset.llmDiscovery.value >= 28);
   assert.equal(dataset.llmDiscovery.qualifier, "documented_lower_bound");
+  assert.ok(dataset.llmDiscovery.events.length >= 3);
+  assert.ok(dataset.llmDiscovery.events.some((event) => event.kind === "public_id_revealed"));
+  assert.ok(dataset.llmDiscovery.events.some((event) => event.kind === "program_report"));
   assert.equal(evidence.coverage, "curated_non_exhaustive");
   assert.equal(evidence.headlineMinimum.cveCount, 28);
   assert.deepEqual(evidence.records, []);

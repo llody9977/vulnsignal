@@ -35,16 +35,16 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     url: "./",
-    title: "VulnSignal — See the shift. Prioritize the risk.",
+    title: "VulnSignal — One timeline. Every signal.",
     description:
-      "Daily CVE and KEV trend intelligence from authoritative public sources.",
+      "Interactive CVE, KEV, severity, exploit-reference, and documented LLM evidence trends from authoritative public sources.",
     siteName: "VulnSignal",
     images: [
       {
         url: "og.png",
-        width: 1730,
-        height: 909,
-        alt: "VulnSignal — See the shift. Prioritize the risk.",
+        width: 1734,
+        height: 907,
+        alt: "VulnSignal — One timeline. Every signal.",
       },
     ],
   },
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "VulnSignal — CVE & KEV Trend Intelligence",
     description:
-      "Daily vulnerability signal from CVE, NVD, and CISA KEV sources.",
+      "Filter CVE, severity, KEV, exploit-reference, and documented LLM evidence trends on one monthly grid.",
     images: ["og.png"],
   },
 };

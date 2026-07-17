@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-17T10:58:10Z",
+  "generatedAt": "2026-07-17T11:39:25Z",
   "project": {
     "name": "VulnSignal",
     "repo": "vulnsignal",
@@ -18,9 +18,9 @@
     "cve": {
       "name": "CVE Program · CVE List V5",
       "url": "https://github.com/CVEProject/cvelistV5",
-      "snapshotSha256": "5330f76fee8352dee75afedc5d40ead4334300084a325e500a018fa7244be30e",
-      "latestFetch": "2026-07-17T10:57:19.196000Z",
-      "changedRecords24h": 1168
+      "snapshotSha256": "279dd5eabce98f7ea1b0fc32c4ba2c91b7cdbd95864da2edbd67d57698bc9cb1",
+      "latestFetch": "2026-07-17T11:30:06.308000Z",
+      "changedRecords24h": 1166
     },
     "nvd": {
       "name": "NIST NVD · CVE JSON 2.0 feeds",
@@ -292,6 +292,62 @@
       "CVE-2026-5501",
       "CVE-2026-5503",
       "CVE-2026-7474"
+    ],
+    "events": [
+      {
+        "kind": "program_report",
+        "date": "2025-10-30",
+        "dateSemantics": "report_publication_date",
+        "coverage": "curated_non_exhaustive",
+        "publisher": "OpenAI",
+        "program": "Aardvark",
+        "reportedMinimum": 10,
+        "sourceUrl": "https://openai.com/index/introducing-aardvark/"
+      },
+      {
+        "kind": "public_id_revealed",
+        "date": "2026-05-20",
+        "dateSemantics": "first_party_revealed_at",
+        "coverage": "curated_non_exhaustive",
+        "count": 13,
+        "cveIds": [
+          "CVE-2026-27654",
+          "CVE-2026-32316",
+          "CVE-2026-33721",
+          "CVE-2026-5199",
+          "CVE-2026-5446",
+          "CVE-2026-5448",
+          "CVE-2026-5466",
+          "CVE-2026-5477",
+          "CVE-2026-5479",
+          "CVE-2026-5500",
+          "CVE-2026-5501",
+          "CVE-2026-5503",
+          "CVE-2026-7474"
+        ],
+        "sourceUrl": "https://red.anthropic.com/2026/cvd/data/payload.json"
+      },
+      {
+        "kind": "public_id_revealed",
+        "date": "2026-05-21",
+        "dateSemantics": "first_party_revealed_at",
+        "coverage": "curated_non_exhaustive",
+        "count": 1,
+        "cveIds": [
+          "CVE-2026-5447"
+        ],
+        "sourceUrl": "https://red.anthropic.com/2026/cvd/data/payload.json"
+      },
+      {
+        "kind": "program_report",
+        "date": "2026-05-22",
+        "dateSemantics": "report_publication_date",
+        "coverage": "curated_non_exhaustive",
+        "publisher": "Anthropic",
+        "program": "Claude Mythos Preview CVD",
+        "reportedMinimum": 28,
+        "sourceUrl": "https://red.anthropic.com/2026/cvd/data/payload.json"
+      }
     ]
   },
   "comparison": {
