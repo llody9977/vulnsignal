@@ -53,7 +53,7 @@ export function percentage(numerator: number, denominator: number) {
 }
 
 export function change(current: number, previous: number) {
-  if (!previous) return null;
+  if (previous === 0) return current === 0 ? 0 : null;
   return Math.round(((current - previous) / previous) * 1000) / 10;
 }
 
@@ -71,6 +71,10 @@ export function availableYears(monthly: MonthPoint[], latestCompleteMonth: strin
       ),
     ),
   ).sort((a, b) => a - b);
+}
+
+export function comparisonYearOptions(years: number[], excludedYear: number) {
+  return years.filter((year) => year !== excludedYear);
 }
 
 export function monthsForYear(
@@ -103,18 +107,20 @@ export function matchedYearPoints(
 ) {
   const first = monthsForYear(monthly, firstYear, latestCompleteMonth);
   const second = monthsForYear(monthly, secondYear, latestCompleteMonth);
-  const monthCap = Math.min(
-    Math.max(...first.map((point) => Number(point.month.slice(5, 7))), 0),
-    Math.max(...second.map((point) => Number(point.month.slice(5, 7))), 0),
+  const firstByMonth = new Map(
+    first.map((point) => [Number(point.month.slice(5, 7)), point]),
   );
+  const secondByMonth = new Map(
+    second.map((point) => [Number(point.month.slice(5, 7)), point]),
+  );
+  const matchedMonths = [...firstByMonth.keys()]
+    .filter((month) => secondByMonth.has(month))
+    .sort((a, b) => a - b);
   return {
-    first: first.filter(
-      (point) => Number(point.month.slice(5, 7)) <= monthCap,
-    ),
-    second: second.filter(
-      (point) => Number(point.month.slice(5, 7)) <= monthCap,
-    ),
-    monthCap,
+    first: matchedMonths.map((month) => firstByMonth.get(month)!),
+    second: matchedMonths.map((month) => secondByMonth.get(month)!),
+    monthCap: matchedMonths.at(-1) ?? 0,
+    matchedMonths,
   };
 }
 

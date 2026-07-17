@@ -42,8 +42,8 @@ export const metadata: Metadata = {
     images: [
       {
         url: "og.png",
-        width: 1734,
-        height: 907,
+        width: 1200,
+        height: 630,
         alt: "VulnSignal — One timeline. Every signal.",
       },
     ],

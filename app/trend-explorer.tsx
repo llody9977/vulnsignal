@@ -3,7 +3,7 @@
 import { useMemo, useState, type CSSProperties } from "react";
 import {
   availableYears,
-  change,
+  comparisonYearOptions,
   completeMonths,
   llmEvidenceForMonth,
   matchedYearPoints,
@@ -37,6 +37,12 @@ type ChartSeries = {
   axis: "left" | "right";
   dashed?: boolean;
   shape?: "circle" | "square" | "diamond";
+};
+
+type ComparisonDisplay = {
+  tone: "up" | "down" | "flat" | "new" | "unavailable";
+  label: string;
+  baseline?: string;
 };
 
 const metricOptions: Array<{ key: MetricKey; label: string }> = [
@@ -75,6 +81,20 @@ function monthLabel(value: string, short = false) {
   }).format(date);
 }
 
+function shortMonth(value: string) {
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    timeZone: "UTC",
+  }).format(new Date(`${value}-01T00:00:00Z`));
+}
+
+function periodLabel(points: MonthPoint[], year: number) {
+  if (!points.length) return String(year);
+  const first = shortMonth(points[0].month);
+  const last = shortMonth(points.at(-1)!.month);
+  return `${first}${first === last ? "" : `–${last}`} ${year}`;
+}
+
 function metricValue(
   point: MonthPoint,
   key: MetricKey,
@@ -85,40 +105,119 @@ function metricValue(
     : point[key];
 }
 
-function deltaLabel(value: number | null, baseline: string) {
-  if (value === null) return `No ${baseline} baseline`;
-  return `${value > 0 ? "+" : ""}${value.toFixed(1)}% vs ${baseline}`;
+function metricPeriodValue(
+  points: MonthPoint[],
+  key: MetricKey,
+  events: LlmEvidenceEvent[],
+) {
+  const values = points.map((point) => metricValue(point, key, events));
+  return key === "llmEvidence"
+    ? Math.max(...values, 0)
+    : values.reduce((total, value) => total + value, 0);
+}
+
+function relativeComparison(
+  current: number,
+  previous: number,
+  baselineLabel: string,
+  hasBaseline: boolean,
+): ComparisonDisplay {
+  if (!hasBaseline) {
+    return { tone: "unavailable", label: `No comparable ${baselineLabel} data` };
+  }
+  const baseline = `Baseline: ${number(previous)}`;
+  if (previous === 0) {
+    return current === 0
+      ? { tone: "flat", label: `No change from ${baselineLabel}`, baseline }
+      : { tone: "new", label: `New activity; ${baselineLabel} was zero`, baseline };
+  }
+  const delta = Math.round(((current - previous) / previous) * 1000) / 10;
+  if (delta === 0) {
+    return { tone: "flat", label: `No change from ${baselineLabel}`, baseline };
+  }
+  return {
+    tone: delta > 0 ? "up" : "down",
+    label: `${Math.abs(delta).toFixed(1)}% ${delta > 0 ? "higher" : "lower"} than ${baselineLabel}`,
+    baseline,
+  };
+}
+
+function pointComparison(
+  current: number | null,
+  previous: number | null,
+  baselineLabel: string,
+  hasBaseline: boolean,
+): ComparisonDisplay {
+  if (!hasBaseline || current === null || previous === null) {
+    return { tone: "unavailable", label: `No comparable ${baselineLabel} data` };
+  }
+  const difference = Math.round((current - previous) * 10) / 10;
+  const baseline = `Baseline: ${previous.toFixed(1)}%`;
+  if (difference === 0) {
+    return { tone: "flat", label: `No change from ${baselineLabel}`, baseline };
+  }
+  return {
+    tone: difference > 0 ? "up" : "down",
+    label: `${Math.abs(difference).toFixed(1)} percentage points ${difference > 0 ? "higher" : "lower"} than ${baselineLabel}`,
+    baseline,
+  };
+}
+
+function llmComparison(
+  current: number,
+  previous: number,
+  baselineLabel: string,
+  hasBaseline: boolean,
+): ComparisonDisplay {
+  if (!hasBaseline) {
+    return { tone: "unavailable", label: `No comparable ${baselineLabel} evidence` };
+  }
+  if (current === previous) {
+    return {
+      tone: "flat",
+      label: `Same documented floor as ${baselineLabel}`,
+      baseline: previous ? `Baseline: ≥ ${number(previous)}` : "Baseline: no event",
+    };
+  }
+  return {
+    tone: current > previous ? "up" : "down",
+    label: `${current > previous ? "Higher" : "Lower"} documented floor than ${baselineLabel}`,
+    baseline: previous ? `Baseline: ≥ ${number(previous)}` : "Baseline: no event",
+  };
 }
 
 function MetricCell({
-  code,
   label,
   value,
   detail,
-  delta,
-  baseline,
-  footer,
+  comparison,
 }: {
-  code: string;
   label: string;
   value: string;
   detail: string;
-  delta: number | null;
-  baseline: string;
-  footer?: string;
+  comparison: ComparisonDisplay;
 }) {
-  const tone = delta === null || delta === 0 ? "flat" : delta > 0 ? "up" : "down";
+  const symbol = comparison.tone === "up" || comparison.tone === "new"
+    ? "↑"
+    : comparison.tone === "down"
+      ? "↓"
+      : comparison.tone === "flat"
+        ? "→"
+        : "—";
   return (
     <article className="indicator-cell">
       <div className="indicator-cell__label">
-        <span>{code}</span>
         <strong>{label}</strong>
       </div>
       <div className="indicator-cell__value">{value}</div>
       <p>{detail}</p>
-      <span className={`indicator-cell__delta indicator-cell__delta--${footer ? "flat" : tone}`}>
-        {footer ?? deltaLabel(delta, baseline)}
-      </span>
+      <div className={`indicator-cell__comparison indicator-cell__comparison--${comparison.tone}`}>
+        <span aria-hidden="true">{symbol}</span>
+        <div>
+          <strong>{comparison.label}</strong>
+          {comparison.baseline ? <small>{comparison.baseline}</small> : null}
+        </div>
+      </div>
     </article>
   );
 }
@@ -129,7 +228,7 @@ function plotPoints(values: Array<number | null>, maximum: number): Array<PlotPo
   return values.map((value, index) => {
     if (value === null) return null;
     return {
-      x: values.length === 1 ? 50 : (index / (values.length - 1)) * 100,
+      x: values.length === 1 ? 50 : 4 + (index / (values.length - 1)) * 92,
       y: 90 - (value / Math.max(maximum, 1)) * 74,
       value,
       index,
@@ -164,6 +263,24 @@ function UnifiedChart({
       1,
     ),
   };
+  const hasRightAxis = series.some((item) => item.axis === "right");
+  const hasLeftAxis = series.some((item) => item.axis === "left");
+  const leftAxisTitle = series
+    .filter((item) => item.axis === "left")
+    .map((item) => item.shortLabel)
+    .join(" / ");
+  const rightAxisTitle = series
+    .filter((item) => item.axis === "right")
+    .map((item) => item.shortLabel)
+    .join(" / ");
+  const leftAxisLabels = scaleMode === "indexed"
+    ? ["100%", "50%", "0"]
+    : [compact(axisMax.left), compact(axisMax.left / 2), "0"];
+  const rightAxisLabels = [
+    compact(axisMax.right),
+    compact(axisMax.right / 2),
+    "0",
+  ];
   const safeActive = Math.min(Math.max(activeIndex, 0), Math.max(labels.length - 1, 0));
 
   return (
@@ -174,11 +291,27 @@ function UnifiedChart({
         aria-label={`Combined vulnerability trend with ${series.length} visible series`}
       >
         <div className="chart-stage__grid" aria-hidden="true" />
+        {scaleMode === "indexed" || hasLeftAxis ? (
+          <div className="chart-y-axis chart-y-axis--left" aria-hidden="true">
+            {leftAxisLabels.map((label, index) => <span key={`${label}-${index}`}>{label}</span>)}
+          </div>
+        ) : null}
+        {scaleMode === "absolute" && hasRightAxis ? (
+          <div className="chart-y-axis chart-y-axis--right" aria-hidden="true">
+            {rightAxisLabels.map((label, index) => <span key={`${label}-${index}`}>{label}</span>)}
+          </div>
+        ) : null}
+        {scaleMode === "absolute" && hasLeftAxis && hasRightAxis ? (
+          <div className="chart-scale-keys" aria-hidden="true">
+            <span>Left · {leftAxisTitle}</span>
+            <span>Right · {rightAxisTitle}</span>
+          </div>
+        ) : null}
         {labels.length > 0 ? (
           <span
             className="chart-stage__cursor"
             style={{
-              "--cursor-x": `${labels.length === 1 ? 50 : (safeActive / (labels.length - 1)) * 100}%`,
+              "--cursor-x": `${labels.length === 1 ? 50 : 4 + (safeActive / (labels.length - 1)) * 92}%`,
             } as CSSProperties}
             aria-hidden="true"
           />
@@ -312,7 +445,7 @@ function SignalMatrix({
                   return (
                     <td
                       key={`${row.label}-${points[index]?.month ?? index}`}
-                      style={{ backgroundColor: `rgba(99, 60, 255, ${opacity})` }}
+                      style={{ "--heat-opacity": opacity } as CSSProperties}
                     >
                       {number(value)}
                     </td>
@@ -364,7 +497,16 @@ export function TrendExplorer({
     latestCompleteMonth,
   );
   const yearPoints = monthsForYear(monthly, selectedYear, latestCompleteMonth);
+  const yearMonthNumbers = new Set(
+    yearPoints.map((point) => Number(point.month.slice(5, 7))),
+  );
+  const previousYearPoints = monthsForYear(
+    monthly,
+    selectedYear - 1,
+    latestCompleteMonth,
+  ).filter((point) => yearMonthNumbers.has(Number(point.month.slice(5, 7))));
   const rolling = rollingMonths(monthly, selectedMonth, latestCompleteMonth);
+  const previousSelectedMonth = `${Number(selectedMonth.slice(0, 4)) - 1}-${selectedMonth.slice(5, 7)}`;
   const chartPoints = viewMode === "year"
     ? yearPoints
     : viewMode === "month"
@@ -377,31 +519,44 @@ export function TrendExplorer({
     ? matched.first
     : viewMode === "month"
       ? complete.filter(
-          (point) => point.month === `${Number(selectedMonth.slice(0, 4)) - 1}-${selectedMonth.slice(5, 7)}`,
+          (point) => point.month === previousSelectedMonth,
         )
-      : monthsForYear(monthly, selectedYear - 1, latestCompleteMonth).filter(
-          (point) => Number(point.month.slice(5, 7)) <= yearPoints.length,
-        );
+      : previousYearPoints;
   const summary = summarizePeriod(summaryPoints, events);
   const baseline = summarizePeriod(baselinePoints, events);
-  const momentum = summarizePeriod(
-    viewMode === "month" ? rolling : summaryPoints,
+  const momentumPoints = viewMode === "month" ? rolling : summaryPoints;
+  const baselineMomentumPoints = viewMode === "month"
+    ? rollingMonths(monthly, previousSelectedMonth, latestCompleteMonth)
+    : baselinePoints;
+  const momentumSummary = summarizePeriod(momentumPoints, events);
+  const baselineMomentumSummary = summarizePeriod(
+    baselineMomentumPoints,
     events,
-  ).momentum;
+  );
+  const momentum = momentumSummary.momentum;
+  const baselineMomentum = baselineMomentumSummary.momentum;
   const baselineLabel = viewMode === "compare"
-    ? String(compareFirst)
+    ? periodLabel(matched.first, compareFirst)
     : viewMode === "month"
-      ? monthLabel(baselinePoints[0]?.month ?? `${Number(selectedMonth.slice(0, 4)) - 1}-${selectedMonth.slice(5, 7)}`, true)
-      : String(selectedYear - 1);
+      ? monthLabel(baselinePoints[0]?.month ?? previousSelectedMonth, true)
+      : periodLabel(baselinePoints, selectedYear - 1);
+  const hasBaseline = baselinePoints.length > 0;
+  const peakSummary = viewMode === "month" ? momentumSummary : summary;
+  const peakBaseline = viewMode === "month" ? baselineMomentumSummary : baseline;
+  const peakBaselineLabel = viewMode === "month"
+    ? `the trailing 12 months ending ${monthLabel(previousSelectedMonth)}`
+    : baselineLabel;
 
-  const labels = chartPoints.map((point) => monthLabel(point.month, true));
+  const labels = chartPoints.map((point) =>
+    viewMode === "compare" ? shortMonth(point.month) : monthLabel(point.month, true),
+  );
   const signalSeries: ChartSeries[] = [
     {
       key: "published",
       label: "Published CVEs",
       shortLabel: "CVE",
       values: chartPoints.map((point) => point.published),
-      color: "#0c0c10",
+      color: "var(--ink)",
       axis: "left",
     },
     {
@@ -409,7 +564,7 @@ export function TrendExplorer({
       label: "CISA KEV additions",
       shortLabel: "KEV",
       values: chartPoints.map((point) => point.kevAdded),
-      color: "#708f00",
+      color: "var(--accent)",
       axis: "right",
       shape: "square",
     },
@@ -418,7 +573,7 @@ export function TrendExplorer({
       label: "Public exploit references",
       shortLabel: "Exploit ref",
       values: chartPoints.map((point) => point.publicExploitReferences),
-      color: "#f07f2f",
+      color: "var(--amber)",
       axis: "left",
       dashed: true,
     },
@@ -430,18 +585,18 @@ export function TrendExplorer({
         const value = llmEvidenceForMonth(point.month, events);
         return value || null;
       }),
-      color: "#633cff",
+      color: "var(--teal)",
       axis: "right",
       dashed: true,
       shape: "diamond",
     },
   ];
   const severitySeries: ChartSeries[] = [
-    { key: "critical", label: "Critical", shortLabel: "Critical", values: chartPoints.map((point) => point.critical), color: "#0c0c10", axis: "left", shape: "square" },
-    { key: "high", label: "High", shortLabel: "High", values: chartPoints.map((point) => point.high), color: "#633cff", axis: "left" },
-    { key: "medium", label: "Medium", shortLabel: "Medium", values: chartPoints.map((point) => point.medium), color: "#a995ff", axis: "left", dashed: true },
-    { key: "low", label: "Low", shortLabel: "Low", values: chartPoints.map((point) => point.low), color: "#708f00", axis: "left", shape: "diamond" },
-    { key: "unknown", label: "Unscored", shortLabel: "Unscored", values: chartPoints.map((point) => point.unknown), color: "#88847c", axis: "left", dashed: true, shape: "square" },
+    { key: "critical", label: "Critical", shortLabel: "Critical", values: chartPoints.map((point) => point.critical), color: "var(--critical)", axis: "left", shape: "square" },
+    { key: "high", label: "High", shortLabel: "High", values: chartPoints.map((point) => point.high), color: "var(--amber)", axis: "left" },
+    { key: "medium", label: "Medium", shortLabel: "Medium", values: chartPoints.map((point) => point.medium), color: "var(--accent)", axis: "left", dashed: true },
+    { key: "low", label: "Low", shortLabel: "Low", values: chartPoints.map((point) => point.low), color: "var(--teal)", axis: "left", shape: "diamond" },
+    { key: "unknown", label: "Unscored", shortLabel: "Unscored", values: chartPoints.map((point) => point.unknown), color: "var(--neutral)", axis: "left", dashed: true, shape: "square" },
   ];
   const comparisonSeries: ChartSeries[] = [
     {
@@ -449,7 +604,7 @@ export function TrendExplorer({
       label: `${compareFirst} ${metricOptions.find((item) => item.key === compareMetric)?.label}`,
       shortLabel: String(compareFirst),
       values: matched.first.map((point) => metricValue(point, compareMetric, events)),
-      color: "#8c8880",
+      color: "var(--neutral)",
       axis: "left",
       dashed: true,
     },
@@ -458,7 +613,7 @@ export function TrendExplorer({
       label: `${compareSecond} ${metricOptions.find((item) => item.key === compareMetric)?.label}`,
       shortLabel: String(compareSecond),
       values: matched.second.map((point) => metricValue(point, compareMetric, events)),
-      color: "#633cff",
+      color: "var(--accent)",
       axis: "left",
       shape: "square",
     },
@@ -471,12 +626,47 @@ export function TrendExplorer({
   const visibleSeries = allSeries.filter((series) => !hiddenSeries.includes(series.key));
   const effectiveScale = viewMode === "compare" || chartFamily === "severity" ? "absolute" : scaleMode;
   const safeActive = Math.min(activeIndex, Math.max(labels.length - 1, 0));
+  const comparisonMetricLabel = metricOptions.find(
+    (item) => item.key === compareMetric,
+  )?.label ?? "Selected signal";
+  const compareFirstValue = metricPeriodValue(
+    matched.first,
+    compareMetric,
+    events,
+  );
+  const compareSecondValue = metricPeriodValue(
+    matched.second,
+    compareMetric,
+    events,
+  );
+  const compareDifference = compareSecondValue - compareFirstValue;
+  const compareChange = compareMetric === "llmEvidence"
+    ? llmComparison(
+        compareSecondValue,
+        compareFirstValue,
+        periodLabel(matched.first, compareFirst),
+        matched.first.length > 0,
+      )
+    : relativeComparison(
+        compareSecondValue,
+        compareFirstValue,
+        periodLabel(matched.first, compareFirst),
+        matched.first.length > 0,
+      );
+  const compareDifferenceLabel = compareMetric === "llmEvidence"
+    ? "Not additive"
+    : `${compareDifference > 0 ? "+" : compareDifference < 0 ? "−" : ""}${number(Math.abs(compareDifference))}`;
+  const compareValueLabel = (value: number) => compareMetric === "llmEvidence"
+    ? value ? `≥ ${number(value)}` : "No event"
+    : number(value);
 
   const periodTitle = viewMode === "year"
-    ? `${selectedYear} / ${yearPoints.length === 12 ? "Annual report" : `Jan–${monthLabel(yearPoints.at(-1)?.month ?? latestCompleteMonth, true)} YTD`}`
+    ? yearPoints.length === 12
+      ? `${selectedYear} annual report`
+      : `${periodLabel(yearPoints, selectedYear)} year to date`
     : viewMode === "month"
-      ? `${monthLabel(selectedMonth)} / Month focus`
-      : `${compareFirst} vs ${compareSecond} / Matched ${matched.monthCap}-month view`;
+      ? `${monthLabel(selectedMonth)} focus`
+      : `${periodLabel(matched.first, compareFirst)} vs ${periodLabel(matched.second, compareSecond)}`;
   const periodDetail = viewMode === "month"
     ? "Indicators use the selected month; the plot keeps 12 complete months of context."
     : viewMode === "compare"
@@ -491,8 +681,8 @@ export function TrendExplorer({
 
   const compareRows = viewMode === "compare"
     ? [
-        { label: `${compareFirst}`, values: comparisonSeries[0].values.map((value) => value ?? 0) },
-        { label: `${compareSecond}`, values: comparisonSeries[1].values.map((value) => value ?? 0) },
+        { label: periodLabel(matched.first, compareFirst), values: comparisonSeries[0].values.map((value) => value ?? 0) },
+        { label: periodLabel(matched.second, compareSecond), values: comparisonSeries[1].values.map((value) => value ?? 0) },
       ]
     : undefined;
 
@@ -504,7 +694,7 @@ export function TrendExplorer({
           <h2>{periodTitle}</h2>
           <p>{periodDetail}</p>
         </div>
-        <span className="data-state"><i />DATA / COMPLETE THROUGH {latestCompleteMonth}</span>
+        <span className="data-state"><i />Complete through {monthLabel(latestCompleteMonth)}</span>
       </div>
 
       <div className="filter-rail" aria-label="Report filters">
@@ -552,13 +742,13 @@ export function TrendExplorer({
             <label>
               <span>Baseline year</span>
               <select value={compareFirst} onChange={(event) => setCompareFirst(Number(event.target.value))}>
-                {[...years].reverse().map((year) => <option key={year}>{year}</option>)}
+                {comparisonYearOptions([...years].reverse(), compareSecond).map((year) => <option value={year} key={year}>{year}</option>)}
               </select>
             </label>
             <label>
               <span>Comparison year</span>
               <select value={compareSecond} onChange={(event) => setCompareSecond(Number(event.target.value))}>
-                {[...years].reverse().map((year) => <option key={year}>{year}</option>)}
+                {comparisonYearOptions([...years].reverse(), compareFirst).map((year) => <option value={year} key={year}>{year}</option>)}
               </select>
             </label>
             <label>
@@ -590,82 +780,81 @@ export function TrendExplorer({
         )}
       </div>
 
+      {viewMode === "compare" ? (
+        <div className="comparison-summary" aria-live="polite">
+          <div className="comparison-summary__title">
+            <span>Selected comparison</span>
+            <strong>{comparisonMetricLabel}</strong>
+          </div>
+          <div>
+            <span>{periodLabel(matched.first, compareFirst)}</span>
+            <strong>{compareValueLabel(compareFirstValue)}</strong>
+          </div>
+          <div>
+            <span>{periodLabel(matched.second, compareSecond)}</span>
+            <strong>{compareValueLabel(compareSecondValue)}</strong>
+          </div>
+          <div className={`comparison-summary__change comparison-summary__change--${compareChange.tone}`}>
+            <span>Difference</span>
+            <strong>{compareDifferenceLabel}</strong>
+            <small>{compareMetric === "llmEvidence" ? `${compareChange.label}; program counts may overlap` : compareChange.label}</small>
+          </div>
+        </div>
+      ) : null}
+
       <div className="indicator-grid">
         <MetricCell
-          code="VOL"
           label="CVEs published"
           value={number(summary.published)}
           detail={`${compact(summary.monthlyAverage)} average per complete month`}
-          delta={change(summary.published, baseline.published)}
-          baseline={baselineLabel}
+          comparison={relativeComparison(summary.published, baseline.published, baselineLabel, hasBaseline)}
         />
         <MetricCell
-          code="SEV"
           label="Critical + high"
           value={number(summary.criticalHigh)}
           detail={`${percent(summary.criticalHighShare)} of scored CVEs`}
-          delta={change(summary.criticalHigh, baseline.criticalHigh)}
-          baseline={baselineLabel}
+          comparison={relativeComparison(summary.criticalHigh, baseline.criticalHigh, baselineLabel, hasBaseline)}
         />
         <MetricCell
-          code="KEV"
           label="KEV additions"
           value={number(summary.kevAdded)}
           detail={`${(summary.kevAdded / Math.max(summaryPoints.length, 1)).toFixed(1)} average per month`}
-          delta={change(summary.kevAdded, baseline.kevAdded)}
-          baseline={baselineLabel}
+          comparison={relativeComparison(summary.kevAdded, baseline.kevAdded, baselineLabel, hasBaseline)}
         />
         <MetricCell
-          code="EXP"
           label="Exploit references"
           value={number(summary.publicExploitReferences)}
           detail={`${percent(summary.publicExploitShare)} of published CVEs`}
-          delta={change(summary.publicExploitReferences, baseline.publicExploitReferences)}
-          baseline={baselineLabel}
+          comparison={relativeComparison(summary.publicExploitReferences, baseline.publicExploitReferences, baselineLabel, hasBaseline)}
         />
         <MetricCell
-          code="LLM"
-          label="Documented evidence"
-          value={summary.llmEvidence ? `≥${number(summary.llmEvidence)}` : "—"}
-          detail="Largest first-party report or public-ID reveal event"
-          delta={null}
-          baseline={baselineLabel}
-          footer="Program totals are not summed"
+          label="LLM-reported CVEs"
+          value={summary.llmEvidence ? `≥ ${number(summary.llmEvidence)}` : "—"}
+          detail="Largest count disclosed by one first-party program or public-ID release; program totals are not added"
+          comparison={llmComparison(summary.llmEvidence, baseline.llmEvidence, baselineLabel, hasBaseline)}
         />
         <MetricCell
-          code="QLT"
           label="Severity coverage"
           value={percent(summary.severityCoverage)}
           detail={`${number(summary.unknown)} records remain unscored`}
-          delta={null}
-          baseline={baselineLabel}
-          footer={
-            summary.severityCoverage !== null && baseline.severityCoverage !== null
-              ? `${summary.severityCoverage - baseline.severityCoverage > 0 ? "+" : ""}${(
-                  summary.severityCoverage - baseline.severityCoverage
-                ).toFixed(1)} pp vs ${baselineLabel}`
-              : `No ${baselineLabel} baseline`
-          }
+          comparison={pointComparison(summary.severityCoverage, baseline.severityCoverage, baselineLabel, hasBaseline)}
         />
         <MetricCell
-          code="PEAK"
-          label="Peak publication month"
-          value={summary.peakMonth ? number(summary.peakMonth.published) : "—"}
-          detail={summary.peakMonth ? monthLabel(summary.peakMonth.month) : "No complete month in range"}
-          delta={change(
-            summary.peakMonth?.published ?? 0,
-            baseline.peakMonth?.published ?? 0,
+          label={viewMode === "month" ? "Trailing 12-month peak" : "Peak publication month"}
+          value={peakSummary.peakMonth ? number(peakSummary.peakMonth.published) : "—"}
+          detail={peakSummary.peakMonth ? monthLabel(peakSummary.peakMonth.month) : "No complete month in range"}
+          comparison={relativeComparison(
+            peakSummary.peakMonth?.published ?? 0,
+            peakBaseline.peakMonth?.published ?? 0,
+            peakBaselineLabel,
+            Boolean(peakSummary.peakMonth && peakBaseline.peakMonth),
           )}
-          baseline={baselineLabel}
         />
         <MetricCell
-          code="MOM"
           label="Three-month momentum"
           value={percent(momentum)}
           detail="Latest three-month CVE average versus the preceding three"
-          delta={null}
-          baseline={baselineLabel}
-          footer={viewMode === "month" ? "Six-month context through selected month" : "Within the selected period"}
+          comparison={pointComparison(momentum, baselineMomentum, baselineLabel, baselineMomentum !== null)}
         />
       </div>
 
@@ -676,13 +865,24 @@ export function TrendExplorer({
             <h3>{viewMode === "compare" ? metricOptions.find((item) => item.key === compareMetric)?.label : chartFamily === "signals" ? "CVE, KEV, exploit and LLM evidence" : "Severity by publication month"}</h3>
           </div>
           {viewMode !== "compare" && chartFamily === "signals" ? (
-            <div className="scale-control" aria-label="Chart scale">
-              <span>Scale</span>
+            <div className="scale-control" aria-label="Chart display">
+              <span>Chart display</span>
               {(["indexed", "absolute"] as ScaleMode[]).map((mode) => (
-                <button type="button" key={mode} aria-pressed={scaleMode === mode} onClick={() => setScaleMode(mode)}>{mode}</button>
+                <button type="button" key={mode} aria-pressed={scaleMode === mode} onClick={() => setScaleMode(mode)}>{mode === "indexed" ? "Relative trend" : "Actual counts"}</button>
               ))}
             </div>
-          ) : <span className="scale-note">Shared absolute scale</span>}
+          ) : <span className="scale-note">Actual counts / shared scale</span>}
+        </div>
+
+        <div className="scale-explainer" role="note">
+          <strong>{effectiveScale === "indexed" ? "Relative trend" : "Actual counts"}</strong>
+          <span>
+            {effectiveScale === "indexed"
+              ? "Each line’s own peak equals 100%. Compare direction and timing—not line height. Exact counts remain below."
+              : viewMode === "compare" || chartFamily === "severity"
+                ? "Every visible line shares one count scale, so line height can be compared directly."
+                : "Monthly totals use the left axis for CVE and exploit references, and the right axis for KEV and LLM evidence."}
+          </span>
         </div>
 
         <div className="series-legend" aria-label="Visible chart series">
@@ -706,10 +906,7 @@ export function TrendExplorer({
         />
 
         <p className="chart-method-note">
-          {effectiveScale === "indexed"
-            ? "Indexed view scales each series to its own peak so differently sized signals can share one plot. Values remain absolute in the readout and matrix."
-            : "Absolute view uses shared axes: publication/severity signals on the left scale and KEV/LLM evidence on the right."}
-          {" "}LLM points mark first-party report or reveal dates—not discovery dates—and program totals are never summed.
+          LLM points mark first-party report or reveal dates—not discovery dates—and program totals are never summed.
         </p>
 
         <div className="matrix-heading">

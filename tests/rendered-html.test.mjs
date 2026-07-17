@@ -24,14 +24,24 @@ test("server-renders the VulnSignal intelligence dashboard", async () => {
   assert.match(html, /One timeline/);
   assert.match(html, /Interactive report/);
   assert.match(html, /Year vs year/);
+  assert.match(html, /Relative trend/);
+  assert.match(html, /Actual counts/);
+  assert.match(html, /51\.6% higher than Jan–Jun 2025/);
+  assert.match(html, /Baseline: 23,650/);
   assert.match(html, /All indicators, one time grid/);
-  assert.match(html, /Before and after public ChatGPT/);
+  assert.match(html, /Before and after ChatGPT launched/);
+  assert.match(html, /Median time to KEV/);
+  assert.match(html, /Apr 2025/);
+  assert.match(html, /Mar 2026/);
+  assert.match(html, /that later entered KEV/);
+  assert.match(html, /75% of KEV-listed CVEs added within/);
   assert.match(html, /Recently confirmed exploitation/);
-  assert.match(html, /CVE List V5/);
+  assert.match(html, /CVE List V5/i);
   assert.match(html, /NVD JSON 2\.0/);
   assert.match(html, /CISA/);
   assert.match(html, /Reported minimum, not prevalence/);
   assert.match(html, /LLM points mark first-party report or reveal dates/);
+  assert.doesNotMatch(html, /T2K \/ P50|T2K \/ P75/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton|Starter Project/i);
 });
 

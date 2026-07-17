@@ -120,21 +120,31 @@ function ComparisonRow({
   pre,
   post,
   suffix = "",
+  changeMode = "relative",
 }: {
   label: string;
   pre: number | null;
   post: number | null;
   suffix?: string;
+  changeMode?: "relative" | "points";
 }) {
   const safePre = pre ?? 0;
   const safePost = post ?? 0;
   const max = Math.max(safePre, safePost, 1);
   const ratio = safePre ? ((safePost - safePre) / safePre) * 100 : null;
+  const pointDifference = post !== null && pre !== null ? post - pre : null;
+  const changeLabel = changeMode === "points"
+    ? pointDifference === null
+      ? "—"
+      : `${pointDifference > 0 ? "↑" : pointDifference < 0 ? "↓" : "→"} ${Math.abs(pointDifference).toFixed(1)} points`
+    : ratio === null
+      ? "—"
+      : `${ratio > 0 ? "↑" : ratio < 0 ? "↓" : "→"} ${Math.abs(ratio).toFixed(1)}%`;
   return (
     <div className="comparison-row">
       <div className="comparison-row__label">
         <span>{label}</span>
-        <span>{ratio === null ? "—" : `${ratio > 0 ? "+" : ""}${ratio.toFixed(1)}%`}</span>
+        <span>{changeLabel}</span>
       </div>
       <div className="comparison-bars">
         <div
@@ -183,7 +193,7 @@ export default function Home() {
         </nav>
         <div className="sync-state">
           <span className="sync-state__dot" aria-hidden="true" />
-          <span><strong>SYNC / NOMINAL</strong><small>{generated}</small></span>
+          <span><strong>UPDATED DAILY</strong><small>{generated}</small></span>
         </div>
       </header>
 
@@ -198,10 +208,10 @@ export default function Home() {
             </p>
           </div>
           <div className="hero__status">
-            <div><span>DATA / THROUGH</span><strong>{dateLabel(dashboard.coverage.asOf, true)}</strong></div>
-            <div><span>COMPLETE / MONTH</span><strong>{dateLabel(dashboard.coverage.latestCompleteMonth)}</strong></div>
-            <div><span>COVERAGE / RECORDS</span><strong>{number(dashboard.coverage.recordCount)}</strong></div>
-            <div><span>PIPELINE / MODE</span><strong>GITHUB DAILY</strong></div>
+            <div><span>Latest source data</span><strong>{dateLabel(dashboard.coverage.asOf, true)}</strong></div>
+            <div><span>Latest complete month</span><strong>{dateLabel(dashboard.coverage.latestCompleteMonth)}</strong></div>
+            <div><span>CVE records covered</span><strong>{number(dashboard.coverage.recordCount)}</strong></div>
+            <div><span>Refresh schedule</span><strong>Daily on GitHub</strong></div>
           </div>
         </section>
 
@@ -213,33 +223,33 @@ export default function Home() {
 
         <section className="section" id="context">
           <div className="section-heading">
-            <div><p className="eyebrow">[02] Context matrix</p><h2>Trend without false precision.</h2></div>
-            <p>Secondary metrics retain their original evidence class and denominator.</p>
+            <div><p className="eyebrow">[02] Additional context</p><h2>Operational vulnerability context.</h2></div>
+            <p>Definitions and comparison populations are shown with each metric.</p>
           </div>
 
           <div className="operational-matrix">
-            <article><span>T2K / P50</span><strong>{dashboard.risk.medianDaysToKev ?? "—"}</strong><p>Median days from NVD publication to CISA KEV catalog entry.</p></article>
-            <article><span>T2K / P75</span><strong>{dashboard.risk.p75DaysToKev ?? "—"}</strong><p>75th percentile publication-to-KEV timing.</p></article>
-            <article><span>KEV / 90D</span><strong>{percent(dashboard.risk.kevWithin90DayRate)}</strong><p>{number(dashboard.risk.kevWithin90Days)} of {number(dashboard.risk.matureCohort)} mature cohort CVEs.</p></article>
-            <article><span>KEV / CATALOG</span><strong>{number(dashboard.risk.catalogKev)}</strong><p>CISA-confirmed exploited vulnerabilities.</p></article>
-            <article><span>CVE / 24H</span><strong>{number(dashboard.sources.cve.changedRecords24h)}</strong><p>Records changed in the canonical CVE List V5 log.</p></article>
-            <article><span>CVSS / COVERAGE</span><strong>{percent(dashboard.latestCompleteMonth.severityCoverage)}</strong><p>Latest complete-month records with a selected score.</p></article>
+            <article><span>Median time to KEV</span><strong>{dashboard.risk.medianDaysToKev === null ? "—" : `${number(dashboard.risk.medianDaysToKev)} days`}</strong><p>Among CVEs published {dateLabel(dashboard.risk.matureCohortStart)}–{dateLabel(dashboard.risk.matureCohortEnd)} that later entered KEV, half were added within this many days of NVD publication.</p></article>
+            <article><span>75% of KEV-listed CVEs added within</span><strong>{dashboard.risk.p75DaysToKev === null ? "—" : `${number(dashboard.risk.p75DaysToKev)} days`}</strong><p>Among that same KEV-matched cohort, three quarters entered CISA’s catalog within this many days.</p></article>
+            <article><span>Added to KEV within 90 days</span><strong>{percent(dashboard.risk.kevWithin90DayRate)}</strong><p>{number(dashboard.risk.kevWithin90Days)} of {number(dashboard.risk.matureCohort)} CVEs with a full 90-day observation window.</p></article>
+            <article><span>CISA KEV catalog</span><strong>{number(dashboard.risk.catalogKev)}</strong><p>Known exploited vulnerabilities currently listed by CISA.</p></article>
+            <article><span>CVE records changed (24h)</span><strong>{number(dashboard.sources.cve.changedRecords24h)}</strong><p>CVE List records added or updated in the past day.</p></article>
+            <article><span>CVEs with severity scores</span><strong>{percent(dashboard.latestCompleteMonth.severityCoverage)}</strong><p>Share of the latest complete month with a CVSS score.</p></article>
           </div>
 
           <div className="context-grid">
             <article className="flat-panel era-card">
               <div className="panel-heading">
-                <div><p className="eyebrow">ERA / 36 + 36 months</p><h3>Before and after public ChatGPT</h3></div>
-                <span>Descriptive / not causal</span>
+                <div><p className="eyebrow">36 months before + after</p><h3>Before and after ChatGPT launched</h3></div>
+                <span>Comparison only / not causal</span>
               </div>
               <div className="era-labels">
                 <div><i />PRE <strong>{dateLabel(dashboard.comparison.pre.start)}–{dateLabel(dashboard.comparison.pre.end)}</strong></div>
                 <div><i />POST <strong>{dateLabel(dashboard.comparison.post.start)}–{dateLabel(dashboard.comparison.post.end)}</strong></div>
               </div>
               <ComparisonRow label="Average CVEs / month" pre={dashboard.comparison.pre.monthlyAverage} post={dashboard.comparison.post.monthlyAverage} />
-              <ComparisonRow label="Critical + high share" pre={dashboard.comparison.pre.criticalHighShare} post={dashboard.comparison.post.criticalHighShare} suffix="%" />
-              <ComparisonRow label="Public exploit ref share" pre={dashboard.comparison.pre.publicExploitShare} post={dashboard.comparison.post.publicExploitShare} suffix="%" />
-              <ComparisonRow label="KEV within 90 days" pre={dashboard.comparison.pre.kevWithin90DayRate} post={dashboard.comparison.post.kevWithin90DayRate} suffix="%" />
+              <ComparisonRow label="Critical + high share" pre={dashboard.comparison.pre.criticalHighShare} post={dashboard.comparison.post.criticalHighShare} suffix="%" changeMode="points" />
+              <ComparisonRow label="CVEs with public exploit references" pre={dashboard.comparison.pre.publicExploitShare} post={dashboard.comparison.post.publicExploitShare} suffix="%" changeMode="points" />
+              <ComparisonRow label="KEV within 90 days" pre={dashboard.comparison.pre.kevWithin90DayRate} post={dashboard.comparison.post.kevWithin90DayRate} suffix="%" changeMode="points" />
               <ComparisonRow label="Median days to KEV" pre={dashboard.comparison.pre.medianDaysToKev} post={dashboard.comparison.post.medianDaysToKev} />
               <p className="panel-note">{dashboard.comparison.causalityNote}</p>
             </article>
@@ -249,7 +259,7 @@ export default function Home() {
                 <div><p className="eyebrow">LLM / Evidence ledger</p><h3>Reported minimum, not prevalence</h3></div>
               </div>
               <div className="evidence-score">
-                <strong>{dashboard.llmDiscovery.value === null ? "—" : `≥${number(dashboard.llmDiscovery.value)}`}</strong>
+                <strong>{dashboard.llmDiscovery.value === null ? "—" : `≥ ${number(dashboard.llmDiscovery.value)}`}</strong>
                 <span>largest documented program count</span>
               </div>
               <div className="evidence-ledger">
@@ -257,7 +267,7 @@ export default function Home() {
                   <a href={report.sourceUrl} key={report.id}>
                     <span>{dateLabel(report.published, true)}</span>
                     <strong>{report.publisher} / {report.program}</strong>
-                    <em>≥{number(report.count)} {report.metric.toLowerCase()}</em>
+                    <em>≥ {number(report.count)} {report.metric.toLowerCase()}</em>
                     <i aria-hidden="true">↗</i>
                   </a>
                 ))}
