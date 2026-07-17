@@ -1,0 +1,35 @@
+{
+  "methodologyVersion": "1.0",
+  "coverage": "curated_non_exhaustive",
+  "description": "Only CVEs with explicit primary-source evidence that an LLM participated in discovery are verified. Absence from this registry is not evidence that no LLM was involved.",
+  "headlineMinimum": {
+    "cveCount": 28,
+    "asOf": "2026-05-22",
+    "basis": "A first-party documented lower bound, not a corpus-wide count. Anthropic's machine-readable disclosure payload reports 28 CVE identifiers assigned to Claude Mythos Preview findings.",
+    "sourceId": "anthropic-cvd-2026"
+  },
+  "programReports": [
+    {
+      "id": "anthropic-cvd-2026",
+      "publisher": "Anthropic",
+      "program": "Claude Mythos Preview CVD",
+      "metric": "CVE identifiers assigned",
+      "count": 28,
+      "sourceUrl": "https://red.anthropic.com/2026/cvd/data/payload.json",
+      "published": "2026-05-22",
+      "includedInHeadlineMinimum": true
+    },
+    {
+      "id": "openai-aardvark-2025",
+      "publisher": "OpenAI",
+      "program": "Aardvark",
+      "metric": "CVE identifiers received",
+      "count": 10,
+      "sourceUrl": "https://openai.com/index/introducing-aardvark/",
+      "published": "2025-10-30",
+      "includedInHeadlineMinimum": false,
+      "exclusionReason": "Program counts are not summed because public aggregates do not provide a cross-program deduplication key."
+    }
+  ],
+  "records": []
+}
