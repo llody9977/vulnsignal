@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type CSSProperties } from "react";
+import { Fragment, useMemo, useState, type CSSProperties } from "react";
 import {
   availableYears,
   comparisonYearOptions,
@@ -36,6 +36,7 @@ type ChartSeries = {
   color: string;
   axis: "left" | "right";
   dashed?: boolean;
+  render?: "line" | "event";
   shape?: "circle" | "square" | "diamond";
 };
 
@@ -45,11 +46,17 @@ type ComparisonDisplay = {
   baseline?: string;
 };
 
+type MatrixRow = {
+  label: string;
+  values: Array<number | null>;
+  event?: boolean;
+};
+
 const metricOptions: Array<{ key: MetricKey; label: string }> = [
   { key: "published", label: "Published CVEs" },
   { key: "kevAdded", label: "KEV additions" },
   { key: "publicExploitReferences", label: "Exploit references" },
-  { key: "llmEvidence", label: "LLM evidence" },
+  { key: "llmEvidence", label: "LLM disclosure events" },
   { key: "critical", label: "Critical" },
   { key: "high", label: "High" },
   { key: "medium", label: "Medium" },
@@ -263,14 +270,15 @@ function UnifiedChart({
       1,
     ),
   };
-  const hasRightAxis = series.some((item) => item.axis === "right");
-  const hasLeftAxis = series.some((item) => item.axis === "left");
+  const hasValues = (item: ChartSeries) => item.values.some((value) => value !== null);
+  const hasRightAxis = series.some((item) => item.axis === "right" && hasValues(item));
+  const hasLeftAxis = series.some((item) => item.axis === "left" && hasValues(item));
   const leftAxisTitle = series
-    .filter((item) => item.axis === "left")
+    .filter((item) => item.axis === "left" && hasValues(item))
     .map((item) => item.shortLabel)
     .join(" / ");
   const rightAxisTitle = series
-    .filter((item) => item.axis === "right")
+    .filter((item) => item.axis === "right" && hasValues(item))
     .map((item) => item.shortLabel)
     .join(" / ");
   const leftAxisLabels = scaleMode === "indexed"
@@ -288,7 +296,7 @@ function UnifiedChart({
       <div
         className="chart-stage"
         role="group"
-        aria-label={`Combined vulnerability trend with ${series.length} visible series`}
+        aria-label={`Combined vulnerability trend with ${series.length} visible layers`}
       >
         <div className="chart-stage__grid" aria-hidden="true" />
         {scaleMode === "indexed" || hasLeftAxis ? (
@@ -329,41 +337,70 @@ function UnifiedChart({
                 aria-hidden="true"
                 focusable="false"
               >
-                {points.slice(0, -1).map((point, index) => {
-                  const next = points[index + 1];
-                  if (!point || !next) return null;
-                  return (
+                {item.render === "event"
+                  ? points.map((point) => point ? (
                     <line
-                      key={`${item.key}-${point.index}`}
+                      key={`${item.key}-${point.index}-stem`}
                       x1={point.x}
-                      y1={point.y}
-                      x2={next.x}
-                      y2={next.y}
+                      y1="90"
+                      x2={point.x}
+                      y2={point.y}
                       stroke={item.color}
                       strokeWidth="2"
-                      strokeDasharray={item.dashed ? "6 4" : undefined}
+                      strokeDasharray="3 3"
                       strokeLinecap="round"
                       vectorEffect="non-scaling-stroke"
                     />
-                  );
-                })}
+                  ) : null)
+                  : points.slice(0, -1).map((point, index) => {
+                      const next = points[index + 1];
+                      if (!point || !next) return null;
+                      return (
+                        <line
+                          key={`${item.key}-${point.index}`}
+                          x1={point.x}
+                          y1={point.y}
+                          x2={next.x}
+                          y2={next.y}
+                          stroke={item.color}
+                          strokeWidth="2"
+                          strokeDasharray={item.dashed ? "6 4" : undefined}
+                          strokeLinecap="round"
+                          vectorEffect="non-scaling-stroke"
+                        />
+                      );
+                    })}
               </svg>
               {points.map((point) =>
                 point ? (
-                  <button
-                    type="button"
-                    className={`chart-point chart-point--${item.shape ?? "circle"}`}
-                    key={`${item.key}-${point.index}-point`}
-                    style={{
-                      "--x": `${point.x}%`,
-                      "--y": `${point.y}%`,
-                      "--series": item.color,
-                    } as CSSProperties}
-                    aria-label={`${labels[point.index]}: ${item.label} ${number(point.value)}`}
-                    onFocus={() => onActiveIndex(point.index)}
-                    onMouseEnter={() => onActiveIndex(point.index)}
-                    onClick={() => onActiveIndex(point.index)}
-                  />
+                  <Fragment key={`${item.key}-${point.index}-point`}>
+                    <button
+                      type="button"
+                      className={`chart-point chart-point--${item.shape ?? "circle"}${item.render === "event" ? " chart-point--event" : ""}`}
+                      style={{
+                        "--x": `${point.x}%`,
+                        "--y": `${point.y}%`,
+                        "--series": item.color,
+                      } as CSSProperties}
+                      aria-label={`${labels[point.index]}: ${item.label} ${item.render === "event" ? "at least " : ""}${number(point.value)}`}
+                      onFocus={() => onActiveIndex(point.index)}
+                      onMouseEnter={() => onActiveIndex(point.index)}
+                      onClick={() => onActiveIndex(point.index)}
+                    />
+                    {item.render === "event" ? (
+                      <span
+                        className="chart-event-label"
+                        style={{
+                          "--x": `${point.x}%`,
+                          "--y": `${point.y}%`,
+                          "--series": item.color,
+                        } as CSSProperties}
+                        aria-hidden="true"
+                      >
+                        ≥ {number(point.value)}
+                      </span>
+                    ) : null}
+                  </Fragment>
                 ) : null,
               )}
             </span>
@@ -395,7 +432,13 @@ function UnifiedChart({
             <span key={item.key}>
               <i style={{ background: item.color }} />
               {item.shortLabel}
-              <b>{item.values[safeActive] === null ? "—" : number(item.values[safeActive] ?? 0)}</b>
+              <b>
+                {item.values[safeActive] === null
+                  ? item.render === "event" ? "No recorded event" : "—"
+                  : item.render === "event"
+                    ? `≥ ${number(item.values[safeActive] ?? 0)}`
+                    : number(item.values[safeActive] ?? 0)}
+              </b>
             </span>
           ))}
         </div>
@@ -411,9 +454,9 @@ function SignalMatrix({
 }: {
   points: MonthPoint[];
   events: LlmEvidenceEvent[];
-  compareRows?: Array<{ label: string; values: number[] }>;
+  compareRows?: MatrixRow[];
 }) {
-  const standardRows = [
+  const standardRows: MatrixRow[] = [
     { label: "CVE", values: points.map((point) => point.published) },
     { label: "Critical", values: points.map((point) => point.critical) },
     { label: "High", values: points.map((point) => point.high) },
@@ -421,7 +464,11 @@ function SignalMatrix({
     { label: "Low", values: points.map((point) => point.low) },
     { label: "KEV", values: points.map((point) => point.kevAdded) },
     { label: "Exploit ref", values: points.map((point) => point.publicExploitReferences) },
-    { label: "LLM evidence", values: points.map((point) => llmEvidenceForMonth(point.month, events)) },
+    {
+      label: "LLM disclosures",
+      values: points.map((point) => llmEvidenceForMonth(point.month, events) || null),
+      event: true,
+    },
   ];
   const rows = compareRows ?? standardRows;
   return (
@@ -436,18 +483,24 @@ function SignalMatrix({
         </thead>
         <tbody>
           {rows.map((row) => {
-            const maximum = Math.max(...row.values, 1);
+            const maximum = Math.max(...row.values.map((value) => value ?? 0), 1);
             return (
               <tr key={row.label}>
                 <th scope="row">{row.label}</th>
                 {row.values.map((value, index) => {
-                  const opacity = 0.035 + (value / maximum) * 0.18;
+                  const opacity = value === null ? 0 : 0.035 + (value / maximum) * 0.18;
                   return (
                     <td
                       key={`${row.label}-${points[index]?.month ?? index}`}
+                      className={value === null ? "is-no-event" : undefined}
                       style={{ "--heat-opacity": opacity } as CSSProperties}
+                      aria-label={row.event
+                        ? value === null
+                          ? "No recorded disclosure event"
+                          : `At least ${number(value)} vulnerabilities in the disclosed event`
+                        : undefined}
                     >
-                      {number(value)}
+                      {value === null ? "—" : row.event ? `≥ ${number(value)}` : number(value)}
                     </td>
                   );
                 })}
@@ -456,6 +509,9 @@ function SignalMatrix({
           })}
         </tbody>
       </table>
+      {rows.some((row) => row.event) ? (
+        <p className="matrix-note">— means no event in the curated evidence registry, not zero LLM discoveries.</p>
+      ) : null}
     </div>
   );
 }
@@ -579,15 +635,15 @@ export function TrendExplorer({
     },
     {
       key: "llmEvidence",
-      label: "LLM CVE evidence disclosed",
-      shortLabel: "LLM evidence",
+      label: "LLM disclosure events",
+      shortLabel: "LLM event",
       values: chartPoints.map((point) => {
         const value = llmEvidenceForMonth(point.month, events);
         return value || null;
       }),
       color: "var(--teal)",
       axis: "right",
-      dashed: true,
+      render: "event",
       shape: "diamond",
     },
   ];
@@ -603,19 +659,28 @@ export function TrendExplorer({
       key: `compare-${compareFirst}`,
       label: `${compareFirst} ${metricOptions.find((item) => item.key === compareMetric)?.label}`,
       shortLabel: String(compareFirst),
-      values: matched.first.map((point) => metricValue(point, compareMetric, events)),
+      values: matched.first.map((point) => {
+        const value = metricValue(point, compareMetric, events);
+        return compareMetric === "llmEvidence" ? value || null : value;
+      }),
       color: "var(--neutral)",
       axis: "left",
-      dashed: true,
+      dashed: compareMetric !== "llmEvidence",
+      render: compareMetric === "llmEvidence" ? "event" : "line",
+      shape: compareMetric === "llmEvidence" ? "diamond" : undefined,
     },
     {
       key: `compare-${compareSecond}`,
       label: `${compareSecond} ${metricOptions.find((item) => item.key === compareMetric)?.label}`,
       shortLabel: String(compareSecond),
-      values: matched.second.map((point) => metricValue(point, compareMetric, events)),
+      values: matched.second.map((point) => {
+        const value = metricValue(point, compareMetric, events);
+        return compareMetric === "llmEvidence" ? value || null : value;
+      }),
       color: "var(--accent)",
       axis: "left",
-      shape: "square",
+      render: compareMetric === "llmEvidence" ? "event" : "line",
+      shape: compareMetric === "llmEvidence" ? "diamond" : "square",
     },
   ];
   const allSeries = viewMode === "compare"
@@ -681,8 +746,8 @@ export function TrendExplorer({
 
   const compareRows = viewMode === "compare"
     ? [
-        { label: periodLabel(matched.first, compareFirst), values: comparisonSeries[0].values.map((value) => value ?? 0) },
-        { label: periodLabel(matched.second, compareSecond), values: comparisonSeries[1].values.map((value) => value ?? 0) },
+        { label: periodLabel(matched.first, compareFirst), values: comparisonSeries[0].values, event: compareMetric === "llmEvidence" },
+        { label: periodLabel(matched.second, compareSecond), values: comparisonSeries[1].values, event: compareMetric === "llmEvidence" },
       ]
     : undefined;
 
@@ -862,7 +927,7 @@ export function TrendExplorer({
         <div className="unified-panel__heading">
           <div>
             <p className="eyebrow">SIG / Combined timeline</p>
-            <h3>{viewMode === "compare" ? metricOptions.find((item) => item.key === compareMetric)?.label : chartFamily === "signals" ? "CVE, KEV, exploit and LLM evidence" : "Severity by publication month"}</h3>
+            <h3>{viewMode === "compare" ? metricOptions.find((item) => item.key === compareMetric)?.label : chartFamily === "signals" ? "CVE, KEV and exploit trends + LLM disclosure events" : "Severity by publication month"}</h3>
           </div>
           {viewMode !== "compare" && chartFamily === "signals" ? (
             <div className="scale-control" aria-label="Chart display">
@@ -878,19 +943,21 @@ export function TrendExplorer({
           <strong>{effectiveScale === "indexed" ? "Relative trend" : "Actual counts"}</strong>
           <span>
             {effectiveScale === "indexed"
-              ? "Each line’s own peak equals 100%. Compare direction and timing—not line height. Exact counts remain below."
+              ? "Each trend line’s own peak equals 100%. Event stems scale to the largest disclosed lower bound in the selected period and do not form a trend."
               : viewMode === "compare" || chartFamily === "severity"
-                ? "Every visible line shares one count scale, so line height can be compared directly."
-                : "Monthly totals use the left axis for CVE and exploit references, and the right axis for KEV and LLM evidence."}
+                ? compareMetric === "llmEvidence"
+                  ? "Event stems show disclosed lower bounds on their report or reveal dates; missing months remain unknown."
+                  : "Every visible line shares one count scale, so line height can be compared directly."
+                : "CVE and exploit trends use the left axis; KEV and LLM event stems use the right axis."}
           </span>
         </div>
 
-        <div className="series-legend" aria-label="Visible chart series">
+        <div className="series-legend" aria-label="Visible chart layers">
           {allSeries.map((item) => {
             const visible = !hiddenSeries.includes(item.key);
             return (
               <button type="button" key={item.key} aria-pressed={visible} onClick={() => toggleSeries(item.key)}>
-                <i className={item.dashed ? "is-dashed" : ""} style={{ "--series": item.color } as CSSProperties} />
+                <i className={item.render === "event" ? "is-event" : item.dashed ? "is-dashed" : ""} style={{ "--series": item.color } as CSSProperties} />
                 <span>{item.label}</span>
               </button>
             );
@@ -906,7 +973,7 @@ export function TrendExplorer({
         />
 
         <p className="chart-method-note">
-          LLM points mark first-party report or reveal dates—not discovery dates—and program totals are never summed.
+          LLM diamond stems are discrete first-party disclosure events—not a continuous monthly trend. Missing months mean undisclosed, not zero; program totals are never summed.
         </p>
 
         <div className="matrix-heading">
