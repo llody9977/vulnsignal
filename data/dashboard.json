@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-17T09:13:03Z",
+  "generatedAt": "2026-07-17T10:58:10Z",
   "project": {
     "name": "VulnSignal",
     "repo": "vulnsignal",
@@ -18,9 +18,9 @@
     "cve": {
       "name": "CVE Program · CVE List V5",
       "url": "https://github.com/CVEProject/cvelistV5",
-      "snapshotSha256": "56072afa776d775716f33ef8d26bdcf93093b0949c4c2266263ba53736d526e6",
-      "latestFetch": "2026-07-17T08:57:40.008000Z",
-      "changedRecords24h": 1163
+      "snapshotSha256": "5330f76fee8352dee75afedc5d40ead4334300084a325e500a018fa7244be30e",
+      "latestFetch": "2026-07-17T10:57:19.196000Z",
+      "changedRecords24h": 1168
     },
     "nvd": {
       "name": "NIST NVD · CVE JSON 2.0 feeds",
