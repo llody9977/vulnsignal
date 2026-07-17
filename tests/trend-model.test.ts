@@ -3,6 +3,8 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
+  change,
+  comparisonYearOptions,
   completeMonths,
   llmEvidenceForMonth,
   matchedYearPoints,
@@ -51,6 +53,49 @@ test("year comparisons stop both series at the same complete month", () => {
   assert.equal(matched.first.length, matched.second.length);
   assert.equal(matched.first.at(-1)?.month, "2025-06");
   assert.equal(matched.second.at(-1)?.month, "2026-06");
+});
+
+test("year comparisons align the intersection when an interior month is missing", () => {
+  const point = (month: string): MonthPoint => ({
+    month,
+    published: 1,
+    critical: 0,
+    high: 0,
+    medium: 0,
+    low: 0,
+    none: 0,
+    unknown: 1,
+    severityCoverage: 0,
+    publicExploitReferences: 0,
+    kevAdded: 0,
+    partial: false,
+  });
+  const matched = matchedYearPoints(
+    [
+      point("2025-01"),
+      point("2025-03"),
+      point("2026-01"),
+      point("2026-02"),
+      point("2026-03"),
+    ],
+    2025,
+    2026,
+    "2026-03",
+  );
+
+  assert.deepEqual(matched.matchedMonths, [1, 3]);
+  assert.deepEqual(matched.first.map((item) => item.month), ["2025-01", "2025-03"]);
+  assert.deepEqual(matched.second.map((item) => item.month), ["2026-01", "2026-03"]);
+});
+
+test("relative changes distinguish zero-to-zero from a missing percentage baseline", () => {
+  assert.equal(change(0, 0), 0);
+  assert.equal(change(5, 0), null);
+  assert.equal(change(0, 5), -100);
+});
+
+test("comparison year options prevent selecting the same year twice", () => {
+  assert.deepEqual(comparisonYearOptions([2026, 2025, 2024], 2025), [2026, 2024]);
 });
 
 test("month focus keeps six-month momentum context inside its trailing window", () => {
