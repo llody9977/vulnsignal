@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/llody9977/vulnsignal/blob/main/data/llm-discovery-evidence.schema.json",
+  "title": "VulnSignal LLM discovery evidence registry",
+  "type": "object",
+  "required": ["methodologyVersion", "coverage", "description", "records"],
+  "properties": {
+    "methodologyVersion": { "type": "string", "minLength": 1 },
+    "coverage": { "const": "curated_non_exhaustive" },
+    "description": { "type": "string", "minLength": 1 },
+    "headlineMinimum": {
+      "type": "object",
+      "required": ["cveCount", "asOf", "basis", "sourceId"],
+      "properties": {
+        "cveCount": { "type": "integer", "minimum": 0 },
+        "asOf": { "type": "string", "format": "date" },
+        "basis": { "type": "string", "minLength": 1 },
+        "sourceId": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "programReports": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "publisher", "program", "metric", "count", "sourceUrl", "published", "includedInHeadlineMinimum"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "publisher": { "type": "string", "minLength": 1 },
+          "program": { "type": "string", "minLength": 1 },
+          "metric": { "type": "string", "minLength": 1 },
+          "count": { "type": "integer", "minimum": 0 },
+          "sourceUrl": { "type": "string", "format": "uri" },
+          "published": { "type": "string", "format": "date" },
+          "includedInHeadlineMinimum": { "type": "boolean" },
+          "exclusionReason": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "records": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["cveId", "status", "provider", "model", "discoveryRole", "primarySourceUrl", "sourcePublishedAt", "verifiedAt", "reviewer"],
+        "properties": {
+          "cveId": { "type": "string", "pattern": "^CVE-[0-9]{4}-[0-9]{4,}$" },
+          "status": { "enum": ["candidate", "verified", "rejected"] },
+          "provider": { "type": "string", "minLength": 1 },
+          "model": { "type": "string", "minLength": 1 },
+          "discoveryRole": { "enum": ["primary", "assisted", "variant_analysis", "unknown"] },
+          "primarySourceUrl": { "type": "string", "format": "uri" },
+          "sourcePublishedAt": { "type": "string", "format": "date" },
+          "verifiedAt": { "type": "string", "format": "date" },
+          "reviewer": { "type": "string", "minLength": 1 },
+          "evidenceSummary": { "type": "string" },
+          "evidenceSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

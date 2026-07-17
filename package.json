@@ -1,0 +1,44 @@
+{
+  "name": "vulnsignal",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Daily CVE and CISA KEV trend intelligence dashboard",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "dev": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext dev",
+    "build": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext build",
+    "start": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext start",
+    "build:pages": "GITHUB_PAGES=true next build",
+    "data:sync": "python3 scripts/sync_vulnerability_data.py",
+    "data:check": "python3 scripts/sync_vulnerability_data.py --check",
+    "test": "npm run build && node --test tests/rendered-html.test.mjs && python3 -m unittest discover -s tests -p 'test_*.py'",
+    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
+    "check": "npm run data:check && npm run lint && npm test"
+  },
+  "dependencies": {
+    "next": "16.2.9",
+    "react": "19.2.6",
+    "react-dom": "19.2.6"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "1.45.0",
+    "@types/node": "22.19.19",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.2",
+    "@vitejs/plugin-rsc": "0.5.26",
+    "eslint": "9.39.4",
+    "eslint-config-next": "16.2.6",
+    "react-server-dom-webpack": "19.2.6",
+    "typescript": "5.9.3",
+    "vinext": "0.0.50",
+    "vite": "8.1.5",
+    "wrangler": "4.111.0"
+  },
+  "overrides": {
+    "postcss": "8.5.10"
+  },
+  "type": "module"
+}
