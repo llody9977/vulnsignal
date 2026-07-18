@@ -25,6 +25,12 @@ type ProgramReport = {
 
 type DashboardData = {
   generatedAt: string;
+  snapshot: {
+    id: string;
+    generatedAt: string;
+    inputCount: number;
+    inputFingerprintSha256: string;
+  };
   coverage: {
     start: string;
     asOf: string;
@@ -47,6 +53,26 @@ type DashboardData = {
       released: string;
       count: number;
     };
+    anthropic: {
+      name: string;
+      url: string;
+      asOf: string | null;
+      revision: number | null;
+      reportedCves: number;
+      publicCveRecords: number;
+    };
+    llmRegistry: {
+      name: string;
+      url: string;
+      lastReviewed: string;
+      latestEvidenceDate: string;
+      programmeSources: {
+        publisher: string;
+        programme: string;
+        published: string;
+        url: string;
+      }[];
+    };
   };
   latestCompleteMonth: {
     month: string;
@@ -63,6 +89,8 @@ type DashboardData = {
     kevWithin90DayRate: number | null;
     kevWithin90Days: number;
     matureCohort: number;
+    kevTimingSample: number;
+    prePublicationKev: number;
     medianDaysToKev: number | null;
     p75DaysToKev: number | null;
   };
@@ -75,9 +103,11 @@ type DashboardData = {
     programReports: ProgramReport[];
   };
   comparison: {
-    causalityNote: string;
-    pre: WindowMetrics;
-    post: WindowMetrics;
+    method: "adjacent_rolling_windows";
+    windowMonths: number;
+    note: string;
+    earlier: WindowMetrics;
+    recent: WindowMetrics;
   };
   monthly: MonthPoint[];
   topCwes: { cwe: string; count: number }[];
@@ -91,14 +121,14 @@ type DashboardData = {
     ransomware: string;
     severity: string;
     score: number | null;
-    publicExploitReference: boolean;
+    publicExploitReference: boolean | null;
   }[];
 };
 
 const dashboard = rawDashboard as DashboardData;
 
 function number(value: number) {
-  return new Intl.NumberFormat("en").format(value);
+  return new Intl.NumberFormat("en-SG").format(value);
 }
 
 function percent(value: number | null) {
@@ -107,7 +137,7 @@ function percent(value: number | null) {
 
 function dateLabel(value: string, includeDay = false) {
   const date = new Date(`${value.length === 7 ? `${value}-01` : value}T00:00:00Z`);
-  return new Intl.DateTimeFormat("en", {
+  return new Intl.DateTimeFormat("en-SG", {
     month: "short",
     year: "numeric",
     ...(includeDay ? { day: "numeric" } : {}),
@@ -115,24 +145,37 @@ function dateLabel(value: string, includeDay = false) {
   }).format(date);
 }
 
+function timestampLabel(value: string | null) {
+  if (!value) return "Not available";
+  const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(value);
+  return new Intl.DateTimeFormat("en-SG", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    ...(dateOnly ? {} : { hour: "2-digit", minute: "2-digit", hourCycle: "h23" as const }),
+    timeZone: "UTC",
+    ...(dateOnly ? {} : { timeZoneName: "short" as const }),
+  }).format(new Date(value));
+}
+
 function ComparisonRow({
   label,
-  pre,
-  post,
+  earlier,
+  recent,
   suffix = "",
   changeMode = "relative",
 }: {
   label: string;
-  pre: number | null;
-  post: number | null;
+  earlier: number | null;
+  recent: number | null;
   suffix?: string;
   changeMode?: "relative" | "points";
 }) {
-  const safePre = pre ?? 0;
-  const safePost = post ?? 0;
-  const max = Math.max(safePre, safePost, 1);
-  const ratio = safePre ? ((safePost - safePre) / safePre) * 100 : null;
-  const pointDifference = post !== null && pre !== null ? post - pre : null;
+  const safeEarlier = earlier ?? 0;
+  const safeRecent = recent ?? 0;
+  const max = Math.max(safeEarlier, safeRecent, 1);
+  const ratio = safeEarlier ? ((safeRecent - safeEarlier) / safeEarlier) * 100 : null;
+  const pointDifference = recent !== null && earlier !== null ? recent - earlier : null;
   const changeLabel = changeMode === "points"
     ? pointDifference === null
       ? "—"
@@ -149,15 +192,15 @@ function ComparisonRow({
       <div className="comparison-bars">
         <div
           className="comparison-bar comparison-bar--pre"
-          style={{ "--bar": `${(safePre / max) * 100}%` } as CSSProperties}
+          style={{ "--bar": `${(safeEarlier / max) * 100}%` } as CSSProperties}
         >
-          <span>{pre === null ? "—" : `${number(pre)}${suffix}`}</span>
+          <span>{earlier === null ? "—" : `${number(earlier)}${suffix}`}</span>
         </div>
         <div
-          className="comparison-bar comparison-bar--post"
-          style={{ "--bar": `${(safePost / max) * 100}%` } as CSSProperties}
+          className="comparison-bar comparison-bar--recent"
+          style={{ "--bar": `${(safeRecent / max) * 100}%` } as CSSProperties}
         >
-          <span>{post === null ? "—" : `${number(post)}${suffix}`}</span>
+          <span>{recent === null ? "—" : `${number(recent)}${suffix}`}</span>
         </div>
       </div>
     </div>
@@ -165,16 +208,14 @@ function ComparisonRow({
 }
 
 export default function Home() {
-  const generated = new Intl.DateTimeFormat("en", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    timeZone: "UTC",
-    timeZoneName: "short",
-  }).format(new Date(dashboard.generatedAt));
   const maxCwe = Math.max(...dashboard.topCwes.map((item) => item.count), 1);
+  const sourceUpdates = [
+    { label: "CVE List", qualifier: "Updated", value: dashboard.sources.cve.latestFetch, url: dashboard.sources.cve.url },
+    { label: "NVD", qualifier: "Updated", value: dashboard.sources.nvd.latestSourceUpdate, url: dashboard.sources.nvd.url },
+    { label: "CISA KEV", qualifier: "Released", value: dashboard.sources.kev.released, url: dashboard.sources.kev.url },
+    { label: "Anthropic CVD", qualifier: "As at", value: dashboard.sources.anthropic.asOf, url: dashboard.sources.anthropic.url },
+    { label: "LLM register", qualifier: "Reviewed", value: dashboard.sources.llmRegistry.lastReviewed, url: dashboard.sources.llmRegistry.url },
+  ];
 
   return (
     <main>
@@ -183,7 +224,7 @@ export default function Home() {
           <span className="brand__mark" aria-hidden="true">
             {Array.from({ length: 9 }, (_, index) => <i key={index} />)}
           </span>
-          <span><strong>VulnSignal</strong><small>CVE / KEV / LLM evidence</small></span>
+          <span><strong>VulnSignal</strong><small>CVE / KEV / PUBLIC SOURCES</small></span>
         </a>
         <nav aria-label="Dashboard sections">
           <a href="#reporting">Reporting</a>
@@ -193,25 +234,36 @@ export default function Home() {
         </nav>
         <div className="sync-state">
           <span className="sync-state__dot" aria-hidden="true" />
-          <span><strong>UPDATED DAILY</strong><small>{generated}</small></span>
+          <span><strong>SNAPSHOT ID</strong><small>{dashboard.snapshot.id}</small></span>
         </div>
       </header>
 
       <div className="page" id="top">
         <section className="hero">
           <div className="hero__copy">
-            <p className="kicker">VULNERABILITY SIGNAL REPORT / DAILY</p>
-            <h1>One timeline.<br /><em>Every signal.</em></h1>
+            <p className="kicker">DAILY CVE AND KEV REPORT</p>
+            <h1>CVE, KEV and LLM disclosures.<br /><em>One timeline.</em></h1>
             <p>
-              Filter CVE publication, severity, CISA KEV, exploit references, and
-              documented LLM evidence on a shared monthly grid.
+              Compare monthly CVE publications, CVSS severity, CISA KEV additions,
+              CVEs with public exploit references and documented LLM-assisted disclosures.
             </p>
           </div>
           <div className="hero__status">
-            <div><span>Latest source data</span><strong>{dateLabel(dashboard.coverage.asOf, true)}</strong></div>
+            <div><span>Snapshot built</span><strong>{timestampLabel(dashboard.generatedAt)}</strong></div>
             <div><span>Latest complete month</span><strong>{dateLabel(dashboard.coverage.latestCompleteMonth)}</strong></div>
             <div><span>CVE records covered</span><strong>{number(dashboard.coverage.recordCount)}</strong></div>
-            <div><span>Refresh schedule</span><strong>Daily on GitHub</strong></div>
+            <div><span>Refresh schedule</span><strong>Daily at 17:17 SGT</strong></div>
+          </div>
+          <div className="source-snapshot" aria-label="Source dates included in this snapshot">
+            <strong>Source data included</strong>
+            <div>
+              {sourceUpdates.map((source) => (
+                <a href={source.url} key={source.label}>
+                  <span>{source.label}</span>
+                  <time dateTime={source.value ?? undefined}><b>{source.qualifier}</b>{timestampLabel(source.value)}</time>
+                </a>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -223,44 +275,43 @@ export default function Home() {
 
         <section className="section" id="context">
           <div className="section-heading">
-            <div><p className="eyebrow">[02] Additional context</p><h2>Operational vulnerability context.</h2></div>
-            <p>Definitions and comparison populations are shown with each metric.</p>
+            <div><p className="eyebrow">[02] Additional context</p><h2>Additional vulnerability metrics</h2></div>
+            <p>Each metric states the period and records included.</p>
           </div>
 
           <div className="operational-matrix">
-            <article><span>Median time to KEV</span><strong>{dashboard.risk.medianDaysToKev === null ? "—" : `${number(dashboard.risk.medianDaysToKev)} days`}</strong><p>Among CVEs published {dateLabel(dashboard.risk.matureCohortStart)}–{dateLabel(dashboard.risk.matureCohortEnd)} that later entered KEV, half were added within this many days of NVD publication.</p></article>
-            <article><span>75% of KEV-listed CVEs added within</span><strong>{dashboard.risk.p75DaysToKev === null ? "—" : `${number(dashboard.risk.p75DaysToKev)} days`}</strong><p>Among that same KEV-matched cohort, three quarters entered CISA’s catalog within this many days.</p></article>
-            <article><span>Added to KEV within 90 days</span><strong>{percent(dashboard.risk.kevWithin90DayRate)}</strong><p>{number(dashboard.risk.kevWithin90Days)} of {number(dashboard.risk.matureCohort)} CVEs with a full 90-day observation window.</p></article>
+            <article><span>Median time to enter KEV</span><strong>{dashboard.risk.medianDaysToKev === null ? "—" : `${number(dashboard.risk.medianDaysToKev)} days`}</strong><p>Half of the {number(dashboard.risk.kevTimingSample)} KEV-matched CVEs in the mature cohort were listed within this time. The {number(dashboard.risk.prePublicationKev)} already-listed records count as zero days.</p></article>
+            <article><span>75th percentile time to KEV</span><strong>{dashboard.risk.p75DaysToKev === null ? "—" : `${number(dashboard.risk.p75DaysToKev)} days`}</strong><p>75% of the same {number(dashboard.risk.kevTimingSample)} KEV-matched CVEs were listed within this time, measured from NVD publication.</p></article>
+            <article><span>Added to KEV within 90 days</span><strong>{percent(dashboard.risk.kevWithin90DayRate)}</strong><p>Of CVEs published {dateLabel(dashboard.risk.matureCohortStart)} to {dateLabel(dashboard.risk.matureCohortEnd)}, {number(dashboard.risk.kevWithin90Days)} of {number(dashboard.risk.matureCohort)} entered KEV within 90 days.</p></article>
             <article><span>CISA KEV catalog</span><strong>{number(dashboard.risk.catalogKev)}</strong><p>Known exploited vulnerabilities currently listed by CISA.</p></article>
-            <article><span>CVE records changed (24h)</span><strong>{number(dashboard.sources.cve.changedRecords24h)}</strong><p>CVE List records added or updated in the past day.</p></article>
+            <article><span>CVE records changed in 24 hours</span><strong>{number(dashboard.sources.cve.changedRecords24h)}</strong><p>CVE List records added or updated in the 24 hours before this snapshot.</p></article>
             <article><span>CVEs with severity scores</span><strong>{percent(dashboard.latestCompleteMonth.severityCoverage)}</strong><p>Share of the latest complete month with a CVSS score.</p></article>
           </div>
 
           <div className="context-grid">
             <article className="flat-panel era-card">
               <div className="panel-heading">
-                <div><p className="eyebrow">36 months before + after</p><h3>Before and after ChatGPT launched</h3></div>
-                <span>Comparison only / not causal</span>
+                <div><p className="eyebrow">Two adjacent 36-month periods</p><h3>Change in published vulnerability reporting</h3></div>
+                <span>Published reporting trends</span>
               </div>
               <div className="era-labels">
-                <div><i />PRE <strong>{dateLabel(dashboard.comparison.pre.start)}–{dateLabel(dashboard.comparison.pre.end)}</strong></div>
-                <div><i />POST <strong>{dateLabel(dashboard.comparison.post.start)}–{dateLabel(dashboard.comparison.post.end)}</strong></div>
+                <div><i />EARLIER <strong>{dateLabel(dashboard.comparison.earlier.start)}–{dateLabel(dashboard.comparison.earlier.end)}</strong></div>
+                <div><i />RECENT <strong>{dateLabel(dashboard.comparison.recent.start)}–{dateLabel(dashboard.comparison.recent.end)}</strong></div>
               </div>
-              <ComparisonRow label="Average CVEs / month" pre={dashboard.comparison.pre.monthlyAverage} post={dashboard.comparison.post.monthlyAverage} />
-              <ComparisonRow label="Critical + high share" pre={dashboard.comparison.pre.criticalHighShare} post={dashboard.comparison.post.criticalHighShare} suffix="%" changeMode="points" />
-              <ComparisonRow label="CVEs with public exploit references" pre={dashboard.comparison.pre.publicExploitShare} post={dashboard.comparison.post.publicExploitShare} suffix="%" changeMode="points" />
-              <ComparisonRow label="KEV within 90 days" pre={dashboard.comparison.pre.kevWithin90DayRate} post={dashboard.comparison.post.kevWithin90DayRate} suffix="%" changeMode="points" />
-              <ComparisonRow label="Median days to KEV" pre={dashboard.comparison.pre.medianDaysToKev} post={dashboard.comparison.post.medianDaysToKev} />
-              <p className="panel-note">{dashboard.comparison.causalityNote}</p>
+              <ComparisonRow label="Average CVEs per month" earlier={dashboard.comparison.earlier.monthlyAverage} recent={dashboard.comparison.recent.monthlyAverage} />
+              <ComparisonRow label="Critical + high share of scored CVEs" earlier={dashboard.comparison.earlier.criticalHighShare} recent={dashboard.comparison.recent.criticalHighShare} suffix="%" changeMode="points" />
+              <ComparisonRow label="CVEs with public exploit references" earlier={dashboard.comparison.earlier.publicExploitShare} recent={dashboard.comparison.recent.publicExploitShare} suffix="%" changeMode="points" />
+              <ComparisonRow label="Added to KEV within 90 days" earlier={dashboard.comparison.earlier.kevWithin90DayRate} recent={dashboard.comparison.recent.kevWithin90DayRate} suffix="%" changeMode="points" />
+              <p className="panel-note">{dashboard.comparison.note}</p>
             </article>
 
             <article className="flat-panel evidence-card">
               <div className="panel-heading">
-                <div><p className="eyebrow">LLM / Evidence ledger</p><h3>Reported minimum, not prevalence</h3></div>
+                <div><p className="eyebrow">LLM disclosure evidence</p><h3>Reported minimum, not a total</h3></div>
               </div>
               <div className="evidence-score">
                 <strong>{dashboard.llmDiscovery.value === null ? "—" : `≥ ${number(dashboard.llmDiscovery.value)}`}</strong>
-                <span>largest documented program count</span>
+                <span>Largest CVE count reported by one programme</span>
               </div>
               <div className="evidence-ledger">
                 {dashboard.llmDiscovery.programReports.map((report) => (
@@ -278,8 +329,8 @@ export default function Home() {
 
           <article className="flat-panel weakness-panel">
             <div className="panel-heading">
-              <div><p className="eyebrow">CWE / Trailing 12 months</p><h3>Weakness concentration</h3></div>
-              <span>Published CVEs / top classes</span>
+              <div><p className="eyebrow">CWE / Trailing 12 months</p><h3>Most common CWE classes</h3></div>
+              <span>CVEs published in the past 12 months</span>
             </div>
             <div className="cwe-list">
               {dashboard.topCwes.map((item, index) => (
@@ -296,14 +347,14 @@ export default function Home() {
 
         <section className="section" id="kev-watch">
           <div className="section-heading">
-            <div><p className="eyebrow">[03] Exploitation ledger</p><h2>Recently confirmed exploitation.</h2></div>
-            <p>KEV membership is kept distinct from a public exploit-reference signal.</p>
+            <div><p className="eyebrow">[03] Exploitation ledger</p><h2>Recently added to CISA KEV</h2></div>
+            <p>A CISA KEV listing confirms known exploitation. An NVD exploit-tagged reference is a separate public signal.</p>
           </div>
 
           <article className="flat-panel kev-table-card">
             <div className="panel-heading">
               <div><p className="eyebrow">CISA / Latest additions</p><h3>KEV watch</h3></div>
-              <a href={dashboard.sources.kev.url}>OPEN SOURCE ↗</a>
+              <a href={dashboard.sources.kev.url}>VIEW CISA SOURCE ↗</a>
             </div>
             <div className="table-wrap">
               <table className="kev-table">
@@ -327,29 +378,31 @@ export default function Home() {
 
         <section className="methodology" id="methodology">
           <div className="methodology__intro">
-            <p className="eyebrow">[04] Method / provenance</p>
-            <h2>Each line says what it knows.</h2>
-            <p>CVE is publication, KEV is catalog addition, exploit is a tagged public reference, and LLM is a first-party report or public-ID reveal event.</p>
+            <p className="eyebrow">[04] Definitions and sources</p>
+            <h2>What each metric measures</h2>
+            <p>CVE counts use NVD publication dates. KEV counts use CISA listing dates. Exploit references and LLM disclosures are shown as separate evidence.</p>
           </div>
           <div className="method-grid">
-            <article><span>01</span><h3>CVE publication</h3><p>Active NVD records grouped by NVD published timestamp. Rejected records are excluded.</p></article>
-            <article><span>02</span><h3>Severity</h3><p>Primary CVSS assessments are preferred. Unscored records remain visible and never become “low.”</p></article>
-            <article><span>03</span><h3>Exploitation</h3><p>NVD exploit-tagged references indicate public material. CISA KEV alone is labeled known exploited.</p></article>
-            <article><span>04</span><h3>LLM evidence</h3><p>Timeline points use report or reveal dates. They are not discovery dates, and non-deduplicated program totals are not summed.</p></article>
+            <article><span>01</span><h3>CVE publication</h3><p>We group active NVD records by publication month and exclude rejected records.</p></article>
+            <article><span>02</span><h3>Severity</h3><p>The dashboard uses primary CVSS assessments where available. Records without a score remain marked “Unscored”.</p></article>
+            <article><span>03</span><h3>Exploitation</h3><p>An NVD reference tagged “Exploit” indicates linked public material; it does not prove that the exploit works. Only CISA KEV entries are labelled “Known exploited”.</p></article>
+            <article><span>04</span><h3>LLM evidence</h3><p>Report and reveal dates are not discovery dates. Counts from different programmes remain separate because they may overlap.</p></article>
           </div>
           <div className="source-strip">
-            <span>PRIMARY / SOURCES</span>
+            <span>SOURCES</span>
             <a href={dashboard.sources.cve.url}>CVE LIST V5 ↗</a>
             <a href={dashboard.sources.nvd.url}>NVD JSON 2.0 ↗</a>
             <a href={dashboard.sources.kev.url}>CISA KEV ↗</a>
+            <a href={dashboard.sources.anthropic.url}>ANTHROPIC CVD ↗</a>
+            <a href={dashboard.sources.llmRegistry.url}>LLM REGISTER ↗</a>
             <em>{dashboard.coverage.notice}</em>
           </div>
         </section>
       </div>
 
       <footer>
-        <div><strong>VulnSignal</strong><span>Evidence-led vulnerability trend intelligence.</span></div>
-        <div><span>SCHEMA / V1</span><span>GITHUB / DAILY</span><a href="#top">TOP ↑</a></div>
+        <div><strong>VulnSignal</strong><span>Daily CVE, KEV and exploit trends from public sources.</span></div>
+        <div><a href="https://github.com/llody9977/vulnsignal">VIEW SOURCE ON GITHUB ↗</a><a href="#top">TOP ↑</a></div>
       </footer>
     </main>
   );

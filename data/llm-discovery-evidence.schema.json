@@ -3,9 +3,10 @@
   "$id": "https://github.com/llody9977/vulnsignal/blob/main/data/llm-discovery-evidence.schema.json",
   "title": "VulnSignal LLM discovery evidence registry",
   "type": "object",
-  "required": ["methodologyVersion", "coverage", "description", "records"],
+  "required": ["methodologyVersion", "lastReviewed", "coverage", "description", "records"],
   "properties": {
     "methodologyVersion": { "type": "string", "minLength": 1 },
+    "lastReviewed": { "type": "string", "format": "date" },
     "coverage": { "const": "curated_non_exhaustive" },
     "description": { "type": "string", "minLength": 1 },
     "headlineMinimum": {

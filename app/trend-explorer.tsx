@@ -55,7 +55,7 @@ type MatrixRow = {
 const metricOptions: Array<{ key: MetricKey; label: string }> = [
   { key: "published", label: "Published CVEs" },
   { key: "kevAdded", label: "KEV additions" },
-  { key: "publicExploitReferences", label: "Exploit references" },
+  { key: "publicExploitReferences", label: "CVEs with exploit references" },
   { key: "llmEvidence", label: "LLM disclosure events" },
   { key: "critical", label: "Critical" },
   { key: "high", label: "High" },
@@ -65,11 +65,11 @@ const metricOptions: Array<{ key: MetricKey; label: string }> = [
 ];
 
 function number(value: number) {
-  return new Intl.NumberFormat("en").format(Math.round(value));
+  return new Intl.NumberFormat("en-SG").format(Math.round(value));
 }
 
 function compact(value: number) {
-  return new Intl.NumberFormat("en", {
+  return new Intl.NumberFormat("en-SG", {
     notation: "compact",
     maximumFractionDigits: 1,
   }).format(value);
@@ -81,7 +81,7 @@ function percent(value: number | null) {
 
 function monthLabel(value: string, short = false) {
   const date = new Date(`${value}-01T00:00:00Z`);
-  return new Intl.DateTimeFormat("en", {
+  return new Intl.DateTimeFormat("en-SG", {
     month: short ? "short" : "long",
     year: short ? "2-digit" : "numeric",
     timeZone: "UTC",
@@ -89,7 +89,7 @@ function monthLabel(value: string, short = false) {
 }
 
 function shortMonth(value: string) {
-  return new Intl.DateTimeFormat("en", {
+  return new Intl.DateTimeFormat("en-SG", {
     month: "short",
     timeZone: "UTC",
   }).format(new Date(`${value}-01T00:00:00Z`));
@@ -182,13 +182,13 @@ function llmComparison(
   if (current === previous) {
     return {
       tone: "flat",
-      label: `Same documented floor as ${baselineLabel}`,
+      label: `Same reported minimum as ${baselineLabel}`,
       baseline: previous ? `Baseline: ≥ ${number(previous)}` : "Baseline: no event",
     };
   }
   return {
     tone: current > previous ? "up" : "down",
-    label: `${current > previous ? "Higher" : "Lower"} documented floor than ${baselineLabel}`,
+    label: `${current > previous ? "Higher" : "Lower"} reported minimum than ${baselineLabel}`,
     baseline: previous ? `Baseline: ≥ ${number(previous)}` : "Baseline: no event",
   };
 }
@@ -296,7 +296,7 @@ function UnifiedChart({
       <div
         className="chart-stage"
         role="group"
-        aria-label={`Combined vulnerability trend with ${series.length} visible layers`}
+        aria-label={`Combined vulnerability trend with ${series.length} visible data series`}
       >
         <div className="chart-stage__grid" aria-hidden="true" />
         {scaleMode === "indexed" || hasLeftAxis ? (
@@ -497,7 +497,7 @@ function SignalMatrix({
                       aria-label={row.event
                         ? value === null
                           ? "No recorded disclosure event"
-                          : `At least ${number(value)} vulnerabilities in the disclosed event`
+                          : `At least ${number(value)} CVEs reported in this disclosure event`
                         : undefined}
                     >
                       {value === null ? "—" : row.event ? `≥ ${number(value)}` : number(value)}
@@ -510,7 +510,7 @@ function SignalMatrix({
         </tbody>
       </table>
       {rows.some((row) => row.event) ? (
-        <p className="matrix-note">— means no event in the curated evidence registry, not zero LLM discoveries.</p>
+        <p className="matrix-note">— means the registry has no recorded disclosure event for that month. It does not mean zero LLM-assisted discoveries.</p>
       ) : null}
     </div>
   );
@@ -626,7 +626,7 @@ export function TrendExplorer({
     },
     {
       key: "publicExploitReferences",
-      label: "Public exploit references",
+      label: "CVEs with public exploit references",
       shortLabel: "Exploit ref",
       values: chartPoints.map((point) => point.publicExploitReferences),
       color: "var(--amber)",
@@ -719,7 +719,7 @@ export function TrendExplorer({
         matched.first.length > 0,
       );
   const compareDifferenceLabel = compareMetric === "llmEvidence"
-    ? "Not additive"
+    ? "Not calculated"
     : `${compareDifference > 0 ? "+" : compareDifference < 0 ? "−" : ""}${number(Math.abs(compareDifference))}`;
   const compareValueLabel = (value: number) => compareMetric === "llmEvidence"
     ? value ? `≥ ${number(value)}` : "No event"
@@ -728,14 +728,14 @@ export function TrendExplorer({
   const periodTitle = viewMode === "year"
     ? yearPoints.length === 12
       ? `${selectedYear} annual report`
-      : `${periodLabel(yearPoints, selectedYear)} year to date`
+      : `${selectedYear} year to date (${periodLabel(yearPoints, selectedYear).replace(` ${selectedYear}`, "")})`
     : viewMode === "month"
-      ? `${monthLabel(selectedMonth)} focus`
+      ? `${monthLabel(selectedMonth)} report`
       : `${periodLabel(matched.first, compareFirst)} vs ${periodLabel(matched.second, compareSecond)}`;
   const periodDetail = viewMode === "month"
     ? "Indicators use the selected month; the plot keeps 12 complete months of context."
     : viewMode === "compare"
-      ? "Both years stop at the same complete month for a like-for-like comparison."
+      ? "Both periods include the same complete calendar months."
       : "Partial months are excluded from totals and trend lines.";
 
   const toggleSeries = (key: string) => {
@@ -776,7 +776,7 @@ export function TrendExplorer({
                   setHiddenSeries([]);
                 }}
               >
-                {mode === "compare" ? "Year vs year" : mode}
+                {mode === "compare" ? "Compare years" : mode}
               </button>
             ))}
           </div>
@@ -817,7 +817,7 @@ export function TrendExplorer({
               </select>
             </label>
             <label>
-              <span>Compared signal</span>
+              <span>Metric</span>
               <select value={compareMetric} onChange={(event) => setCompareMetric(event.target.value as MetricKey)}>
                 {metricOptions.map((item) => <option value={item.key} key={item.key}>{item.label}</option>)}
               </select>
@@ -825,7 +825,7 @@ export function TrendExplorer({
           </>
         ) : (
           <fieldset>
-            <legend>Series family</legend>
+            <legend>Chart data</legend>
             <div className="segmented-control">
               {(["signals", "severity"] as ChartFamily[]).map((family) => (
                 <button
@@ -862,7 +862,7 @@ export function TrendExplorer({
           <div className={`comparison-summary__change comparison-summary__change--${compareChange.tone}`}>
             <span>Difference</span>
             <strong>{compareDifferenceLabel}</strong>
-            <small>{compareMetric === "llmEvidence" ? `${compareChange.label}; program counts may overlap` : compareChange.label}</small>
+            <small>{compareMetric === "llmEvidence" ? "No difference is calculated because programme counts may overlap." : compareChange.label}</small>
           </div>
         </div>
       ) : null}
@@ -887,19 +887,19 @@ export function TrendExplorer({
           comparison={relativeComparison(summary.kevAdded, baseline.kevAdded, baselineLabel, hasBaseline)}
         />
         <MetricCell
-          label="Exploit references"
+          label="CVEs with exploit references"
           value={number(summary.publicExploitReferences)}
           detail={`${percent(summary.publicExploitShare)} of published CVEs`}
           comparison={relativeComparison(summary.publicExploitReferences, baseline.publicExploitReferences, baselineLabel, hasBaseline)}
         />
         <MetricCell
-          label="LLM-reported CVEs"
+          label="Reported LLM-assisted CVEs"
           value={summary.llmEvidence ? `≥ ${number(summary.llmEvidence)}` : "—"}
-          detail="Largest count disclosed by one first-party program or public-ID release; program totals are not added"
+          detail="Largest count in one first-party programme report or public CVE-ID release. Counts from different programmes remain separate."
           comparison={llmComparison(summary.llmEvidence, baseline.llmEvidence, baselineLabel, hasBaseline)}
         />
         <MetricCell
-          label="Severity coverage"
+          label="CVEs with severity scores"
           value={percent(summary.severityCoverage)}
           detail={`${number(summary.unknown)} records remain unscored`}
           comparison={pointComparison(summary.severityCoverage, baseline.severityCoverage, baselineLabel, hasBaseline)}
@@ -916,9 +916,9 @@ export function TrendExplorer({
           )}
         />
         <MetricCell
-          label="Three-month momentum"
+          label="Change in three-month average"
           value={percent(momentum)}
-          detail="Latest three-month CVE average versus the preceding three"
+          detail="Latest three-month average compared with the previous three months."
           comparison={pointComparison(momentum, baselineMomentum, baselineLabel, baselineMomentum !== null)}
         />
       </div>
@@ -926,8 +926,8 @@ export function TrendExplorer({
       <article className="unified-panel">
         <div className="unified-panel__heading">
           <div>
-            <p className="eyebrow">SIG / Combined timeline</p>
-            <h3>{viewMode === "compare" ? metricOptions.find((item) => item.key === compareMetric)?.label : chartFamily === "signals" ? "CVE, KEV and exploit trends + LLM disclosure events" : "Severity by publication month"}</h3>
+            <p className="eyebrow">Combined timeline</p>
+            <h3>{viewMode === "compare" ? metricOptions.find((item) => item.key === compareMetric)?.label : chartFamily === "signals" ? "CVE, KEV and exploit trends, with LLM disclosure events" : "Severity by publication month"}</h3>
           </div>
           {viewMode !== "compare" && chartFamily === "signals" ? (
             <div className="scale-control" aria-label="Chart display">
@@ -936,17 +936,17 @@ export function TrendExplorer({
                 <button type="button" key={mode} aria-pressed={scaleMode === mode} onClick={() => setScaleMode(mode)}>{mode === "indexed" ? "Relative trend" : "Actual counts"}</button>
               ))}
             </div>
-          ) : <span className="scale-note">Actual counts / shared scale</span>}
+          ) : <span className="scale-note">Actual counts on one scale</span>}
         </div>
 
         <div className="scale-explainer" role="note">
           <strong>{effectiveScale === "indexed" ? "Relative trend" : "Actual counts"}</strong>
           <span>
             {effectiveScale === "indexed"
-              ? "Each trend line’s own peak equals 100%. Event stems scale to the largest disclosed lower bound in the selected period and do not form a trend."
+              ? "Each line is scaled against its own peak, shown as 100%. LLM markers show separate disclosure events and are scaled against the largest reported minimum."
               : viewMode === "compare" || chartFamily === "severity"
                 ? compareMetric === "llmEvidence"
-                  ? "Event stems show disclosed lower bounds on their report or reveal dates; missing months remain unknown."
+                  ? "Each marker shows a first-party report or reveal date. A blank month means no event is recorded in the registry."
                   : "Every visible line shares one count scale, so line height can be compared directly."
                 : "CVE and exploit trends use the left axis; KEV and LLM event stems use the right axis."}
           </span>
@@ -973,12 +973,12 @@ export function TrendExplorer({
         />
 
         <p className="chart-method-note">
-          LLM diamond stems are discrete first-party disclosure events—not a continuous monthly trend. Missing months mean undisclosed, not zero; program totals are never summed.
+          Diamond markers show separate first-party disclosure events, not a monthly trend. A blank month means no event is recorded; it does not mean zero LLM-assisted discoveries. Counts from different programmes remain separate.
         </p>
 
         <div className="matrix-heading">
-          <div><p className="eyebrow">MAT / Signal matrix</p><h3>All indicators, one time grid</h3></div>
-          <span>Exact values / scroll horizontally on small screens</span>
+          <div><p className="eyebrow">Monthly values</p><h3>Monthly values by indicator</h3></div>
+          <span>Exact monthly values. Scroll horizontally on smaller screens.</span>
         </div>
         <SignalMatrix points={chartPoints} events={events} compareRows={compareRows} />
       </article>

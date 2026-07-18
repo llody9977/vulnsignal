@@ -29,6 +29,12 @@ jobs:
         with:
           python-version: "3.13"
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22.13.0"
+          cache: npm
+
       - name: Calculate the source-cache generation
         id: cache-key
         shell: bash
@@ -51,6 +57,15 @@ jobs:
 
       - name: Run ingestion unit tests
         run: python3 -m unittest discover -s tests -p "test_*.py"
+
+      - name: Install dashboard dependencies
+        run: npm ci
+
+      - name: Validate the dashboard contract and Pages export
+        run: |
+          npm run lint
+          npm test
+          npm run build:pages
 
       - name: Commit the refreshed aggregate
         shell: bash

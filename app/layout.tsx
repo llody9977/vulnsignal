@@ -17,9 +17,9 @@ export const metadata: Metadata = {
     process.env.NEXT_PUBLIC_SITE_URL ??
       "https://llody9977.github.io/vulnsignal/",
   ),
-  title: "VulnSignal — CVE & KEV Trend Intelligence",
+  title: "VulnSignal — CVE, KEV and LLM Disclosure Trends",
   description:
-    "An evidence-led dashboard for CVE publication, severity, exploit references, and CISA Known Exploited Vulnerabilities trends.",
+    "Daily dashboard of CVE publications, CVSS severity, CVEs with public exploit references, CISA KEV additions and documented LLM-assisted disclosures.",
   applicationName: "VulnSignal",
   authors: [{ name: "VulnSignal contributors" }],
   keywords: [
@@ -35,24 +35,24 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     url: "./",
-    title: "VulnSignal — One timeline. Every signal.",
+    title: "VulnSignal — CVE, KEV and LLM disclosures. One timeline.",
     description:
-      "Interactive CVE, KEV, severity, exploit-reference, and documented LLM evidence trends from authoritative public sources.",
+      "Compare monthly CVE, severity, CISA KEV, exploit-reference and documented LLM disclosure data from official and first-party public sources.",
     siteName: "VulnSignal",
     images: [
       {
         url: "og.png",
         width: 1200,
         height: 630,
-        alt: "VulnSignal — One timeline. Every signal.",
+        alt: "VulnSignal dashboard showing CVE, KEV and LLM disclosure trends",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "VulnSignal — CVE & KEV Trend Intelligence",
+    title: "VulnSignal — CVE, KEV and LLM Disclosure Trends",
     description:
-      "Filter CVE, severity, KEV, exploit-reference, and documented LLM evidence trends on one monthly grid.",
+      "Compare CVE, severity, KEV, exploit-reference and documented LLM disclosure data on one monthly timeline.",
     images: ["og.png"],
   },
 };
