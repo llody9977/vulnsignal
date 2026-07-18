@@ -1,16 +1,16 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-18T03:52:38Z",
+  "generatedAt": "2026-07-18T12:47:43Z",
   "snapshot": {
-    "id": "VS-20260718-0352Z",
-    "generatedAt": "2026-07-18T03:52:38Z",
+    "id": "VS-20260718-1247Z",
+    "generatedAt": "2026-07-18T12:47:43Z",
     "inputCount": 30,
-    "inputFingerprintSha256": "ebe2e77d77b1d6bd20e50d8f69909133f58351b30cdff6a3aaac23180f62f11d",
+    "inputFingerprintSha256": "85623a96fa6c4c3e44c6f1aab26e1fbfeea583067cae14a0509a4c4c5dac0e9c",
     "inputs": [
       {
         "id": "cve-list-delta",
         "kind": "downloaded_snapshot",
-        "sha256": "dc493fbc52cf65d975755623439d1a0011e99714f08b595fc00b8bb6dc7a728d"
+        "sha256": "362eb346260d4a40c76f85d2f3229f9f85e409d2a95801dffe2b45daef931b2b"
       },
       {
         "id": "nvd-2002",
@@ -100,7 +100,7 @@
       {
         "id": "nvd-2019",
         "kind": "official_checksum_verified_feed",
-        "sha256": "c87fab90276899900d4b327287a8aaec4d53013b53bb12b1790c02a7468edf3e"
+        "sha256": "534f6d277f08c0ec50d60fb12af0055bab257a8a47f8634cbda183b83f5aa510"
       },
       {
         "id": "nvd-2020",
@@ -110,32 +110,32 @@
       {
         "id": "nvd-2021",
         "kind": "official_checksum_verified_feed",
-        "sha256": "d843f776b5b2b208e9239690418bf163daa0bebf24eb9d681f74e8ba30f57d7c"
+        "sha256": "731e8db7dd8342c0d2ebe6dac2bd1b6ac4f3770293648bffe8f0002836e14108"
       },
       {
         "id": "nvd-2022",
         "kind": "official_checksum_verified_feed",
-        "sha256": "603f7afe73c6eeae04aa6558585f8ca3aced38dcd7c7a51cfa930a04a1f28e36"
+        "sha256": "0d528a3253a06fa3e92d7863a7d817f77632f1718fb5665d98859cdf0ae6268b"
       },
       {
         "id": "nvd-2023",
         "kind": "official_checksum_verified_feed",
-        "sha256": "a48ccf3f0da19cbd224208c43db8620dac52057beaeb1a79f399692e2a358429"
+        "sha256": "75cb7105be787a93e9eb6da088a8aba9cfa011551e490c47b4adcde92065aea5"
       },
       {
         "id": "nvd-2024",
         "kind": "official_checksum_verified_feed",
-        "sha256": "e9e0f4c4a83d4fb752d58254d5b45fb024cd0f14c3ab62488881a61168da40b7"
+        "sha256": "c0b9bf0dd68e84ff37a4e23b74db6ac3c59b373986daa62a72b4f41c02d3bc5c"
       },
       {
         "id": "nvd-2025",
         "kind": "official_checksum_verified_feed",
-        "sha256": "98b0d78d8e9533ddc58e7109c2082e523fb4865184e030e3336d6e0f7164900c"
+        "sha256": "8a2673248118f49beb84f196be7142f7ac5e3de78f97df5aac9735dc9559a0c7"
       },
       {
         "id": "nvd-2026",
         "kind": "official_checksum_verified_feed",
-        "sha256": "5549258d71061ebeacfd9e5a1eca143e82e5a27d8aae990eabdcc6a3cfca3aef"
+        "sha256": "2f5aeaf996de4775764b917460c81b3b51ab4e785ec64f0401c8edc39d6927de"
       },
       {
         "id": "cisa-kev",
@@ -150,7 +150,7 @@
       {
         "id": "epss-scores",
         "kind": "downloaded_snapshot",
-        "sha256": "d7a6928c9fd188021d3a945a46c97e583080030d7e5c06146d3c6c2bf409cce3"
+        "sha256": "6650e0a690b172b34bc75db6dcd8739796e107b400fffac265c43761fdd3dcfd"
       },
       {
         "id": "llm-evidence-register",
@@ -169,7 +169,7 @@
     "start": "2019-01-01",
     "asOf": "2026-07-18",
     "latestCompleteMonth": "2026-06",
-    "recordCount": 238036,
+    "recordCount": 238268,
     "publicationDateSemantics": "NVD published timestamp",
     "notice": "This product uses data from the NVD API and feeds but is not endorsed or certified by the NVD."
   },
@@ -177,14 +177,14 @@
     "cve": {
       "name": "CVE Program · CVE List V5",
       "url": "https://github.com/CVEProject/cvelistV5",
-      "contentFingerprintSha256": "dc493fbc52cf65d975755623439d1a0011e99714f08b595fc00b8bb6dc7a728d",
-      "latestFetch": "2026-07-18T03:12:23.672000Z",
-      "changedRecords24h": 1143
+      "contentFingerprintSha256": "362eb346260d4a40c76f85d2f3229f9f85e409d2a95801dffe2b45daef931b2b",
+      "latestFetch": "2026-07-18T12:13:11.177000Z",
+      "changedRecords24h": 1066
     },
     "nvd": {
       "name": "NIST NVD · CVE JSON 2.0 feeds",
       "url": "https://nvd.nist.gov/vuln/data-feeds",
-      "latestSourceUpdate": "2026-07-17T03:02:25-04:00",
+      "latestSourceUpdate": "2026-07-18T03:02:48-04:00",
       "feeds": [
         {
           "identifierYear": 2002,
@@ -307,10 +307,10 @@
         },
         {
           "identifierYear": 2019,
-          "lastModified": "2026-07-15T03:03:14-04:00",
-          "sha256": "c87fab90276899900d4b327287a8aaec4d53013b53bb12b1790c02a7468edf3e",
-          "size": 125775713,
-          "records": 17618
+          "lastModified": "2026-07-18T03:02:48-04:00",
+          "sha256": "534f6d277f08c0ec50d60fb12af0055bab257a8a47f8634cbda183b83f5aa510",
+          "size": 125779944,
+          "records": 17619
         },
         {
           "identifierYear": 2020,
@@ -321,45 +321,45 @@
         },
         {
           "identifierYear": 2021,
-          "lastModified": "2026-07-17T03:02:25-04:00",
-          "sha256": "d843f776b5b2b208e9239690418bf163daa0bebf24eb9d681f74e8ba30f57d7c",
-          "size": 197778706,
+          "lastModified": "2026-07-18T03:02:28-04:00",
+          "sha256": "731e8db7dd8342c0d2ebe6dac2bd1b6ac4f3770293648bffe8f0002836e14108",
+          "size": 197778715,
           "records": 23432
         },
         {
           "identifierYear": 2022,
-          "lastModified": "2026-07-15T03:02:11-04:00",
-          "sha256": "603f7afe73c6eeae04aa6558585f8ca3aced38dcd7c7a51cfa930a04a1f28e36",
-          "size": 216071553,
+          "lastModified": "2026-07-18T03:02:06-04:00",
+          "sha256": "0d528a3253a06fa3e92d7863a7d817f77632f1718fb5665d98859cdf0ae6268b",
+          "size": 216071831,
           "records": 27521
         },
         {
           "identifierYear": 2023,
-          "lastModified": "2026-07-17T03:02:00-04:00",
-          "sha256": "a48ccf3f0da19cbd224208c43db8620dac52057beaeb1a79f399692e2a358429",
-          "size": 246751814,
+          "lastModified": "2026-07-18T03:01:40-04:00",
+          "sha256": "75cb7105be787a93e9eb6da088a8aba9cfa011551e490c47b4adcde92065aea5",
+          "size": 246752332,
           "records": 31215
         },
         {
           "identifierYear": 2024,
-          "lastModified": "2026-07-17T03:01:13-04:00",
-          "sha256": "e9e0f4c4a83d4fb752d58254d5b45fb024cd0f14c3ab62488881a61168da40b7",
-          "size": 289727172,
-          "records": 39164
+          "lastModified": "2026-07-18T03:01:10-04:00",
+          "sha256": "c0b9bf0dd68e84ff37a4e23b74db6ac3c59b373986daa62a72b4f41c02d3bc5c",
+          "size": 289771289,
+          "records": 39179
         },
         {
           "identifierYear": 2025,
-          "lastModified": "2026-07-17T03:00:42-04:00",
-          "sha256": "98b0d78d8e9533ddc58e7109c2082e523fb4865184e030e3336d6e0f7164900c",
-          "size": 282034722,
-          "records": 44961
+          "lastModified": "2026-07-18T03:00:37-04:00",
+          "sha256": "8a2673248118f49beb84f196be7142f7ac5e3de78f97df5aac9735dc9559a0c7",
+          "size": 282045662,
+          "records": 44965
         },
         {
           "identifierYear": 2026,
-          "lastModified": "2026-07-17T03:00:08-04:00",
-          "sha256": "5549258d71061ebeacfd9e5a1eca143e82e5a27d8aae990eabdcc6a3cfca3aef",
-          "size": 216170298,
-          "records": 33843
+          "lastModified": "2026-07-18T03:00:09-04:00",
+          "sha256": "2f5aeaf996de4775764b917460c81b3b51ab4e785ec64f0401c8edc39d6927de",
+          "size": 217453100,
+          "records": 34056
         }
       ]
     },
@@ -383,8 +383,17 @@
     },
     "epss": {
       "name": "FIRST · Exploit Prediction Scoring System",
-      "url": "https://epss.first.org/",
-      "contentFingerprintSha256": "d7a6928c9fd188021d3a945a46c97e583080030d7e5c06146d3c6c2bf409cce3"
+      "url": "https://www.first.org/epss/",
+      "feedUrl": "https://epss.empiricalsecurity.com/epss_scores-current.csv.gz",
+      "modelVersion": "v2026.06.15",
+      "scoreDate": "2026-07-17T12:00:27Z",
+      "recordCount": 349158,
+      "matchedCveCount": 349158,
+      "nvdRecordCount": 349377,
+      "coveragePercent": 99.9,
+      "projectThreshold": 0.1,
+      "thresholdSemantics": "project_defined_current_score_cutoff",
+      "contentFingerprintSha256": "6650e0a690b172b34bc75db6dcd8739796e107b400fffac265c43761fdd3dcfd"
     },
     "llmRegistry": {
       "name": "Curated first-party LLM disclosure register",
@@ -417,13 +426,35 @@
     "severityCoverage": 99.3,
     "kevAdded": 23,
     "kevAddedDelta": 9.5,
-    "publicExploitReferences": 427,
-    "publicExploitDelta": -31.2
+    "publicExploitReferences": 427
   },
   "risk": {
     "catalogKev": 1647,
     "matureCohortStart": "2025-04-01",
     "matureCohortEnd": "2026-03-31",
+    "kevTimingWindow": {
+      "start": "2025-04-01",
+      "end": "2026-03-31",
+      "publishedCves": 51367,
+      "matureCves": 51367,
+      "kevEntriesWithTiming": 177
+    },
+    "epssCohortWindow": {
+      "start": "2025-04-01",
+      "end": "2026-03-31",
+      "publishedCves": 51367,
+      "scoredCves": 51367,
+      "highEpssCves": 569,
+      "scoreDate": "2026-07-17T12:00:27Z",
+      "threshold": 0.1
+    },
+    "kevAdditionsWindow": {
+      "start": "2025-07-01",
+      "end": "2026-06-30",
+      "count": 259,
+      "dueWindowSample": 259,
+      "ageSample": 259
+    },
     "kevWithin90DayRate": 0.3,
     "kevWithin90Days": 153,
     "matureCohort": 51367,
@@ -431,15 +462,17 @@
     "prePublicationKev": 7,
     "medianDaysToKev": 6.0,
     "p75DaysToKev": 45.0,
-    "highEpss": 2464,
-    "highEpssNotInKevCount": 2458,
-    "highEpssNotInKevShare": 99.8,
-    "ransomwareKevShare": 7.8,
-    "ransomwareKevCount": 19,
+    "highEpss": 569,
+    "highEpssNotInKevCount": 461,
+    "highEpssNotInKevShare": 81.0,
+    "ransomwareKevShare": 9.7,
+    "ransomwareKevCount": 25,
     "medianKevDueWindow": 21.0,
-    "kevAdditionsCount": 243,
-    "oldKevCount": 46,
-    "oldKevShare": 18.9
+    "kevDueWindowSample": 259,
+    "kevAdditionsCount": 259,
+    "kevAgeSample": 259,
+    "oldKevCount": 55,
+    "oldKevShare": 21.2
   },
   "llmDiscovery": {
     "value": 28,
@@ -549,7 +582,7 @@
   "comparison": {
     "method": "adjacent_rolling_windows",
     "windowMonths": 36,
-    "note": "Compares two adjacent 36-month periods ending at the latest complete month. It covers publication, severity, exploit-reference and 90-day KEV reporting trends; it does not measure an LLM discovery rate.",
+    "note": "Compares two adjacent 36-month publication periods ending at the latest complete month. Exploit-reference shares use records matured for 180 days. EPSS values apply the current FIRST score snapshot and the project's EPSS ≥ 0.1 threshold to CVEs published in each period; they are not historical EPSS scores. The comparison does not measure an LLM discovery rate.",
     "earlier": {
       "start": "2020-07-01",
       "end": "2023-06-30",
@@ -571,14 +604,17 @@
       "prePublicationKev": 42,
       "medianDaysToKev": 180.0,
       "p75DaysToKev": 392.0,
-      "epssHigh": 2574,
-      "epssHighShare": 3.8,
-      "highEpssNotInKevCount": 2549,
-      "highEpssNotInKevShare": 99.0,
+      "epssScored": 67858,
+      "epssHigh": 2844,
+      "epssHighShare": 4.2,
+      "highEpssNotInKevCount": 2481,
+      "highEpssNotInKevShare": 87.2,
       "ransomwareKevShare": 23.3,
       "ransomwareKevCount": 224,
       "medianKevDueWindow": 21.0,
+      "kevDueWindowSample": 963,
       "kevAdditionsCount": 963,
+      "kevAgeSample": 963,
       "oldKevCount": 495,
       "oldKevShare": 51.4
     },
@@ -603,14 +639,17 @@
       "prePublicationKev": 20,
       "medianDaysToKev": 7.0,
       "p75DaysToKev": 59.0,
-      "epssHigh": 6433,
-      "epssHighShare": 4.6,
-      "highEpssNotInKevCount": 6413,
-      "highEpssNotInKevShare": 99.7,
+      "epssScored": 138688,
+      "epssHigh": 2209,
+      "epssHighShare": 1.6,
+      "highEpssNotInKevCount": 1854,
+      "highEpssNotInKevShare": 83.9,
       "ransomwareKevShare": 15.7,
       "ransomwareKevCount": 105,
       "medianKevDueWindow": 21.0,
+      "kevDueWindowSample": 667,
       "kevAdditionsCount": 667,
+      "kevAgeSample": 667,
       "oldKevCount": 119,
       "oldKevShare": 17.8
     }
@@ -630,7 +669,8 @@
       "kevAdded": 14,
       "partial": false,
       "enriching": false,
-      "epssHigh": 166
+      "epssScored": 3113,
+      "epssHigh": 79
     },
     {
       "month": "2024-08",
@@ -646,7 +686,8 @@
       "kevAdded": 19,
       "partial": false,
       "enriching": false,
-      "epssHigh": 126
+      "epssScored": 2897,
+      "epssHigh": 76
     },
     {
       "month": "2024-09",
@@ -662,7 +703,8 @@
       "kevAdded": 25,
       "partial": false,
       "enriching": false,
-      "epssHigh": 116
+      "epssScored": 2515,
+      "epssHigh": 74
     },
     {
       "month": "2024-10",
@@ -678,7 +720,8 @@
       "kevAdded": 17,
       "partial": false,
       "enriching": false,
-      "epssHigh": 180
+      "epssScored": 3566,
+      "epssHigh": 85
     },
     {
       "month": "2024-11",
@@ -694,7 +737,8 @@
       "kevAdded": 22,
       "partial": false,
       "enriching": false,
-      "epssHigh": 126
+      "epssScored": 4056,
+      "epssHigh": 68
     },
     {
       "month": "2024-12",
@@ -710,7 +754,8 @@
       "kevAdded": 16,
       "partial": false,
       "enriching": false,
-      "epssHigh": 131
+      "epssScored": 3431,
+      "epssHigh": 50
     },
     {
       "month": "2025-01",
@@ -726,7 +771,8 @@
       "kevAdded": 14,
       "partial": false,
       "enriching": false,
-      "epssHigh": 189
+      "epssScored": 4275,
+      "epssHigh": 68
     },
     {
       "month": "2025-02",
@@ -742,7 +788,8 @@
       "kevAdded": 27,
       "partial": false,
       "enriching": false,
-      "epssHigh": 172
+      "epssScored": 3673,
+      "epssHigh": 47
     },
     {
       "month": "2025-03",
@@ -758,7 +805,8 @@
       "kevAdded": 32,
       "partial": false,
       "enriching": false,
-      "epssHigh": 182
+      "epssScored": 4007,
+      "epssHigh": 57
     },
     {
       "month": "2025-04",
@@ -774,7 +822,8 @@
       "kevAdded": 15,
       "partial": false,
       "enriching": false,
-      "epssHigh": 198
+      "epssScored": 4034,
+      "epssHigh": 53
     },
     {
       "month": "2025-05",
@@ -790,7 +839,8 @@
       "kevAdded": 24,
       "partial": false,
       "enriching": false,
-      "epssHigh": 260
+      "epssScored": 3980,
+      "epssHigh": 63
     },
     {
       "month": "2025-06",
@@ -806,7 +856,8 @@
       "kevAdded": 20,
       "partial": false,
       "enriching": false,
-      "epssHigh": 194
+      "epssScored": 3681,
+      "epssHigh": 58
     },
     {
       "month": "2025-07",
@@ -822,7 +873,8 @@
       "kevAdded": 20,
       "partial": false,
       "enriching": false,
-      "epssHigh": 188
+      "epssScored": 3776,
+      "epssHigh": 57
     },
     {
       "month": "2025-08",
@@ -838,7 +890,8 @@
       "kevAdded": 15,
       "partial": false,
       "enriching": false,
-      "epssHigh": 169
+      "epssScored": 3628,
+      "epssHigh": 50
     },
     {
       "month": "2025-09",
@@ -854,7 +907,8 @@
       "kevAdded": 16,
       "partial": false,
       "enriching": false,
-      "epssHigh": 196
+      "epssScored": 4320,
+      "epssHigh": 40
     },
     {
       "month": "2025-10",
@@ -870,7 +924,8 @@
       "kevAdded": 31,
       "partial": false,
       "enriching": false,
-      "epssHigh": 190
+      "epssScored": 4273,
+      "epssHigh": 39
     },
     {
       "month": "2025-11",
@@ -886,7 +941,8 @@
       "kevAdded": 11,
       "partial": false,
       "enriching": false,
-      "epssHigh": 105
+      "epssScored": 3022,
+      "epssHigh": 25
     },
     {
       "month": "2025-12",
@@ -902,7 +958,8 @@
       "kevAdded": 20,
       "partial": false,
       "enriching": false,
-      "epssHigh": 227
+      "epssScored": 5493,
+      "epssHigh": 49
     },
     {
       "month": "2026-01",
@@ -918,7 +975,8 @@
       "kevAdded": 17,
       "partial": false,
       "enriching": true,
-      "epssHigh": 215
+      "epssScored": 4309,
+      "epssHigh": 58
     },
     {
       "month": "2026-02",
@@ -934,7 +992,8 @@
       "kevAdded": 28,
       "partial": false,
       "enriching": true,
-      "epssHigh": 233
+      "epssScored": 4617,
+      "epssHigh": 39
     },
     {
       "month": "2026-03",
@@ -950,13 +1009,14 @@
       "kevAdded": 26,
       "partial": false,
       "enriching": true,
-      "epssHigh": 289
+      "epssScored": 6234,
+      "epssHigh": 38
     },
     {
       "month": "2026-04",
       "published": 5811,
-      "critical": 653,
-      "high": 2234,
+      "critical": 652,
+      "high": 2235,
       "medium": 2448,
       "low": 476,
       "none": 0,
@@ -966,7 +1026,8 @@
       "kevAdded": 31,
       "partial": false,
       "enriching": true,
-      "epssHigh": 263
+      "epssScored": 5811,
+      "epssHigh": 39
     },
     {
       "month": "2026-05",
@@ -982,7 +1043,8 @@
       "kevAdded": 21,
       "partial": false,
       "enriching": true,
-      "epssHigh": 297
+      "epssScored": 6938,
+      "epssHigh": 31
     },
     {
       "month": "2026-06",
@@ -998,7 +1060,8 @@
       "kevAdded": 23,
       "partial": false,
       "enriching": true,
-      "epssHigh": 399
+      "epssScored": 7949,
+      "epssHigh": 18
     }
   ],
   "monthly": [
@@ -1016,7 +1079,8 @@
       "kevAdded": 0,
       "partial": false,
       "enriching": false,
-      "epssHigh": 2
+      "epssScored": 1212,
+      "epssHigh": 83
     },
     {
       "month": "2019-02",
@@ -1032,7 +1096,8 @@
       "kevAdded": 0,
       "partial": false,
       "enriching": false,
-      "epssHigh": 0
+      "epssScored": 838,
+      "epssHigh": 43
     },
     {
       "month": "2019-03",
@@ -1048,7 +1113,8 @@
       "kevAdded": 0,
       "partial": false,
       "enriching": false,
-      "epssHigh": 0
+      "epssScored": 1182,
+      "epssHigh": 116
     },
     {
       "month": "2019-04",
@@ -1064,7 +1130,8 @@
       "kevAdded": 0,
       "partial": false,
       "enriching": false,
-      "epssHigh": 0
+      "epssScored": 1533,
+      "epssHigh": 115
     },
     {
       "month": "2019-05",
@@ -1080,7 +1147,8 @@
       "kevAdded": 0,
       "partial": false,
       "enriching": false,
-      "epssHigh": 4
+      "epssScored": 1316,
+      "epssHigh": 108
     },
     {
       "month": "2019-06",
@@ -1096,7 +1164,8 @@
       "kevAdded": 0,
       "partial": false,
       "enriching": false,
-      "epssHigh": 0
+      "epssScored": 1254,
+      "epssHigh": 84
     },
     {
       "month": "2019-07",
@@ -1112,7 +1181,8 @@
       "kevAdded": 0,
       "partial": false,
       "enriching": false,
-      "epssHigh": 0
+      "epssScored": 1618,
+      "epssHigh": 98
     },
     {
       "month": "2019-08",
@@ -1128,7 +1198,8 @@
       "kevAdded": 0,
       "partial": false,
       "enriching": false,
-      "epssHigh": 0
+      "epssScored": 2001,
+      "epssHigh": 85
     },
     {
       "month": "2019-09",
@@ -1144,7 +1215,8 @@
       "kevAdded": 0,
       "partial": false,
       "enriching": false,
-      "epssHigh": 0
+      "epssScored": 1531,
+      "epssHigh": 84
     },
     {
       "month": "2019-10",
@@ -1160,7 +1232,8 @@
       "kevAdded": 0,
       "partial": false,
       "enriching": false,
-      "epssHigh": 1
+      "epssScored": 1566,
+      "epssHigh": 94
     },
     {
       "month": "2019-11",
@@ -1176,7 +1249,8 @@
       "kevAdded": 0,
       "partial": false,
       "enriching": false,
-      "epssHigh": 0
+      "epssScored": 1677,
+      "epssHigh": 57
     },
     {
       "month": "2019-12",
@@ -1192,7 +1266,8 @@
       "kevAdded": 0,
       "partial": false,
       "enriching": false,
-      "epssHigh": 0
+      "epssScored": 1577,
+      "epssHigh": 73
     },
     {
       "month": "2020-01",
@@ -1208,7 +1283,8 @@
       "kevAdded": 0,
       "partial": false,
       "enriching": false,
-      "epssHigh": 38
+      "epssScored": 1656,
+      "epssHigh": 110
     },
     {
       "month": "2020-02",
@@ -1224,7 +1300,8 @@
       "kevAdded": 0,
       "partial": false,
       "enriching": false,
-      "epssHigh": 54
+      "epssScored": 1394,
+      "epssHigh": 107
     },
     {
       "month": "2020-03",
@@ -1240,7 +1317,8 @@
       "kevAdded": 0,
       "partial": false,
       "enriching": false,
-      "epssHigh": 72
+      "epssScored": 1754,
+      "epssHigh": 79
     },
     {
       "month": "2020-04",
@@ -1256,7 +1334,8 @@
       "kevAdded": 0,
       "partial": false,
       "enriching": false,
-      "epssHigh": 97
+      "epssScored": 2187,
+      "epssHigh": 93
     },
     {
       "month": "2020-05",
@@ -1272,7 +1351,8 @@
       "kevAdded": 0,
       "partial": false,
       "enriching": false,
-      "epssHigh": 51
+      "epssScored": 1017,
+      "epssHigh": 65
     },
     {
       "month": "2020-06",
@@ -1288,7 +1368,8 @@
       "kevAdded": 0,
       "partial": false,
       "enriching": false,
-      "epssHigh": 80
+      "epssScored": 1786,
+      "epssHigh": 72
     },
     {
       "month": "2020-07",
@@ -1304,7 +1385,8 @@
       "kevAdded": 0,
       "partial": false,
       "enriching": false,
-      "epssHigh": 60
+      "epssScored": 1417,
+      "epssHigh": 85
     },
     {
       "month": "2020-08",
@@ -1320,7 +1402,8 @@
       "kevAdded": 0,
       "partial": false,
       "enriching": false,
-      "epssHigh": 51
+      "epssScored": 1155,
+      "epssHigh": 47
     },
     {
       "month": "2020-09",
@@ -1336,7 +1419,8 @@
       "kevAdded": 0,
       "partial": false,
       "enriching": false,
-      "epssHigh": 72
+      "epssScored": 1593,
+      "epssHigh": 53
     },
     {
       "month": "2020-10",
@@ -1352,7 +1436,8 @@
       "kevAdded": 0,
       "partial": false,
       "enriching": false,
-      "epssHigh": 58
+      "epssScored": 1563,
+      "epssHigh": 59
     },
     {
       "month": "2020-11",
@@ -1368,6 +1453,7 @@
       "kevAdded": 0,
       "partial": false,
       "enriching": false,
+      "epssScored": 1271,
       "epssHigh": 66
     },
     {
@@ -1384,7 +1470,8 @@
       "kevAdded": 0,
       "partial": false,
       "enriching": false,
-      "epssHigh": 46
+      "epssScored": 1529,
+      "epssHigh": 71
     },
     {
       "month": "2021-01",
@@ -1400,7 +1487,8 @@
       "kevAdded": 0,
       "partial": false,
       "enriching": false,
-      "epssHigh": 64
+      "epssScored": 1524,
+      "epssHigh": 74
     },
     {
       "month": "2021-02",
@@ -1416,7 +1504,8 @@
       "kevAdded": 0,
       "partial": false,
       "enriching": false,
-      "epssHigh": 52
+      "epssScored": 1456,
+      "epssHigh": 144
     },
     {
       "month": "2021-03",
@@ -1432,7 +1521,8 @@
       "kevAdded": 0,
       "partial": false,
       "enriching": false,
-      "epssHigh": 55
+      "epssScored": 1446,
+      "epssHigh": 105
     },
     {
       "month": "2021-04",
@@ -1448,7 +1538,8 @@
       "kevAdded": 0,
       "partial": false,
       "enriching": false,
-      "epssHigh": 64
+      "epssScored": 1818,
+      "epssHigh": 86
     },
     {
       "month": "2021-05",
@@ -1464,7 +1555,8 @@
       "kevAdded": 0,
       "partial": false,
       "enriching": false,
-      "epssHigh": 42
+      "epssScored": 1473,
+      "epssHigh": 79
     },
     {
       "month": "2021-06",
@@ -1480,7 +1572,8 @@
       "kevAdded": 0,
       "partial": false,
       "enriching": false,
-      "epssHigh": 75
+      "epssScored": 1712,
+      "epssHigh": 67
     },
     {
       "month": "2021-07",
@@ -1496,7 +1589,8 @@
       "kevAdded": 0,
       "partial": false,
       "enriching": false,
-      "epssHigh": 70
+      "epssScored": 1582,
+      "epssHigh": 68
     },
     {
       "month": "2021-08",
@@ -1512,7 +1606,8 @@
       "kevAdded": 0,
       "partial": false,
       "enriching": false,
-      "epssHigh": 48
+      "epssScored": 2085,
+      "epssHigh": 81
     },
     {
       "month": "2021-09",
@@ -1528,7 +1623,8 @@
       "kevAdded": 0,
       "partial": false,
       "enriching": false,
-      "epssHigh": 69
+      "epssScored": 1902,
+      "epssHigh": 85
     },
     {
       "month": "2021-10",
@@ -1544,7 +1640,8 @@
       "kevAdded": 0,
       "partial": false,
       "enriching": false,
-      "epssHigh": 50
+      "epssScored": 1701,
+      "epssHigh": 79
     },
     {
       "month": "2021-11",
@@ -1560,7 +1657,8 @@
       "kevAdded": 291,
       "partial": false,
       "enriching": false,
-      "epssHigh": 57
+      "epssScored": 1508,
+      "epssHigh": 69
     },
     {
       "month": "2021-12",
@@ -1576,7 +1674,8 @@
       "kevAdded": 20,
       "partial": false,
       "enriching": false,
-      "epssHigh": 68
+      "epssScored": 1942,
+      "epssHigh": 75
     },
     {
       "month": "2022-01",
@@ -1592,7 +1691,8 @@
       "kevAdded": 40,
       "partial": false,
       "enriching": false,
-      "epssHigh": 66
+      "epssScored": 2016,
+      "epssHigh": 61
     },
     {
       "month": "2022-02",
@@ -1608,7 +1708,8 @@
       "kevAdded": 32,
       "partial": false,
       "enriching": false,
-      "epssHigh": 74
+      "epssScored": 1942,
+      "epssHigh": 97
     },
     {
       "month": "2022-03",
@@ -1624,7 +1725,8 @@
       "kevAdded": 226,
       "partial": false,
       "enriching": false,
-      "epssHigh": 74
+      "epssScored": 2058,
+      "epssHigh": 116
     },
     {
       "month": "2022-04",
@@ -1640,7 +1742,8 @@
       "kevAdded": 45,
       "partial": false,
       "enriching": false,
-      "epssHigh": 60
+      "epssScored": 2046,
+      "epssHigh": 94
     },
     {
       "month": "2022-05",
@@ -1656,7 +1759,8 @@
       "kevAdded": 83,
       "partial": false,
       "enriching": false,
-      "epssHigh": 89
+      "epssScored": 2021,
+      "epssHigh": 115
     },
     {
       "month": "2022-06",
@@ -1672,7 +1776,8 @@
       "kevAdded": 48,
       "partial": false,
       "enriching": false,
-      "epssHigh": 94
+      "epssScored": 2280,
+      "epssHigh": 71
     },
     {
       "month": "2022-07",
@@ -1688,7 +1793,8 @@
       "kevAdded": 3,
       "partial": false,
       "enriching": false,
-      "epssHigh": 73
+      "epssScored": 1969,
+      "epssHigh": 79
     },
     {
       "month": "2022-08",
@@ -1704,7 +1810,8 @@
       "kevAdded": 23,
       "partial": false,
       "enriching": false,
-      "epssHigh": 83
+      "epssScored": 2317,
+      "epssHigh": 71
     },
     {
       "month": "2022-09",
@@ -1720,7 +1827,8 @@
       "kevAdded": 24,
       "partial": false,
       "enriching": false,
-      "epssHigh": 85
+      "epssScored": 2197,
+      "epssHigh": 65
     },
     {
       "month": "2022-10",
@@ -1736,7 +1844,8 @@
       "kevAdded": 12,
       "partial": false,
       "enriching": false,
-      "epssHigh": 84
+      "epssScored": 1849,
+      "epssHigh": 57
     },
     {
       "month": "2022-11",
@@ -1752,7 +1861,8 @@
       "kevAdded": 10,
       "partial": false,
       "enriching": false,
-      "epssHigh": 70
+      "epssScored": 1958,
+      "epssHigh": 46
     },
     {
       "month": "2022-12",
@@ -1768,7 +1878,8 @@
       "kevAdded": 9,
       "partial": false,
       "enriching": false,
-      "epssHigh": 90
+      "epssScored": 2421,
+      "epssHigh": 61
     },
     {
       "month": "2023-01",
@@ -1784,7 +1895,8 @@
       "kevAdded": 5,
       "partial": false,
       "enriching": false,
-      "epssHigh": 80
+      "epssScored": 2337,
+      "epssHigh": 89
     },
     {
       "month": "2023-02",
@@ -1800,7 +1912,8 @@
       "kevAdded": 14,
       "partial": false,
       "enriching": false,
-      "epssHigh": 65
+      "epssScored": 2122,
+      "epssHigh": 84
     },
     {
       "month": "2023-03",
@@ -1816,7 +1929,8 @@
       "kevAdded": 18,
       "partial": false,
       "enriching": false,
-      "epssHigh": 115
+      "epssScored": 2516,
+      "epssHigh": 86
     },
     {
       "month": "2023-04",
@@ -1832,7 +1946,8 @@
       "kevAdded": 17,
       "partial": false,
       "enriching": false,
-      "epssHigh": 84
+      "epssScored": 2330,
+      "epssHigh": 68
     },
     {
       "month": "2023-05",
@@ -1848,7 +1963,8 @@
       "kevAdded": 19,
       "partial": false,
       "enriching": false,
-      "epssHigh": 116
+      "epssScored": 2418,
+      "epssHigh": 96
     },
     {
       "month": "2023-06",
@@ -1864,7 +1980,8 @@
       "kevAdded": 24,
       "partial": false,
       "enriching": false,
-      "epssHigh": 105
+      "epssScored": 2384,
+      "epssHigh": 95
     },
     {
       "month": "2023-07",
@@ -1880,7 +1997,8 @@
       "kevAdded": 16,
       "partial": false,
       "enriching": false,
-      "epssHigh": 100
+      "epssScored": 2306,
+      "epssHigh": 63
     },
     {
       "month": "2023-08",
@@ -1896,7 +2014,8 @@
       "kevAdded": 8,
       "partial": false,
       "enriching": false,
-      "epssHigh": 132
+      "epssScored": 2477,
+      "epssHigh": 77
     },
     {
       "month": "2023-09",
@@ -1912,7 +2031,8 @@
       "kevAdded": 19,
       "partial": false,
       "enriching": false,
-      "epssHigh": 88
+      "epssScored": 2148,
+      "epssHigh": 74
     },
     {
       "month": "2023-10",
@@ -1928,7 +2048,8 @@
       "kevAdded": 18,
       "partial": false,
       "enriching": false,
-      "epssHigh": 117
+      "epssScored": 2680,
+      "epssHigh": 68
     },
     {
       "month": "2023-11",
@@ -1944,7 +2065,8 @@
       "kevAdded": 18,
       "partial": false,
       "enriching": false,
-      "epssHigh": 125
+      "epssScored": 2449,
+      "epssHigh": 82
     },
     {
       "month": "2023-12",
@@ -1960,7 +2082,8 @@
       "kevAdded": 11,
       "partial": false,
       "enriching": false,
-      "epssHigh": 116
+      "epssScored": 2650,
+      "epssHigh": 76
     },
     {
       "month": "2024-01",
@@ -1976,7 +2099,8 @@
       "kevAdded": 21,
       "partial": false,
       "enriching": false,
-      "epssHigh": 118
+      "epssScored": 2594,
+      "epssHigh": 83
     },
     {
       "month": "2024-02",
@@ -1992,7 +2116,8 @@
       "kevAdded": 9,
       "partial": false,
       "enriching": false,
-      "epssHigh": 103
+      "epssScored": 2778,
+      "epssHigh": 63
     },
     {
       "month": "2024-03",
@@ -2008,7 +2133,8 @@
       "kevAdded": 10,
       "partial": false,
       "enriching": false,
-      "epssHigh": 165
+      "epssScored": 3309,
+      "epssHigh": 74
     },
     {
       "month": "2024-04",
@@ -2024,7 +2150,8 @@
       "kevAdded": 10,
       "partial": false,
       "enriching": false,
-      "epssHigh": 187
+      "epssScored": 3621,
+      "epssHigh": 103
     },
     {
       "month": "2024-05",
@@ -2040,7 +2167,8 @@
       "kevAdded": 14,
       "partial": false,
       "enriching": false,
-      "epssHigh": 216
+      "epssScored": 5000,
+      "epssHigh": 120
     },
     {
       "month": "2024-06",
@@ -2056,7 +2184,8 @@
       "kevAdded": 9,
       "partial": false,
       "enriching": false,
-      "epssHigh": 155
+      "epssScored": 3078,
+      "epssHigh": 65
     },
     {
       "month": "2024-07",
@@ -2072,7 +2201,8 @@
       "kevAdded": 14,
       "partial": false,
       "enriching": false,
-      "epssHigh": 166
+      "epssScored": 3113,
+      "epssHigh": 79
     },
     {
       "month": "2024-08",
@@ -2088,7 +2218,8 @@
       "kevAdded": 19,
       "partial": false,
       "enriching": false,
-      "epssHigh": 126
+      "epssScored": 2897,
+      "epssHigh": 76
     },
     {
       "month": "2024-09",
@@ -2104,7 +2235,8 @@
       "kevAdded": 25,
       "partial": false,
       "enriching": false,
-      "epssHigh": 116
+      "epssScored": 2515,
+      "epssHigh": 74
     },
     {
       "month": "2024-10",
@@ -2120,7 +2252,8 @@
       "kevAdded": 17,
       "partial": false,
       "enriching": false,
-      "epssHigh": 180
+      "epssScored": 3566,
+      "epssHigh": 85
     },
     {
       "month": "2024-11",
@@ -2136,7 +2269,8 @@
       "kevAdded": 22,
       "partial": false,
       "enriching": false,
-      "epssHigh": 126
+      "epssScored": 4056,
+      "epssHigh": 68
     },
     {
       "month": "2024-12",
@@ -2152,7 +2286,8 @@
       "kevAdded": 16,
       "partial": false,
       "enriching": false,
-      "epssHigh": 131
+      "epssScored": 3431,
+      "epssHigh": 50
     },
     {
       "month": "2025-01",
@@ -2168,7 +2303,8 @@
       "kevAdded": 14,
       "partial": false,
       "enriching": false,
-      "epssHigh": 189
+      "epssScored": 4275,
+      "epssHigh": 68
     },
     {
       "month": "2025-02",
@@ -2184,7 +2320,8 @@
       "kevAdded": 27,
       "partial": false,
       "enriching": false,
-      "epssHigh": 172
+      "epssScored": 3673,
+      "epssHigh": 47
     },
     {
       "month": "2025-03",
@@ -2200,7 +2337,8 @@
       "kevAdded": 32,
       "partial": false,
       "enriching": false,
-      "epssHigh": 182
+      "epssScored": 4007,
+      "epssHigh": 57
     },
     {
       "month": "2025-04",
@@ -2216,7 +2354,8 @@
       "kevAdded": 15,
       "partial": false,
       "enriching": false,
-      "epssHigh": 198
+      "epssScored": 4034,
+      "epssHigh": 53
     },
     {
       "month": "2025-05",
@@ -2232,7 +2371,8 @@
       "kevAdded": 24,
       "partial": false,
       "enriching": false,
-      "epssHigh": 260
+      "epssScored": 3980,
+      "epssHigh": 63
     },
     {
       "month": "2025-06",
@@ -2248,7 +2388,8 @@
       "kevAdded": 20,
       "partial": false,
       "enriching": false,
-      "epssHigh": 194
+      "epssScored": 3681,
+      "epssHigh": 58
     },
     {
       "month": "2025-07",
@@ -2264,7 +2405,8 @@
       "kevAdded": 20,
       "partial": false,
       "enriching": false,
-      "epssHigh": 188
+      "epssScored": 3776,
+      "epssHigh": 57
     },
     {
       "month": "2025-08",
@@ -2280,7 +2422,8 @@
       "kevAdded": 15,
       "partial": false,
       "enriching": false,
-      "epssHigh": 169
+      "epssScored": 3628,
+      "epssHigh": 50
     },
     {
       "month": "2025-09",
@@ -2296,7 +2439,8 @@
       "kevAdded": 16,
       "partial": false,
       "enriching": false,
-      "epssHigh": 196
+      "epssScored": 4320,
+      "epssHigh": 40
     },
     {
       "month": "2025-10",
@@ -2312,7 +2456,8 @@
       "kevAdded": 31,
       "partial": false,
       "enriching": false,
-      "epssHigh": 190
+      "epssScored": 4273,
+      "epssHigh": 39
     },
     {
       "month": "2025-11",
@@ -2328,7 +2473,8 @@
       "kevAdded": 11,
       "partial": false,
       "enriching": false,
-      "epssHigh": 105
+      "epssScored": 3022,
+      "epssHigh": 25
     },
     {
       "month": "2025-12",
@@ -2344,7 +2490,8 @@
       "kevAdded": 20,
       "partial": false,
       "enriching": false,
-      "epssHigh": 227
+      "epssScored": 5493,
+      "epssHigh": 49
     },
     {
       "month": "2026-01",
@@ -2360,7 +2507,8 @@
       "kevAdded": 17,
       "partial": false,
       "enriching": true,
-      "epssHigh": 215
+      "epssScored": 4309,
+      "epssHigh": 58
     },
     {
       "month": "2026-02",
@@ -2376,7 +2524,8 @@
       "kevAdded": 28,
       "partial": false,
       "enriching": true,
-      "epssHigh": 233
+      "epssScored": 4617,
+      "epssHigh": 39
     },
     {
       "month": "2026-03",
@@ -2392,13 +2541,14 @@
       "kevAdded": 26,
       "partial": false,
       "enriching": true,
-      "epssHigh": 289
+      "epssScored": 6234,
+      "epssHigh": 38
     },
     {
       "month": "2026-04",
       "published": 5811,
-      "critical": 653,
-      "high": 2234,
+      "critical": 652,
+      "high": 2235,
       "medium": 2448,
       "low": 476,
       "none": 0,
@@ -2408,7 +2558,8 @@
       "kevAdded": 31,
       "partial": false,
       "enriching": true,
-      "epssHigh": 263
+      "epssScored": 5811,
+      "epssHigh": 39
     },
     {
       "month": "2026-05",
@@ -2424,7 +2575,8 @@
       "kevAdded": 21,
       "partial": false,
       "enriching": true,
-      "epssHigh": 297
+      "epssScored": 6938,
+      "epssHigh": 31
     },
     {
       "month": "2026-06",
@@ -2440,23 +2592,25 @@
       "kevAdded": 23,
       "partial": false,
       "enriching": true,
-      "epssHigh": 399
+      "epssScored": 7949,
+      "epssHigh": 18
     },
     {
       "month": "2026-07",
-      "published": 4391,
-      "critical": 484,
-      "high": 1963,
-      "medium": 1588,
-      "low": 301,
+      "published": 4623,
+      "critical": 521,
+      "high": 2032,
+      "medium": 1693,
+      "low": 319,
       "none": 1,
-      "unknown": 54,
+      "unknown": 57,
       "severityCoverage": 98.8,
-      "publicExploitReferences": 182,
+      "publicExploitReferences": 187,
       "kevAdded": 17,
       "partial": true,
       "enriching": true,
-      "epssHigh": 226
+      "epssScored": 4404,
+      "epssHigh": 6
     }
   ],
   "topCwes": [
@@ -2464,37 +2618,67 @@
       "cwe": "CWE-79",
       "count": 7495,
       "priorCount": 8343,
-      "change": -848
+      "change": -848,
+      "recentTotal": 60370,
+      "priorTotal": 43228,
+      "recentShare": 12.4,
+      "priorShare": 19.3,
+      "changePoints": -6.9
     },
     {
       "cwe": "CWE-89",
       "count": 4103,
       "priorCount": 3408,
-      "change": 695
+      "change": 695,
+      "recentTotal": 60370,
+      "priorTotal": 43228,
+      "recentShare": 6.8,
+      "priorShare": 7.9,
+      "changePoints": -1.1
     },
     {
       "cwe": "CWE-862",
       "count": 3088,
       "priorCount": 2147,
-      "change": 941
+      "change": 941,
+      "recentTotal": 60370,
+      "priorTotal": 43228,
+      "recentShare": 5.1,
+      "priorShare": 5.0,
+      "changePoints": 0.1
     },
     {
       "cwe": "CWE-74",
       "count": 2379,
       "priorCount": 1485,
-      "change": 894
+      "change": 894,
+      "recentTotal": 60370,
+      "priorTotal": 43228,
+      "recentShare": 3.9,
+      "priorShare": 3.4,
+      "changePoints": 0.5
     },
     {
       "cwe": "CWE-22",
       "count": 1901,
       "priorCount": 1079,
-      "change": 822
+      "change": 822,
+      "recentTotal": 60370,
+      "priorTotal": 43228,
+      "recentShare": 3.1,
+      "priorShare": 2.5,
+      "changePoints": 0.6
     },
     {
       "cwe": "CWE-416",
       "count": 1819,
       "priorCount": 1114,
-      "change": 705
+      "change": 705,
+      "recentTotal": 60370,
+      "priorTotal": 43228,
+      "recentShare": 3.0,
+      "priorShare": 2.6,
+      "changePoints": 0.4
     }
   ],
   "recentKev": [

@@ -19,9 +19,9 @@ export const metadata: Metadata = {
   ),
   title: "VulnSignal — CVE, KEV and LLM Disclosure Trends",
   description:
-    "Daily dashboard of CVE publications, CVSS severity, CVEs with public exploit references, CISA KEV additions and documented LLM-assisted disclosures.",
+    "Daily dashboard of CVE publications, CVSS severity, CISA KEV additions, public exploit references, current EPSS signals and documented LLM-assisted disclosures.",
   applicationName: "VulnSignal",
-  authors: [{ name: "VulnSignal contributors" }],
+  authors: [{ name: "llody9977", url: "https://github.com/llody9977" }],
   keywords: [
     "CVE",
     "CISA KEV",
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     url: "./",
     title: "VulnSignal — CVE, KEV and LLM disclosures. One timeline.",
     description:
-      "Compare monthly CVE, severity, CISA KEV, exploit-reference and documented LLM disclosure data from official and first-party public sources.",
+      "Compare monthly CVE, severity, CISA KEV, exploit-reference, current EPSS and documented LLM disclosure data from official and first-party public sources.",
     siteName: "VulnSignal",
     images: [
       {
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "VulnSignal — CVE, KEV and LLM Disclosure Trends",
     description:
-      "Compare CVE, severity, KEV, exploit-reference and documented LLM disclosure data on one monthly timeline.",
+      "Compare CVE, severity, KEV, exploit-reference, current EPSS and documented LLM disclosure data on one monthly timeline.",
     images: ["og.png"],
   },
 };

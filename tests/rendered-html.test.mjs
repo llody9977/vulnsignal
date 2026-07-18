@@ -28,6 +28,7 @@ test("server-renders the VulnSignal intelligence dashboard", async () => {
   assert.match(html, /Actual counts/);
   assert.match(html, /Baseline:/);
   assert.match(html, /Monthly values by indicator/);
+  assert.match(html, /CVE, KEV, exploit and EPSS trends/);
   assert.match(html, /SNAPSHOT ID/);
   assert.match(html, /VS-\d{8}-\d{4}Z/);
   assert.match(html, /Source data included/);
@@ -42,10 +43,17 @@ test("server-renders the VulnSignal intelligence dashboard", async () => {
   assert.match(html, /Reported minimum, not a total/);
   assert.match(html, /LLM disclosure events/);
   assert.match(html, /does not mean zero LLM-assisted discoveries/);
+  assert.match(html, /Not comparable — sparse disclosure evidence/);
+  assert.match(html, /recent records are still being enriched/);
+  assert.match(html, /None \(CVSS 0\.0\)/);
+  assert.match(html, /project-defined threshold/);
+  assert.match(html, /current, not historical/i);
+  assert.match(html, /FIRST EPSS/i);
   assert.match(html, /chart-point--event/);
   assert.match(html, /≥ 28/);
   assert.match(html, /Counts from different programmes remain separate/);
   assert.doesNotMatch(html, /LLM CVE evidence disclosed/);
+  assert.doesNotMatch(html, /Higher reported minimum|Lower reported minimum/);
   assert.doesNotMatch(html, /Before and after ChatGPT|Every signal|recommended GitHub repository/i);
   assert.doesNotMatch(html, /T2K \/ P50|T2K \/ P75/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton|Starter Project/i);

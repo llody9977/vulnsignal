@@ -26,6 +26,7 @@ type MetricKey =
   | "high"
   | "medium"
   | "low"
+  | "none"
   | "unknown"
   | "epssHigh";
 
@@ -62,8 +63,9 @@ const metricOptions: Array<{ key: MetricKey; label: string }> = [
   { key: "high", label: "High" },
   { key: "medium", label: "Medium" },
   { key: "low", label: "Low" },
+  { key: "none", label: "None (CVSS 0.0)" },
   { key: "unknown", label: "Unscored" },
-  { key: "epssHigh", label: "CVEs with EPSS ≥ 0.1" },
+  { key: "epssHigh", label: "Current EPSS ≥ 0.1 (project threshold)" },
 ];
 
 function number(value: number) {
@@ -95,6 +97,18 @@ function shortMonth(value: string) {
     month: "short",
     timeZone: "UTC",
   }).format(new Date(`${value}-01T00:00:00Z`));
+}
+
+function scoreDateLabel(value?: string | null) {
+  if (!value) return "latest available score snapshot";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "latest available score snapshot";
+  return new Intl.DateTimeFormat("en-SG", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(date);
 }
 
 function periodLabel(points: MonthPoint[], year: number) {
@@ -172,27 +186,47 @@ function pointComparison(
   };
 }
 
-function llmComparison(
+function llmComparison(): ComparisonDisplay {
+  return {
+    tone: "unavailable",
+    label: "Not comparable — sparse disclosure evidence",
+    baseline: "Programme reports are separate lower bounds",
+  };
+}
+
+function exploitComparison(
+  currentPoints: MonthPoint[],
+  previousPoints: MonthPoint[],
   current: number,
   previous: number,
   baselineLabel: string,
   hasBaseline: boolean,
 ): ComparisonDisplay {
-  if (!hasBaseline) {
-    return { tone: "unavailable", label: `No comparable ${baselineLabel} evidence` };
-  }
-  if (current === previous) {
+  if (
+    currentPoints.some((point) => point.enriching)
+    || previousPoints.some((point) => point.enriching)
+  ) {
     return {
-      tone: "flat",
-      label: `Same reported minimum as ${baselineLabel}`,
-      baseline: previous ? `Baseline: ≥ ${number(previous)}` : "Baseline: no event",
+      tone: "unavailable",
+      label: "Not comparable — recent records are still being enriched",
+      baseline: "Raw monthly counts remain visible",
     };
   }
-  return {
-    tone: current > previous ? "up" : "down",
-    label: `${current > previous ? "Higher" : "Lower"} reported minimum than ${baselineLabel}`,
-    baseline: previous ? `Baseline: ≥ ${number(previous)}` : "Baseline: no event",
-  };
+  return relativeComparison(current, previous, baselineLabel, hasBaseline);
+}
+
+function exploitShareDetail(
+  summary: ReturnType<typeof summarizePeriod>,
+) {
+  if (summary.publicExploitEnrichingMonths === 0) {
+    return `${percent(summary.publicExploitShare)} of published CVEs`;
+  }
+  if (summary.publicExploitMatureMonths === 0) {
+    return "Share unavailable; all selected months are still being enriched";
+  }
+  const monthWord = summary.publicExploitMatureMonths === 1 ? "month" : "months";
+  const excludedWord = summary.publicExploitEnrichingMonths === 1 ? "month" : "months";
+  return `${percent(summary.publicExploitShare)} in ${summary.publicExploitMatureMonths} mature ${monthWord}; ${summary.publicExploitEnrichingMonths} recent ${excludedWord} excluded`;
 }
 
 function MetricCell({
@@ -464,10 +498,11 @@ function SignalMatrix({
     { label: "High", values: points.map((point) => point.high) },
     { label: "Medium", values: points.map((point) => point.medium) },
     { label: "Low", values: points.map((point) => point.low) },
-    { label: "Unscored", values: points.map((point) => point.unknown + point.none) },
+    { label: "None (CVSS 0.0)", values: points.map((point) => point.none) },
+    { label: "Unscored", values: points.map((point) => point.unknown) },
     { label: "KEV", values: points.map((point) => point.kevAdded) },
     { label: "Exploit ref", values: points.map((point) => point.publicExploitReferences) },
-    { label: "High EPSS (≥ 0.1)", values: points.map((point) => point.epssHigh) },
+    { label: "Current EPSS ≥ 0.1", values: points.map((point) => point.epssHigh) },
     {
       label: "LLM disclosures",
       values: points.map((point) => llmEvidenceForMonth(point.month, events) || null),
@@ -521,7 +556,9 @@ function SignalMatrix({
       {rows.some((row) => row.event) ? (
         <p className="matrix-note">— means the registry has no recorded disclosure event for that month. It does not mean zero LLM-assisted discoveries.</p>
       ) : null}
-      <p className="matrix-note">* Recent months are still being enriched by NVD with exploit references.</p>
+      {points.some((point) => point.enriching) ? (
+        <p className="matrix-note">* Recent months are still being enriched by NVD with exploit references.</p>
+      ) : null}
     </div>
   );
 }
@@ -530,10 +567,12 @@ export function TrendExplorer({
   monthly,
   latestCompleteMonth,
   events,
+  epssScoreDate,
 }: {
   monthly: MonthPoint[];
   latestCompleteMonth: string;
   events: LlmEvidenceEvent[];
+  epssScoreDate?: string | null;
 }) {
   const complete = useMemo(
     () => completeMonths(monthly, latestCompleteMonth),
@@ -621,7 +660,7 @@ export function TrendExplorer({
     {
       key: "publicExploitReferences",
       label: "CVEs with public exploit references",
-      shortLabel: "Exploit ref",
+      shortLabel: "Exploit",
       values: chartPoints.map((point) => point.publicExploitReferences),
       color: "var(--amber)",
       axis: "left",
@@ -629,8 +668,8 @@ export function TrendExplorer({
     },
     {
       key: "epssHigh",
-      label: "CVEs with EPSS ≥ 0.1",
-      shortLabel: "High EPSS",
+      label: "Current EPSS ≥ 0.1 (project threshold)",
+      shortLabel: "EPSS ≥ 0.1",
       values: chartPoints.map((point) => point.epssHigh),
       color: "var(--critical)",
       axis: "left",
@@ -640,7 +679,7 @@ export function TrendExplorer({
     {
       key: "llmEvidence",
       label: "LLM disclosure events",
-      shortLabel: "LLM event",
+      shortLabel: "LLM",
       values: chartPoints.map((point) => {
         const value = llmEvidenceForMonth(point.month, events);
         return value || null;
@@ -656,6 +695,7 @@ export function TrendExplorer({
     { key: "high", label: "High", shortLabel: "High", values: chartPoints.map((point) => point.high), color: "var(--amber)", axis: "left" },
     { key: "medium", label: "Medium", shortLabel: "Medium", values: chartPoints.map((point) => point.medium), color: "var(--accent)", axis: "left", dashed: true },
     { key: "low", label: "Low", shortLabel: "Low", values: chartPoints.map((point) => point.low), color: "var(--teal)", axis: "left", shape: "diamond" },
+    { key: "none", label: "None (CVSS 0.0)", shortLabel: "None", values: chartPoints.map((point) => point.none), color: "var(--neutral)", axis: "left" },
     { key: "unknown", label: "Unscored", shortLabel: "Unscored", values: chartPoints.map((point) => point.unknown), color: "var(--neutral)", axis: "left", dashed: true, shape: "square" },
   ];
   const comparisonSeries: ChartSeries[] = [
@@ -710,19 +750,24 @@ export function TrendExplorer({
   );
   const compareDifference = compareSecondValue - compareFirstValue;
   const compareChange = compareMetric === "llmEvidence"
-    ? llmComparison(
-        compareSecondValue,
-        compareFirstValue,
-        periodLabel(matched.first, compareFirst),
-        matched.first.length > 0,
-      )
-    : relativeComparison(
-        compareSecondValue,
-        compareFirstValue,
-        periodLabel(matched.first, compareFirst),
-        matched.first.length > 0,
-      );
+    ? llmComparison()
+    : compareMetric === "publicExploitReferences"
+      ? exploitComparison(
+          matched.second,
+          matched.first,
+          compareSecondValue,
+          compareFirstValue,
+          periodLabel(matched.first, compareFirst),
+          matched.first.length > 0,
+        )
+      : relativeComparison(
+          compareSecondValue,
+          compareFirstValue,
+          periodLabel(matched.first, compareFirst),
+          matched.first.length > 0,
+        );
   const compareDifferenceLabel = compareMetric === "llmEvidence"
+    || (compareMetric === "publicExploitReferences" && compareChange.tone === "unavailable")
     ? "Not calculated"
     : `${compareDifference > 0 ? "+" : compareDifference < 0 ? "−" : ""}${number(Math.abs(compareDifference))}`;
   const compareValueLabel = (value: number) => compareMetric === "llmEvidence"
@@ -893,14 +938,21 @@ export function TrendExplorer({
         <MetricCell
           label="CVEs with exploit references"
           value={number(summary.publicExploitReferences)}
-          detail={`${percent(summary.publicExploitShare)} of published CVEs${summaryPoints.some((p) => p.enriching) ? " (still enriching)" : ""}`}
-          comparison={relativeComparison(summary.publicExploitReferences, baseline.publicExploitReferences, baselineLabel, hasBaseline)}
+          detail={exploitShareDetail(summary)}
+          comparison={exploitComparison(
+            summaryPoints,
+            baselinePoints,
+            summary.publicExploitReferences,
+            baseline.publicExploitReferences,
+            baselineLabel,
+            hasBaseline,
+          )}
         />
         <MetricCell
           label="Reported LLM-assisted CVEs"
           value={summary.llmEvidence ? `≥ ${number(summary.llmEvidence)}` : "—"}
           detail="Largest count in one first-party programme report or public CVE-ID release. Counts from different programmes remain separate."
-          comparison={llmComparison(summary.llmEvidence, baseline.llmEvidence, baselineLabel, hasBaseline)}
+          comparison={llmComparison()}
         />
         <MetricCell
           label="CVEs with severity scores"
@@ -914,7 +966,7 @@ export function TrendExplorer({
         <div className="unified-panel__heading">
           <div>
             <p className="eyebrow">Combined timeline</p>
-            <h3>{viewMode === "compare" ? metricOptions.find((item) => item.key === compareMetric)?.label : chartFamily === "signals" ? "CVE, KEV and exploit trends, with LLM disclosure events" : "Severity by publication month"}</h3>
+            <h3>{viewMode === "compare" ? metricOptions.find((item) => item.key === compareMetric)?.label : chartFamily === "signals" ? "CVE, KEV, exploit and EPSS trends, with LLM disclosure events" : "Severity by publication month"}</h3>
           </div>
           {viewMode !== "compare" && chartFamily === "signals" ? (
             <div className="scale-control" aria-label="Chart display">
@@ -931,11 +983,13 @@ export function TrendExplorer({
           <span>
             {effectiveScale === "indexed"
               ? "Each line is scaled against its own peak, shown as 100%. LLM markers show separate disclosure events and are scaled against the largest reported minimum."
-              : viewMode === "compare" || chartFamily === "severity"
+              : viewMode === "compare" && compareMetric === "epssHigh"
+                ? `Each line groups CVEs by publication month and applies the current EPSS snapshot dated ${scoreDateLabel(epssScoreDate)}.`
+                : viewMode === "compare" || chartFamily === "severity"
                 ? compareMetric === "llmEvidence"
                   ? "Each marker shows a first-party report or reveal date. A blank month means no event is recorded in the registry."
                   : "Every visible line shares one count scale, so line height can be compared directly."
-                : "CVE and exploit trends use the left axis; KEV and LLM event stems use the right axis."}
+                : "CVE, exploit and current EPSS trends use the left axis; KEV and LLM event stems use the right axis."}
           </span>
         </div>
 
@@ -960,7 +1014,7 @@ export function TrendExplorer({
         />
 
         <p className="chart-method-note">
-          Diamond markers show separate first-party disclosure events, not a monthly trend. A blank month means no event is recorded; it does not mean zero LLM-assisted discoveries. Counts from different programmes remain separate.
+          Diamond markers show separate first-party disclosure events, not a monthly trend. A blank month means no event is recorded; it does not mean zero LLM-assisted discoveries. Counts from different programmes remain separate. EPSS values use the current score snapshot dated {scoreDateLabel(epssScoreDate)} and are grouped by CVE publication month; ≥ 0.1 is a project-defined threshold, not an official FIRST severity band.
         </p>
 
         <div className="matrix-heading">
