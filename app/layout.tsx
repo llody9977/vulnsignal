@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     process.env.NEXT_PUBLIC_SITE_URL ??
       "https://llody9977.github.io/vulnsignal/",
   ),
-  title: "VulnSignal — CVE, KEV and LLM Disclosure Trends",
+  title: "VulnSignal — CVE, KEV and EPSS Exploitation Signals",
   description:
     "Daily dashboard of CVE publications, CVSS severity, CISA KEV additions, public exploit references, current EPSS signals and documented LLM-assisted disclosures.",
   applicationName: "VulnSignal",
@@ -25,6 +25,7 @@ export const metadata: Metadata = {
   keywords: [
     "CVE",
     "CISA KEV",
+    "EPSS",
     "vulnerability intelligence",
     "cybersecurity dashboard",
     "vulnerability trends",
@@ -35,24 +36,24 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     url: "./",
-    title: "VulnSignal — CVE, KEV and LLM disclosures. One timeline.",
+    title: "VulnSignal — CVE, KEV and EPSS Exploitation Signals",
     description:
-      "Compare monthly CVE, severity, CISA KEV, exploit-reference, current EPSS and documented LLM disclosure data from official and first-party public sources.",
+      "Compare monthly CVE, severity, CISA KEV, exploit-reference and current EPSS signals, with documented LLM disclosures kept as separate evidence.",
     siteName: "VulnSignal",
     images: [
       {
         url: "og.png",
         width: 1200,
         height: 630,
-        alt: "VulnSignal dashboard showing CVE, KEV and LLM disclosure trends",
+        alt: "VulnSignal dashboard showing CVE, KEV and EPSS exploitation signals",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "VulnSignal — CVE, KEV and LLM Disclosure Trends",
+    title: "VulnSignal — CVE, KEV and EPSS Exploitation Signals",
     description:
-      "Compare CVE, severity, KEV, exploit-reference, current EPSS and documented LLM disclosure data on one monthly timeline.",
+      "Compare CVE, severity, KEV, exploit-reference and current EPSS signals, with documented LLM disclosures shown separately.",
     images: ["og.png"],
   },
 };

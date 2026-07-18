@@ -4,18 +4,18 @@
   "private": true,
   "description": "Daily dashboard for CVE publications, CVSS severity, CISA KEV, exploit references, current EPSS signals and documented LLM disclosures",
   "engines": {
-    "node": ">=22.13.0"
+    "node": ">=22.23.1 <23"
   },
   "scripts": {
-    "dev": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext dev",
-    "build": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext build",
-    "start": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext start",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
     "build:pages": "GITHUB_PAGES=true next build",
     "data:sync": "python3 scripts/sync_vulnerability_data.py",
     "data:check": "python3 scripts/sync_vulnerability_data.py --check",
     "data:check:freshness": "python3 scripts/sync_vulnerability_data.py --check-freshness",
     "evidence:check": "node scripts/validate-llm-evidence.mjs",
-    "test": "npm run evidence:check && npm run build && node --test tests/rendered-html.test.mjs && node --experimental-strip-types --test tests/trend-model.test.ts && python3 -m unittest discover -s tests -p 'test_*.py'",
+    "test": "npm run evidence:check && npm run build:pages && node --test tests/rendered-html.test.mjs && node --experimental-strip-types --test tests/trend-model.test.ts && python3 -m unittest discover -s tests -p 'test_*.py'",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "check": "npm run data:check && npm run lint && npm test"
   },
@@ -25,21 +25,14 @@
     "react-dom": "19.2.6"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "1.45.0",
     "@types/node": "22.19.19",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
-    "@vitejs/plugin-react": "6.0.2",
-    "@vitejs/plugin-rsc": "0.5.26",
     "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1",
     "eslint": "9.39.4",
-    "eslint-config-next": "16.2.6",
-    "react-server-dom-webpack": "19.2.6",
-    "typescript": "5.9.3",
-    "vinext": "0.0.50",
-    "vite": "8.1.5",
-    "wrangler": "4.111.0"
+    "eslint-config-next": "16.2.9",
+    "typescript": "5.9.3"
   },
   "overrides": {
     "postcss": "8.5.10"

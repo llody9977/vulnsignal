@@ -6,10 +6,12 @@ import {
   change,
   comparisonYearOptions,
   completeMonths,
+  hasRecordedValue,
   llmEvidenceForMonth,
   matchedYearPoints,
   monthsForYear,
   rollingMonths,
+  severityShare,
   summarizePeriod,
   type LlmEvidenceEvent,
   type MonthPoint,
@@ -156,6 +158,36 @@ test("exploit-reference share never falls back to an enriching cohort", () => {
   assert.equal(mixed.publicExploitMaturePublished, 100);
   assert.equal(mixed.publicExploitMatureMonths, 1);
   assert.equal(mixed.publicExploitEnrichingMonths, 1);
+});
+
+test("severity shares use all published CVEs and reconcile to 100%", () => {
+  const point: MonthPoint = {
+    month: "2026-06",
+    published: 100,
+    critical: 5,
+    high: 20,
+    medium: 40,
+    low: 10,
+    none: 5,
+    unknown: 20,
+    severityCoverage: 80,
+    publicExploitReferences: 0,
+    kevAdded: 0,
+    partial: false,
+    enriching: true,
+    epssHigh: 0,
+  };
+  const keys = ["critical", "high", "medium", "low", "none", "unknown"] as const;
+  assert.equal(
+    keys.reduce((total, key) => total + (severityShare(point, key) ?? 0), 0),
+    100,
+  );
+  assert.equal(severityShare({ ...point, published: 0 }, "critical"), null);
+});
+
+test("legend availability keeps zero values and omits all-null series", () => {
+  assert.equal(hasRecordedValue([null, 0, null]), true);
+  assert.equal(hasRecordedValue([null, null]), false);
 });
 
 test("LLM evidence uses the largest monthly lower bound and never sums programs", () => {

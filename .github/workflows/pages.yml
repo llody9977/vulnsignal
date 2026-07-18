@@ -1,20 +1,15 @@
 name: Deploy VulnSignal to GitHub Pages
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
   workflow_run:
     workflows:
+      - CI
       - Refresh vulnerability data
     types:
       - completed
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
+permissions: {}
 
 concurrency:
   group: github-pages
@@ -23,13 +18,55 @@ concurrency:
 jobs:
   build:
     name: Build static dashboard
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == github.event.repository.default_branch &&
+      (github.event.workflow_run.name == 'Refresh vulnerability data' ||
+      github.event.workflow_run.event == 'push'))
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      actions: read
+      contents: read
 
     steps:
-      - name: Check out the dashboard
+      - name: Check out the dashboard without stored credentials
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.event.repository.default_branch }}
+          persist-credentials: false
+
+      - name: Stop if a successful CI run is no longer the current branch tip
+        if: github.event_name == 'workflow_run' && github.event.workflow_run.name == 'CI'
+        shell: bash
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          VALIDATED_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          current_sha="$(git ls-remote origin "refs/heads/${DEFAULT_BRANCH}" | cut -f1)"
+          test "$current_sha" = "$VALIDATED_HEAD_SHA"
+
+      - name: Download the validated data from a successful refresh
+        if: github.event_name == 'workflow_run' && github.event.workflow_run.name == 'Refresh vulnerability data'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: vulnerability-data-${{ github.event.workflow_run.id }}
+          path: refresh-output
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Install the validated refresh aggregate
+        if: github.event_name == 'workflow_run' && github.event.workflow_run.name == 'Refresh vulnerability data'
+        shell: bash
+        run: |
+          (
+            cd refresh-output
+            sha256sum --check SHA256SUMS
+          )
+          cp refresh-output/dashboard.json data/dashboard.json
 
       - name: Set up Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
@@ -39,12 +76,8 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
-          node-version: "22.13.0"
+          node-version: "22.23.1"
           cache: npm
-
-      - name: Configure GitHub Pages
-        id: pages
-        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6
 
       - name: Install dependencies
         run: npm ci
@@ -55,8 +88,8 @@ jobs:
       - name: Build the static export
         env:
           GITHUB_PAGES: "true"
-          NEXT_PUBLIC_BASE_PATH: ${{ steps.pages.outputs.base_path }}
-          NEXT_PUBLIC_SITE_URL: ${{ steps.pages.outputs.base_url }}/
+          NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
+          NEXT_PUBLIC_SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
         run: npm run build:pages
 
       - name: Upload the Pages artifact
@@ -69,6 +102,9 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
