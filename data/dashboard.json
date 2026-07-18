@@ -1,14 +1,167 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-17T11:39:25Z",
+  "generatedAt": "2026-07-18T01:59:13Z",
+  "snapshot": {
+    "id": "VS-20260718-0159Z",
+    "generatedAt": "2026-07-18T01:59:13Z",
+    "inputCount": 29,
+    "inputFingerprintSha256": "8ebfa561d4dc1600a302842907b049baf1c17dfe254d7eca3de9e5b872804ce0",
+    "inputs": [
+      {
+        "id": "cve-list-delta",
+        "kind": "downloaded_snapshot",
+        "sha256": "d4340f44f3bd543ddf6e47747df9ef2af823a1da6cb3d3eaf85b518aca458311"
+      },
+      {
+        "id": "nvd-2002",
+        "kind": "official_checksum_verified_feed",
+        "sha256": "25926cc1ffbd25e903a2528bf585b5750300f8a88b10f858da37cd5cb6c8df13"
+      },
+      {
+        "id": "nvd-2003",
+        "kind": "official_checksum_verified_feed",
+        "sha256": "5d439a7b9d6d41e74824ff1d00a7b002d32f8d7dce7fe4adcca4d897021c11a3"
+      },
+      {
+        "id": "nvd-2004",
+        "kind": "official_checksum_verified_feed",
+        "sha256": "f3b27b864dcb602f14b1b4f9f6bcbd8fe5acf6ee3fe04df4634fcd60a28824e0"
+      },
+      {
+        "id": "nvd-2005",
+        "kind": "official_checksum_verified_feed",
+        "sha256": "8d0e26fe6772d1de213b32b1d434c6eb2f6e27b782593692820c3d948ef4f9a3"
+      },
+      {
+        "id": "nvd-2006",
+        "kind": "official_checksum_verified_feed",
+        "sha256": "fa6d2cc8e5099c5c7b4c96a6264b9a4a93d27293a22e13295fc15ed6a78e6634"
+      },
+      {
+        "id": "nvd-2007",
+        "kind": "official_checksum_verified_feed",
+        "sha256": "c7017e3f5b841fed5daf44a1c55d62e86529482874e9095813579c0c04fdd7f4"
+      },
+      {
+        "id": "nvd-2008",
+        "kind": "official_checksum_verified_feed",
+        "sha256": "7632c41a9dd2d579e6554c8b5336ef71496e02920f57bc1612bee08724a9a45a"
+      },
+      {
+        "id": "nvd-2009",
+        "kind": "official_checksum_verified_feed",
+        "sha256": "9af2d8cf6c1a8425e6d82cb8a223be25dc7fa371b14a53ef987430fbffa2a918"
+      },
+      {
+        "id": "nvd-2010",
+        "kind": "official_checksum_verified_feed",
+        "sha256": "73460fdfe2fae6cf4af7249700f59aa8a4b7afdb5df9136dd91a15b9396f0ad2"
+      },
+      {
+        "id": "nvd-2011",
+        "kind": "official_checksum_verified_feed",
+        "sha256": "0b0be13dab670835f0159751f1fbd8fda2f774270b743eafb0656401d5e792d6"
+      },
+      {
+        "id": "nvd-2012",
+        "kind": "official_checksum_verified_feed",
+        "sha256": "4dc45d55e27cfb81d40cb6d9c9f6adecd40abb790eca15c67fe1ff567f204504"
+      },
+      {
+        "id": "nvd-2013",
+        "kind": "official_checksum_verified_feed",
+        "sha256": "c2b58ee1dda1b12ad53ce56c6558c46eb37a8e05cc6c62f05fc992550b99c673"
+      },
+      {
+        "id": "nvd-2014",
+        "kind": "official_checksum_verified_feed",
+        "sha256": "f3e408c1442afce3153c96fba9983bd29c9f046ebef21abf083da0e7780717c3"
+      },
+      {
+        "id": "nvd-2015",
+        "kind": "official_checksum_verified_feed",
+        "sha256": "db2f3130ea482bbd05431b82aaee70cfe97d499df223dd7aada0d3d8121e9e48"
+      },
+      {
+        "id": "nvd-2016",
+        "kind": "official_checksum_verified_feed",
+        "sha256": "23e132f0c302e6efccc990a032a26765ae2772c92ebffc30b6546c30c7a3e272"
+      },
+      {
+        "id": "nvd-2017",
+        "kind": "official_checksum_verified_feed",
+        "sha256": "b340a4469f37cc3f4f2e14e6a47f509f3ed853f291c53ee9b120df72d7bf43b0"
+      },
+      {
+        "id": "nvd-2018",
+        "kind": "official_checksum_verified_feed",
+        "sha256": "36eb3796b1ce709049dedd8a800756e9ba8ab5e0b5b4f36c36cfe895c82c8401"
+      },
+      {
+        "id": "nvd-2019",
+        "kind": "official_checksum_verified_feed",
+        "sha256": "c87fab90276899900d4b327287a8aaec4d53013b53bb12b1790c02a7468edf3e"
+      },
+      {
+        "id": "nvd-2020",
+        "kind": "official_checksum_verified_feed",
+        "sha256": "7ee48596b505f915e076c46bf78589875a467829e0e21bc4ed13dc33b2594e1e"
+      },
+      {
+        "id": "nvd-2021",
+        "kind": "official_checksum_verified_feed",
+        "sha256": "d843f776b5b2b208e9239690418bf163daa0bebf24eb9d681f74e8ba30f57d7c"
+      },
+      {
+        "id": "nvd-2022",
+        "kind": "official_checksum_verified_feed",
+        "sha256": "603f7afe73c6eeae04aa6558585f8ca3aced38dcd7c7a51cfa930a04a1f28e36"
+      },
+      {
+        "id": "nvd-2023",
+        "kind": "official_checksum_verified_feed",
+        "sha256": "a48ccf3f0da19cbd224208c43db8620dac52057beaeb1a79f399692e2a358429"
+      },
+      {
+        "id": "nvd-2024",
+        "kind": "official_checksum_verified_feed",
+        "sha256": "e9e0f4c4a83d4fb752d58254d5b45fb024cd0f14c3ab62488881a61168da40b7"
+      },
+      {
+        "id": "nvd-2025",
+        "kind": "official_checksum_verified_feed",
+        "sha256": "98b0d78d8e9533ddc58e7109c2082e523fb4865184e030e3336d6e0f7164900c"
+      },
+      {
+        "id": "nvd-2026",
+        "kind": "official_checksum_verified_feed",
+        "sha256": "5549258d71061ebeacfd9e5a1eca143e82e5a27d8aae990eabdcc6a3cfca3aef"
+      },
+      {
+        "id": "cisa-kev",
+        "kind": "downloaded_snapshot",
+        "sha256": "4ebfc4634049feafd7d6243708f9f225923b13a8431594c8c0df77b4ec4c776b"
+      },
+      {
+        "id": "anthropic-cvd",
+        "kind": "downloaded_snapshot",
+        "sha256": "783ab38b8cd39ab274b9d4e197e57132cdd58a13217d71eacb873ba6d79f2598"
+      },
+      {
+        "id": "llm-evidence-register",
+        "kind": "repository_snapshot",
+        "sha256": "b29205a2f0cd0315218058f799ced8b239bd735a50f8c5692670916a65560638"
+      }
+    ]
+  },
   "project": {
     "name": "VulnSignal",
     "repo": "vulnsignal",
-    "description": "CVE and KEV trend intelligence from authoritative sources"
+    "description": "Daily CVE, KEV and documented LLM disclosure trends"
   },
   "coverage": {
     "start": "2019-01-01",
-    "asOf": "2026-07-17",
+    "asOf": "2026-07-18",
     "latestCompleteMonth": "2026-06",
     "recordCount": 238036,
     "publicationDateSemantics": "NVD published timestamp",
@@ -18,9 +171,9 @@
     "cve": {
       "name": "CVE Program · CVE List V5",
       "url": "https://github.com/CVEProject/cvelistV5",
-      "snapshotSha256": "279dd5eabce98f7ea1b0fc32c4ba2c91b7cdbd95864da2edbd67d57698bc9cb1",
-      "latestFetch": "2026-07-17T11:30:06.308000Z",
-      "changedRecords24h": 1166
+      "contentFingerprintSha256": "d4340f44f3bd543ddf6e47747df9ef2af823a1da6cb3d3eaf85b518aca458311",
+      "latestFetch": "2026-07-18T01:19:05.588000Z",
+      "changedRecords24h": 1112
     },
     "nvd": {
       "name": "NIST NVD · CVE JSON 2.0 feeds",
@@ -30,175 +183,175 @@
         {
           "identifierYear": 2002,
           "lastModified": "2026-06-22T10:34:49-04:00",
-          "sha256": "25926CC1FFBD25E903A2528BF585B5750300F8A88B10F858DA37CD5CB6C8DF13",
+          "sha256": "25926cc1ffbd25e903a2528bf585b5750300f8a88b10f858da37cd5cb6c8df13",
           "size": 27075193,
           "records": 6771
         },
         {
           "identifierYear": 2003,
           "lastModified": "2026-06-22T10:34:47-04:00",
-          "sha256": "5D439A7B9D6D41E74824FF1D00A7B002D32F8D7DCE7FE4ADCCA4D897021C11A3",
+          "sha256": "5d439a7b9d6d41e74824ff1d00a7b002d32f8d7dce7fe4adcca4d897021c11a3",
           "size": 7908123,
           "records": 1555
         },
         {
           "identifierYear": 2004,
           "lastModified": "2026-06-22T10:34:45-04:00",
-          "sha256": "F3B27B864DCB602F14B1B4F9F6BCBD8FE5ACF6EE3FE04DF4634FCD60A28824E0",
+          "sha256": "f3b27b864dcb602f14b1b4f9f6bcbd8fe5acf6ee3fe04df4634fcd60a28824e0",
           "size": 16380792,
           "records": 2707
         },
         {
           "identifierYear": 2005,
           "lastModified": "2026-07-15T03:04:09-04:00",
-          "sha256": "8D0E26FE6772D1DE213B32B1D434C6EB2F6E27B782593692820C3D948EF4F9A3",
+          "sha256": "8d0e26fe6772d1de213b32b1d434c6eb2f6e27b782593692820c3d948ef4f9a3",
           "size": 25789741,
           "records": 4770
         },
         {
           "identifierYear": 2006,
           "lastModified": "2026-07-15T03:04:04-04:00",
-          "sha256": "FA6D2CC8E5099C5C7B4C96A6264B9A4A93D27293A22E13295FC15ED6A78E6634",
+          "sha256": "fa6d2cc8e5099c5c7b4c96a6264b9a4a93d27293a22e13295fc15ed6a78e6634",
           "size": 41220718,
           "records": 7145
         },
         {
           "identifierYear": 2007,
           "lastModified": "2026-06-22T10:34:32-04:00",
-          "sha256": "C7017E3F5B841FED5DAF44A1C55D62E86529482874E9095813579C0C04FDD7F4",
+          "sha256": "c7017e3f5b841fed5daf44a1c55d62e86529482874e9095813579c0c04fdd7f4",
           "size": 39412640,
           "records": 6580
         },
         {
           "identifierYear": 2008,
           "lastModified": "2026-07-14T03:02:57-04:00",
-          "sha256": "7632C41A9DD2D579E6554C8B5336EF71496E02920F57BC1612BEE08724A9A45A",
+          "sha256": "7632c41a9dd2d579e6554c8b5336ef71496e02920f57bc1612bee08724a9a45a",
           "size": 45541269,
           "records": 7179
         },
         {
           "identifierYear": 2009,
           "lastModified": "2026-07-11T03:02:43-04:00",
-          "sha256": "9AF2D8CF6C1A8425E6D82CB8A223BE25DC7FA371B14A53EF987430FBFFA2A918",
+          "sha256": "9af2d8cf6c1a8425e6d82cb8a223be25dc7fa371b14a53ef987430fbffa2a918",
           "size": 43658899,
           "records": 5054
         },
         {
           "identifierYear": 2010,
           "lastModified": "2026-07-15T03:03:59-04:00",
-          "sha256": "73460FDFE2FAE6CF4AF7249700F59AA8A4B7AFDB5DF9136DD91A15B9396F0AD2",
+          "sha256": "73460fdfe2fae6cf4af7249700f59aa8a4b7afdb5df9136dd91a15b9396f0ad2",
           "size": 47114430,
           "records": 5249
         },
         {
           "identifierYear": 2011,
           "lastModified": "2026-07-10T03:03:18-04:00",
-          "sha256": "0B0BE13DAB670835F0159751F1FBD8FDA2F774270B743EAFB0656401D5E792D6",
+          "sha256": "0b0be13dab670835f0159751f1fbd8fda2f774270b743eafb0656401d5e792d6",
           "size": 46638968,
           "records": 4899
         },
         {
           "identifierYear": 2012,
           "lastModified": "2026-06-22T10:34:02-04:00",
-          "sha256": "4DC45D55E27CFB81D40CB6D9C9F6ADECD40ABB790ECA15C67FE1FF567F204504",
+          "sha256": "4dc45d55e27cfb81d40cb6d9c9f6adecd40abb790eca15c67fe1ff567f204504",
           "size": 54356777,
           "records": 5939
         },
         {
           "identifierYear": 2013,
           "lastModified": "2026-06-22T10:33:55-04:00",
-          "sha256": "C2B58EE1DDA1B12AD53CE56C6558C46EB37A8E05CC6C62F05FC992550B99C673",
+          "sha256": "c2b58ee1dda1b12ad53ce56c6558c46eb37a8e05cc6c62f05fc992550b99c673",
           "size": 59649684,
           "records": 6830
         },
         {
           "identifierYear": 2014,
           "lastModified": "2026-07-14T03:02:51-04:00",
-          "sha256": "F3E408C1442AFCE3153C96FBA9983BD29C9F046EBEF21ABF083DA0E7780717C3",
+          "sha256": "f3e408c1442afce3153c96fba9983bd29c9f046ebef21abf083da0e7780717c3",
           "size": 55250799,
           "records": 9002
         },
         {
           "identifierYear": 2015,
           "lastModified": "2026-07-11T03:02:24-04:00",
-          "sha256": "DB2F3130EA482BBD05431B82AAEE70CFE97D499DF223DD7AADA0D3D8121E9E48",
+          "sha256": "db2f3130ea482bbd05431b82aaee70cfe97d499df223dd7aada0d3d8121e9e48",
           "size": 55160887,
           "records": 8779
         },
         {
           "identifierYear": 2016,
           "lastModified": "2026-07-15T03:03:51-04:00",
-          "sha256": "23E132F0C302E6EFCCC990A032A26765AE2772C92EBFFC30B6546C30C7A3E272",
+          "sha256": "23e132f0c302e6efccc990a032a26765ae2772c92ebffc30b6546c30c7a3e272",
           "size": 70166342,
           "records": 10645
         },
         {
           "identifierYear": 2017,
           "lastModified": "2026-07-15T03:03:41-04:00",
-          "sha256": "B340A4469F37CC3F4F2E14E6A47F509F3ED853F291C53EE9B120DF72D7BF43B0",
+          "sha256": "b340a4469f37cc3f4f2e14e6a47f509f3ed853f291c53ee9b120df72d7bf43b0",
           "size": 101732174,
           "records": 17102
         },
         {
           "identifierYear": 2018,
           "lastModified": "2026-07-15T03:03:28-04:00",
-          "sha256": "36EB3796B1CE709049DEDD8A800756E9BA8AB5E0B5B4F36C36CFE895C82C8401",
+          "sha256": "36eb3796b1ce709049dedd8a800756e9ba8ab5e0b5b4f36c36cfe895c82c8401",
           "size": 108617196,
           "records": 17817
         },
         {
           "identifierYear": 2019,
           "lastModified": "2026-07-15T03:03:14-04:00",
-          "sha256": "C87FAB90276899900D4B327287A8AAEC4D53013B53BB12B1790C02A7468EDF3E",
+          "sha256": "c87fab90276899900d4b327287a8aaec4d53013b53bb12b1790c02a7468edf3e",
           "size": 125775713,
           "records": 17618
         },
         {
           "identifierYear": 2020,
           "lastModified": "2026-07-15T03:02:56-04:00",
-          "sha256": "7EE48596B505F915E076C46BF78589875A467829E0E21BC4ED13DC33B2594E1E",
+          "sha256": "7ee48596b505f915e076c46bf78589875a467829e0e21bc4ed13dc33b2594e1e",
           "size": 165057536,
           "records": 21060
         },
         {
           "identifierYear": 2021,
           "lastModified": "2026-07-17T03:02:25-04:00",
-          "sha256": "D843F776B5B2B208E9239690418BF163DAA0BEBF24EB9D681F74E8BA30F57D7C",
+          "sha256": "d843f776b5b2b208e9239690418bf163daa0bebf24eb9d681f74e8ba30f57d7c",
           "size": 197778706,
           "records": 23432
         },
         {
           "identifierYear": 2022,
           "lastModified": "2026-07-15T03:02:11-04:00",
-          "sha256": "603F7AFE73C6EEAE04AA6558585F8CA3ACED38DCD7C7A51CFA930A04A1F28E36",
+          "sha256": "603f7afe73c6eeae04aa6558585f8ca3aced38dcd7c7a51cfa930a04a1f28e36",
           "size": 216071553,
           "records": 27521
         },
         {
           "identifierYear": 2023,
           "lastModified": "2026-07-17T03:02:00-04:00",
-          "sha256": "A48CCF3F0DA19CBD224208C43DB8620DAC52057BEAEB1A79F399692E2A358429",
+          "sha256": "a48ccf3f0da19cbd224208c43db8620dac52057beaeb1a79f399692e2a358429",
           "size": 246751814,
           "records": 31215
         },
         {
           "identifierYear": 2024,
           "lastModified": "2026-07-17T03:01:13-04:00",
-          "sha256": "E9E0F4C4A83D4FB752D58254D5B45FB024CD0F14C3AB62488881A61168DA40B7",
+          "sha256": "e9e0f4c4a83d4fb752d58254d5b45fb024cd0f14c3ab62488881a61168da40b7",
           "size": 289727172,
           "records": 39164
         },
         {
           "identifierYear": 2025,
           "lastModified": "2026-07-17T03:00:42-04:00",
-          "sha256": "98B0D78D8E9533DDC58E7109C2082E523FB4865184E030E3336D6E0F7164900C",
+          "sha256": "98b0d78d8e9533ddc58e7109c2082e523fb4865184e030e3336d6e0f7164900c",
           "size": 282034722,
           "records": 44961
         },
         {
           "identifierYear": 2026,
           "lastModified": "2026-07-17T03:00:08-04:00",
-          "sha256": "5549258D71061EBEACFD9E5A1ECA143E82E5A27D8AAE990EABDCC6A3CFCA3AEF",
+          "sha256": "5549258d71061ebeacfd9e5a1eca143e82e5a27d8aae990eabdcc6a3cfca3aef",
           "size": 216170298,
           "records": 33843
         }
@@ -210,9 +363,9 @@
       "catalogVersion": "2026.07.16",
       "released": "2026-07-16T17:00:15.6845Z",
       "count": 1647,
-      "snapshotSha256": "4ebfc4634049feafd7d6243708f9f225923b13a8431594c8c0df77b4ec4c776b"
+      "contentFingerprintSha256": "4ebfc4634049feafd7d6243708f9f225923b13a8431594c8c0df77b4ec4c776b"
     },
-    "llmEvidence": {
+    "anthropic": {
       "name": "Anthropic coordinated vulnerability disclosure payload",
       "url": "https://red.anthropic.com/2026/cvd/data/payload.json",
       "asOf": "2026-05-22T17:27:03.605363Z",
@@ -220,7 +373,28 @@
       "manifestSha3": "b7a0c5362f95291c017a1a208ae5d9ca3f44f7f0560ca3553ec88d46636999aafcf4ebbbe4fd344703e36dc33d492a58a1c965b8198801d5775e4d85f69ff8e4",
       "reportedCves": 28,
       "publicCveRecords": 14,
-      "snapshotSha256": "783ab38b8cd39ab274b9d4e197e57132cdd58a13217d71eacb873ba6d79f2598"
+      "contentFingerprintSha256": "783ab38b8cd39ab274b9d4e197e57132cdd58a13217d71eacb873ba6d79f2598"
+    },
+    "llmRegistry": {
+      "name": "Curated first-party LLM disclosure register",
+      "url": "https://github.com/llody9977/vulnsignal/blob/main/data/llm-discovery-evidence.json",
+      "lastReviewed": "2026-07-18",
+      "latestEvidenceDate": "2026-05-22",
+      "contentFingerprintSha256": "b29205a2f0cd0315218058f799ced8b239bd735a50f8c5692670916a65560638",
+      "programmeSources": [
+        {
+          "publisher": "Anthropic",
+          "programme": "Claude Mythos Preview CVD",
+          "published": "2026-05-22",
+          "url": "https://red.anthropic.com/2026/cvd/data/payload.json"
+        },
+        {
+          "publisher": "OpenAI",
+          "programme": "Aardvark",
+          "published": "2025-10-30",
+          "url": "https://openai.com/index/introducing-aardvark/"
+        }
+      ]
     }
   },
   "latestCompleteMonth": {
@@ -240,10 +414,12 @@
     "matureCohortStart": "2025-04-01",
     "matureCohortEnd": "2026-03-31",
     "kevWithin90DayRate": 0.3,
-    "kevWithin90Days": 146,
+    "kevWithin90Days": 153,
     "matureCohort": 51367,
-    "medianDaysToKev": 7.0,
-    "p75DaysToKev": 48.0
+    "kevTimingSample": 177,
+    "prePublicationKev": 7,
+    "medianDaysToKev": 6.0,
+    "p75DaysToKev": 45.0
   },
   "llmDiscovery": {
     "value": 28,
@@ -253,7 +429,7 @@
     "coverage": "curated_non_exhaustive",
     "label": "Publicly reported LLM-assisted CVEs",
     "methodologyVersion": "1.0",
-    "basis": "Highest non-overlapping first-party CVE program count; program totals are not summed. CVE, NVD, and KEV have no standardized discovery-method field.",
+    "basis": "The headline is the largest CVE count reported by one first-party LLM-assisted programme. Counts from different programmes remain separate because the sources do not support reliable deduplication. CVE, NVD and KEV do not record discovery method consistently.",
     "programReports": [
       {
         "id": "anthropic-cvd-2026",
@@ -274,7 +450,7 @@
         "sourceUrl": "https://openai.com/index/introducing-aardvark/",
         "published": "2025-10-30",
         "includedInHeadlineMinimum": false,
-        "exclusionReason": "Program counts are not summed because public aggregates do not provide a cross-program deduplication key."
+        "exclusionReason": "Programme counts are not summed because public aggregates do not provide a cross-programme deduplication key."
       }
     ],
     "publicCveIds": [
@@ -351,47 +527,50 @@
     ]
   },
   "comparison": {
-    "event": "Public ChatGPT release",
-    "cutover": "2022-11-30",
+    "method": "adjacent_rolling_windows",
     "windowMonths": 36,
-    "causalityNote": "Descriptive era comparison only; it does not establish that LLMs caused a change.",
-    "pre": {
-      "start": "2019-12-01",
-      "end": "2022-11-30",
-      "published": 62701,
-      "monthlyAverage": 1741.7,
-      "scored": 62699,
+    "note": "Compares two adjacent 36-month periods ending at the latest complete month. It covers publication, severity, exploit-reference and 90-day KEV reporting trends; it does not measure an LLM discovery rate.",
+    "earlier": {
+      "start": "2020-07-01",
+      "end": "2023-06-30",
+      "published": 67858,
+      "monthlyAverage": 1884.9,
+      "scored": 67856,
       "severityCoverage": 100.0,
-      "criticalHigh": 34260,
-      "criticalHighShare": 54.6,
-      "publicExploitReferences": 20051,
-      "publicExploitShare": 32.0,
-      "eventualKev": 502,
-      "eventualKevShare": 0.8,
-      "matureCohort": 62701,
-      "kevWithin90Days": 92,
-      "kevWithin90DayRate": 0.1,
-      "medianDaysToKev": 336.5,
-      "p75DaysToKev": 631.0
-    },
-    "post": {
-      "start": "2022-12-01",
-      "end": "2025-11-30",
-      "published": 113865,
-      "monthlyAverage": 3162.9,
-      "scored": 113552,
-      "severityCoverage": 99.7,
-      "criticalHigh": 57104,
-      "criticalHighShare": 50.3,
-      "publicExploitReferences": 26180,
-      "publicExploitShare": 23.0,
-      "eventualKev": 502,
-      "eventualKevShare": 0.4,
-      "matureCohort": 113865,
-      "kevWithin90Days": 354,
+      "criticalHigh": 36604,
+      "criticalHighShare": 53.9,
+      "publicExploitReferences": 22459,
+      "publicExploitShare": 33.1,
+      "observedKev": 485,
+      "observedKevShare": 0.7,
+      "matureCohort": 67858,
+      "kevWithin90Days": 181,
       "kevWithin90DayRate": 0.3,
-      "medianDaysToKev": 9.0,
-      "p75DaysToKev": 91.0
+      "kevTimingSample": 485,
+      "prePublicationKev": 42,
+      "medianDaysToKev": 180.0,
+      "p75DaysToKev": 392.0
+    },
+    "recent": {
+      "start": "2023-07-01",
+      "end": "2026-06-30",
+      "published": 138688,
+      "monthlyAverage": 3852.4,
+      "scored": 137158,
+      "severityCoverage": 98.9,
+      "criticalHigh": 69408,
+      "criticalHighShare": 50.6,
+      "publicExploitReferences": 27897,
+      "publicExploitShare": 20.1,
+      "observedKev": 537,
+      "observedKevShare": 0.4,
+      "matureCohort": 121640,
+      "kevWithin90Days": 391,
+      "kevWithin90DayRate": 0.3,
+      "kevTimingSample": 493,
+      "prePublicationKev": 20,
+      "medianDaysToKev": 7.0,
+      "p75DaysToKev": 59.0
     }
   },
   "trend": [
@@ -2011,27 +2190,27 @@
   "topCwes": [
     {
       "cwe": "CWE-79",
-      "count": 7397
-    },
-    {
-      "cwe": "CWE-862",
-      "count": 2867
-    },
-    {
-      "cwe": "CWE-74",
-      "count": 2368
+      "count": 7495
     },
     {
       "cwe": "CWE-89",
-      "count": 2200
+      "count": 4103
+    },
+    {
+      "cwe": "CWE-862",
+      "count": 3088
+    },
+    {
+      "cwe": "CWE-74",
+      "count": 2379
     },
     {
       "cwe": "CWE-22",
-      "count": 1843
+      "count": 1901
     },
     {
       "cwe": "CWE-416",
-      "count": 1664
+      "count": 1819
     }
   ],
   "recentKev": [

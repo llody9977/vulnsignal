@@ -2,7 +2,7 @@
   "name": "vulnsignal",
   "version": "1.0.0",
   "private": true,
-  "description": "Daily CVE and CISA KEV trend intelligence dashboard",
+  "description": "Daily dashboard for CVE publications, CVSS severity, CISA KEV, exploit references and documented LLM disclosures",
   "engines": {
     "node": ">=22.13.0"
   },
@@ -13,7 +13,8 @@
     "build:pages": "GITHUB_PAGES=true next build",
     "data:sync": "python3 scripts/sync_vulnerability_data.py",
     "data:check": "python3 scripts/sync_vulnerability_data.py --check",
-    "test": "npm run build && node --test tests/rendered-html.test.mjs && node --experimental-strip-types --test tests/trend-model.test.ts && python3 -m unittest discover -s tests -p 'test_*.py'",
+    "evidence:check": "node scripts/validate-llm-evidence.mjs",
+    "test": "npm run evidence:check && npm run build && node --test tests/rendered-html.test.mjs && node --experimental-strip-types --test tests/trend-model.test.ts && python3 -m unittest discover -s tests -p 'test_*.py'",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "check": "npm run data:check && npm run lint && npm test"
   },
@@ -29,6 +30,8 @@
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "6.0.2",
     "@vitejs/plugin-rsc": "0.5.26",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
     "eslint": "9.39.4",
     "eslint-config-next": "16.2.6",
     "react-server-dom-webpack": "19.2.6",

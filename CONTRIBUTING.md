@@ -38,7 +38,7 @@ that Markdown links and examples are accurate.
   test, and regenerate the dataset with `npm run data:sync`.
 - Prefer an issuing authority or original publisher over mirrors and derived
   APIs. Explain provenance, update frequency, licensing or attribution, and
-  failure behavior when proposing a new source.
+  how failures are handled when proposing a new source.
 - Preserve source uncertainty. Missing severity is not low severity, an NVD
   `Exploit` reference is not equivalent to CISA KEV membership, and a KEV entry
   does not show that every product configuration is exploitable.
@@ -58,10 +58,10 @@ researcher reports, and first-party technical disclosures are preferred.
 Secondary reporting can help locate evidence but is not sufficient by itself
 for `verified` status.
 
-A first-party program aggregate can be tracked as a documented lower bound
-when individual CVE identifiers are not published, but it must remain separate
-from CVE-level records. State the unit exactly and do not treat a combined
-CVEs-and-GHSAs figure as a CVE count.
+A first-party programme total may be recorded as a documented minimum when
+individual CVE IDs are unavailable. Keep programme totals separate from
+CVE-level records, state the unit clearly, and do not count a combined CVE and
+GHSA total as CVEs.
 
 The registry is intentionally curated and non-exhaustive. Absence from it must
 never be presented as evidence that a vulnerability was not LLM-assisted.

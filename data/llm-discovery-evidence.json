@@ -1,5 +1,6 @@
 {
   "methodologyVersion": "1.0",
+  "lastReviewed": "2026-07-18",
   "coverage": "curated_non_exhaustive",
   "description": "Only CVEs with explicit primary-source evidence that an LLM participated in discovery are verified. Absence from this registry is not evidence that no LLM was involved.",
   "headlineMinimum": {
@@ -28,7 +29,7 @@
       "sourceUrl": "https://openai.com/index/introducing-aardvark/",
       "published": "2025-10-30",
       "includedInHeadlineMinimum": false,
-      "exclusionReason": "Program counts are not summed because public aggregates do not provide a cross-program deduplication key."
+      "exclusionReason": "Programme counts are not summed because public aggregates do not provide a cross-programme deduplication key."
     }
   ],
   "records": []
