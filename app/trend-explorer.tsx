@@ -26,7 +26,8 @@ type MetricKey =
   | "high"
   | "medium"
   | "low"
-  | "unknown";
+  | "unknown"
+  | "epssHigh";
 
 type ChartSeries = {
   key: string;
@@ -62,6 +63,7 @@ const metricOptions: Array<{ key: MetricKey; label: string }> = [
   { key: "medium", label: "Medium" },
   { key: "low", label: "Low" },
   { key: "unknown", label: "Unscored" },
+  { key: "epssHigh", label: "CVEs with EPSS ≥ 0.1" },
 ];
 
 function number(value: number) {
@@ -462,8 +464,10 @@ function SignalMatrix({
     { label: "High", values: points.map((point) => point.high) },
     { label: "Medium", values: points.map((point) => point.medium) },
     { label: "Low", values: points.map((point) => point.low) },
+    { label: "Unscored", values: points.map((point) => point.unknown + point.none) },
     { label: "KEV", values: points.map((point) => point.kevAdded) },
     { label: "Exploit ref", values: points.map((point) => point.publicExploitReferences) },
+    { label: "High EPSS (≥ 0.1)", values: points.map((point) => point.epssHigh) },
     {
       label: "LLM disclosures",
       values: points.map((point) => llmEvidenceForMonth(point.month, events) || null),
@@ -478,7 +482,12 @@ function SignalMatrix({
         <thead>
           <tr>
             <th>Signal</th>
-            {points.map((point) => <th key={point.month}>{monthLabel(point.month, true)}</th>)}
+            {points.map((point) => (
+              <th key={point.month}>
+                {monthLabel(point.month, true)}
+                {point.enriching ? " *" : ""}
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody>
@@ -512,6 +521,7 @@ function SignalMatrix({
       {rows.some((row) => row.event) ? (
         <p className="matrix-note">— means the registry has no recorded disclosure event for that month. It does not mean zero LLM-assisted discoveries.</p>
       ) : null}
+      <p className="matrix-note">* Recent months are still being enriched by NVD with exploit references.</p>
     </div>
   );
 }
@@ -537,7 +547,7 @@ export function TrendExplorer({
   const priorYear = years.includes(latestYear - 1) ? latestYear - 1 : years.at(-2) ?? latestYear;
   const [viewMode, setViewMode] = useState<ViewMode>("year");
   const [chartFamily, setChartFamily] = useState<ChartFamily>("signals");
-  const [scaleMode, setScaleMode] = useState<ScaleMode>("indexed");
+  const [scaleMode, setScaleMode] = useState<ScaleMode>("absolute");
   const [selectedYear, setSelectedYear] = useState(latestYear);
   const [selectedMonth, setSelectedMonth] = useState(latestCompleteMonth);
   const [compareFirst, setCompareFirst] = useState(priorYear);
@@ -580,28 +590,12 @@ export function TrendExplorer({
       : previousYearPoints;
   const summary = summarizePeriod(summaryPoints, events);
   const baseline = summarizePeriod(baselinePoints, events);
-  const momentumPoints = viewMode === "month" ? rolling : summaryPoints;
-  const baselineMomentumPoints = viewMode === "month"
-    ? rollingMonths(monthly, previousSelectedMonth, latestCompleteMonth)
-    : baselinePoints;
-  const momentumSummary = summarizePeriod(momentumPoints, events);
-  const baselineMomentumSummary = summarizePeriod(
-    baselineMomentumPoints,
-    events,
-  );
-  const momentum = momentumSummary.momentum;
-  const baselineMomentum = baselineMomentumSummary.momentum;
   const baselineLabel = viewMode === "compare"
     ? periodLabel(matched.first, compareFirst)
     : viewMode === "month"
       ? monthLabel(baselinePoints[0]?.month ?? previousSelectedMonth, true)
       : periodLabel(baselinePoints, selectedYear - 1);
   const hasBaseline = baselinePoints.length > 0;
-  const peakSummary = viewMode === "month" ? momentumSummary : summary;
-  const peakBaseline = viewMode === "month" ? baselineMomentumSummary : baseline;
-  const peakBaselineLabel = viewMode === "month"
-    ? `the trailing 12 months ending ${monthLabel(previousSelectedMonth)}`
-    : baselineLabel;
 
   const labels = chartPoints.map((point) =>
     viewMode === "compare" ? shortMonth(point.month) : monthLabel(point.month, true),
@@ -632,6 +626,16 @@ export function TrendExplorer({
       color: "var(--amber)",
       axis: "left",
       dashed: true,
+    },
+    {
+      key: "epssHigh",
+      label: "CVEs with EPSS ≥ 0.1",
+      shortLabel: "High EPSS",
+      values: chartPoints.map((point) => point.epssHigh),
+      color: "var(--critical)",
+      axis: "left",
+      dashed: true,
+      shape: "circle",
     },
     {
       key: "llmEvidence",
@@ -889,7 +893,7 @@ export function TrendExplorer({
         <MetricCell
           label="CVEs with exploit references"
           value={number(summary.publicExploitReferences)}
-          detail={`${percent(summary.publicExploitShare)} of published CVEs`}
+          detail={`${percent(summary.publicExploitShare)} of published CVEs${summaryPoints.some((p) => p.enriching) ? " (still enriching)" : ""}`}
           comparison={relativeComparison(summary.publicExploitReferences, baseline.publicExploitReferences, baselineLabel, hasBaseline)}
         />
         <MetricCell
@@ -903,23 +907,6 @@ export function TrendExplorer({
           value={percent(summary.severityCoverage)}
           detail={`${number(summary.unknown)} records remain unscored`}
           comparison={pointComparison(summary.severityCoverage, baseline.severityCoverage, baselineLabel, hasBaseline)}
-        />
-        <MetricCell
-          label={viewMode === "month" ? "Trailing 12-month peak" : "Peak publication month"}
-          value={peakSummary.peakMonth ? number(peakSummary.peakMonth.published) : "—"}
-          detail={peakSummary.peakMonth ? monthLabel(peakSummary.peakMonth.month) : "No complete month in range"}
-          comparison={relativeComparison(
-            peakSummary.peakMonth?.published ?? 0,
-            peakBaseline.peakMonth?.published ?? 0,
-            peakBaselineLabel,
-            Boolean(peakSummary.peakMonth && peakBaseline.peakMonth),
-          )}
-        />
-        <MetricCell
-          label="Change in three-month average"
-          value={percent(momentum)}
-          detail="Latest three-month average compared with the previous three months."
-          comparison={pointComparison(momentum, baselineMomentum, baselineLabel, baselineMomentum !== null)}
         />
       </div>
 

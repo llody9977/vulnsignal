@@ -11,6 +11,7 @@ type WindowMetrics = {
   publicExploitShare: number | null;
   kevWithin90DayRate: number | null;
   medianDaysToKev: number | null;
+  epssHighShare: number | null;
 };
 
 type ProgramReport = {
@@ -30,6 +31,12 @@ type DashboardData = {
     generatedAt: string;
     inputCount: number;
     inputFingerprintSha256: string;
+  };
+  project: {
+    name: string;
+    repo: string;
+    description: string;
+    refreshSchedule?: string;
   };
   coverage: {
     start: string;
@@ -93,6 +100,13 @@ type DashboardData = {
     prePublicationKev: number;
     medianDaysToKev: number | null;
     p75DaysToKev: number | null;
+    highEpssNotInKevCount: number;
+    highEpssNotInKevShare: number | null;
+    ransomwareKevShare: number | null;
+    ransomwareKevCount: number;
+    medianKevDueWindow: number | null;
+    kevAdditionsCount: number;
+    oldKevShare: number | null;
   };
   llmDiscovery: {
     value: number | null;
@@ -110,7 +124,7 @@ type DashboardData = {
     recent: WindowMetrics;
   };
   monthly: MonthPoint[];
-  topCwes: { cwe: string; count: number }[];
+  topCwes: { cwe: string; count: number; priorCount?: number; change?: number }[];
   recentKev: {
     cveId: string;
     vendor: string;
@@ -121,6 +135,7 @@ type DashboardData = {
     ransomware: string;
     severity: string;
     score: number | null;
+    cvssVersion: string | null;
     publicExploitReference: boolean | null;
   }[];
 };
@@ -214,6 +229,7 @@ export default function Home() {
     { label: "NVD", qualifier: "Updated", value: dashboard.sources.nvd.latestSourceUpdate, url: dashboard.sources.nvd.url },
     { label: "CISA KEV", qualifier: "Released", value: dashboard.sources.kev.released, url: dashboard.sources.kev.url },
     { label: "Anthropic CVD", qualifier: "As at", value: dashboard.sources.anthropic.asOf, url: dashboard.sources.anthropic.url },
+    { label: "EPSS", qualifier: "Updated", value: dashboard.generatedAt, url: "https://epss.first.org/" },
     { label: "LLM register", qualifier: "Reviewed", value: dashboard.sources.llmRegistry.lastReviewed, url: dashboard.sources.llmRegistry.url },
   ];
 
@@ -252,14 +268,21 @@ export default function Home() {
             <div><span>Snapshot built</span><strong>{timestampLabel(dashboard.generatedAt)}</strong></div>
             <div><span>Latest complete month</span><strong>{dateLabel(dashboard.coverage.latestCompleteMonth)}</strong></div>
             <div><span>CVE records covered</span><strong>{number(dashboard.coverage.recordCount)}</strong></div>
-            <div><span>Refresh schedule</span><strong>Daily at 17:17 SGT</strong></div>
+            <div><span>Refresh schedule</span><strong>{dashboard.project.refreshSchedule || "Daily"}</strong></div>
           </div>
           <div className="source-snapshot" aria-label="Source dates included in this snapshot">
             <strong>Source data included</strong>
             <div>
               {sourceUpdates.map((source) => (
                 <a href={source.url} key={source.label}>
-                  <span>{source.label}</span>
+                  <span>
+                    {source.label}
+                    {source.label === "CVE List" && (
+                      <span className="telemetry-badge">
+                        {number(dashboard.sources.cve.changedRecords24h)} changes/24h
+                      </span>
+                    )}
+                  </span>
                   <time dateTime={source.value ?? undefined}><b>{source.qualifier}</b>{timestampLabel(source.value)}</time>
                 </a>
               ))}
@@ -282,10 +305,12 @@ export default function Home() {
           <div className="operational-matrix">
             <article><span>Median time to enter KEV</span><strong>{dashboard.risk.medianDaysToKev === null ? "—" : `${number(dashboard.risk.medianDaysToKev)} days`}</strong><p>Half of the {number(dashboard.risk.kevTimingSample)} KEV-matched CVEs in the mature cohort were listed within this time. The {number(dashboard.risk.prePublicationKev)} already-listed records count as zero days.</p></article>
             <article><span>75th percentile time to KEV</span><strong>{dashboard.risk.p75DaysToKev === null ? "—" : `${number(dashboard.risk.p75DaysToKev)} days`}</strong><p>75% of the same {number(dashboard.risk.kevTimingSample)} KEV-matched CVEs were listed within this time, measured from NVD publication.</p></article>
-            <article><span>Added to KEV within 90 days</span><strong>{percent(dashboard.risk.kevWithin90DayRate)}</strong><p>Of CVEs published {dateLabel(dashboard.risk.matureCohortStart)} to {dateLabel(dashboard.risk.matureCohortEnd)}, {number(dashboard.risk.kevWithin90Days)} of {number(dashboard.risk.matureCohort)} entered KEV within 90 days.</p></article>
             <article><span>CISA KEV catalog</span><strong>{number(dashboard.risk.catalogKev)}</strong><p>Known exploited vulnerabilities currently listed by CISA.</p></article>
-            <article><span>CVE records changed in 24 hours</span><strong>{number(dashboard.sources.cve.changedRecords24h)}</strong><p>CVE List records added or updated in the 24 hours before this snapshot.</p></article>
-            <article><span>CVEs with severity scores</span><strong>{percent(dashboard.latestCompleteMonth.severityCoverage)}</strong><p>Share of the latest complete month with a CVSS score.</p></article>
+            <article><span>Severity coverage — {dateLabel(dashboard.latestCompleteMonth.month)}</span><strong>{percent(dashboard.latestCompleteMonth.severityCoverage)}</strong><p>Share of the latest complete month with a CVSS score.</p></article>
+            <article><span>Ransomware in KEV additions</span><strong>{percent(dashboard.risk.ransomwareKevShare)}</strong><p>Of the {number(dashboard.risk.kevAdditionsCount)} KEV additions in the mature cohort, {number(dashboard.risk.ransomwareKevCount)} are known to be used in ransomware campaigns.</p></article>
+            <article><span>Remediation due window</span><strong>{dashboard.risk.medianKevDueWindow === null ? "—" : `${number(dashboard.risk.medianKevDueWindow)} days`}</strong><p>Median days allowed between the listing date (dateAdded) and remediation due date (dueDate) in CISA KEV additions.</p></article>
+            <article><span>KEV additions &gt;2 years old</span><strong>{percent(dashboard.risk.oldKevShare)}</strong><p>Share of KEV additions that were listed more than 2 years after their CVE publication.</p></article>
+            <article><span>High-EPSS not in CISA KEV</span><strong>{percent(dashboard.risk.highEpssNotInKevShare)}</strong><p>Of CVEs with EPSS ≥ 0.1 in the mature cohort, {number(dashboard.risk.highEpssNotInKevCount)} are not listed in CISA KEV.</p></article>
           </div>
 
           <div className="context-grid">
@@ -301,7 +326,7 @@ export default function Home() {
               <ComparisonRow label="Average CVEs per month" earlier={dashboard.comparison.earlier.monthlyAverage} recent={dashboard.comparison.recent.monthlyAverage} />
               <ComparisonRow label="Critical + high share of scored CVEs" earlier={dashboard.comparison.earlier.criticalHighShare} recent={dashboard.comparison.recent.criticalHighShare} suffix="%" changeMode="points" />
               <ComparisonRow label="CVEs with public exploit references" earlier={dashboard.comparison.earlier.publicExploitShare} recent={dashboard.comparison.recent.publicExploitShare} suffix="%" changeMode="points" />
-              <ComparisonRow label="Added to KEV within 90 days" earlier={dashboard.comparison.earlier.kevWithin90DayRate} recent={dashboard.comparison.recent.kevWithin90DayRate} suffix="%" changeMode="points" />
+              <ComparisonRow label="CVEs with EPSS ≥ 0.1 (High EPSS share)" earlier={dashboard.comparison.earlier.epssHighShare} recent={dashboard.comparison.recent.epssHighShare} suffix="%" changeMode="points" />
               <p className="panel-note">{dashboard.comparison.note}</p>
             </article>
 
@@ -333,14 +358,20 @@ export default function Home() {
               <span>CVEs published in the past 12 months</span>
             </div>
             <div className="cwe-list">
-              {dashboard.topCwes.map((item, index) => (
-                <div className="cwe-row" key={item.cwe}>
-                  <span>{String(index + 1).padStart(2, "0")}</span>
-                  <strong>{item.cwe}</strong>
-                  <div><i style={{ "--bar": `${(item.count / maxCwe) * 100}%` } as CSSProperties} /></div>
-                  <em>{number(item.count)}</em>
-                </div>
-              ))}
+              {dashboard.topCwes.map((item, index) => {
+                const change = item.change ?? 0;
+                const changeText = change > 0 ? `+${number(change)}` : change < 0 ? `−${number(Math.abs(change))}` : "0";
+                const changeClass = change > 0 ? "cwe-change--up" : change < 0 ? "cwe-change--down" : "cwe-change--flat";
+                return (
+                  <div className="cwe-row" key={item.cwe}>
+                    <span>{String(index + 1).padStart(2, "0")}</span>
+                    <strong>{item.cwe}</strong>
+                    <div><i style={{ "--bar": `${(item.count / maxCwe) * 100}%` } as CSSProperties} /></div>
+                    <em className="cwe-count">{number(item.count)}</em>
+                    <span className={`cwe-change ${changeClass}`} title="Change vs prior 12 months">{changeText}</span>
+                  </div>
+                );
+              })}
             </div>
           </article>
         </section>
@@ -365,7 +396,7 @@ export default function Home() {
                       <td data-label="Added">{dateLabel(item.dateAdded, true)}</td>
                       <td data-label="Vulnerability"><a href={`https://www.cve.org/CVERecord?id=${item.cveId}`}>{item.cveId}</a><span>{item.name}</span></td>
                       <td data-label="Asset"><strong>{item.vendor}</strong><span>{item.product}</span></td>
-                      <td data-label="Severity"><span className={`severity-badge severity-badge--${item.severity.toLowerCase()}`}>{item.severity === "UNKNOWN" ? "Unscored" : `${item.severity}${item.score ? ` ${item.score}` : ""}`}</span></td>
+                      <td data-label="Severity"><span className={`severity-badge severity-badge--${item.severity.toLowerCase()}`}>{item.severity === "UNKNOWN" ? "Unscored" : `${item.severity}${item.score ? ` ${item.score}` : ""}${item.cvssVersion ? ` (${item.cvssVersion.toLowerCase()})` : ""}`}</span></td>
                       <td data-label="Signals"><div className="signal-list"><span className="signal signal--active">Known exploited</span>{item.ransomware === "Known" ? <span className="signal signal--ransomware">Ransomware</span> : null}{item.publicExploitReference ? <span className="signal">Exploit ref</span> : null}</div></td>
                       <td data-label="Due">{dateLabel(item.dueDate, true)}</td>
                     </tr>
