@@ -3,7 +3,27 @@
 [![Refresh vulnerability data](https://github.com/llody9977/vulnsignal/actions/workflows/data-refresh.yml/badge.svg)](https://github.com/llody9977/vulnsignal/actions/workflows/data-refresh.yml)
 [![Deploy dashboard](https://github.com/llody9977/vulnsignal/actions/workflows/pages.yml/badge.svg)](https://github.com/llody9977/vulnsignal/actions/workflows/pages.yml)
 
-VulnSignal is a personal dashboard created for understanding vulnerability trends, tracking monthly CVE publications, CVSS severity, CVEs with public exploit references, CISA Known Exploited Vulnerabilities (KEV) additions, and documented LLM-assisted disclosures. It supports year, month, and year-on-year views on a unified monthly timeline.
+## Problem Statement
+Vulnerability data from NVD, CISA, and FIRST (EPSS) is highly fragmented and prone to severe measurement artifacts. For example:
+1. **Enrichment Lag**: NVD's delay in tagging exploit references makes recent months look like exploitation is dropping, when in reality, NVD just hasn't processed the tags yet.
+2. **Immature Denominators**: Calculating how many CVEs enter CISA KEV within 90 days across a pool of brand-new CVEs yields a deceptively low percentage because most of those CVEs haven't had 90 days to exist yet.
+
+This fragmentation and noise make it difficult to identify genuine macro vulnerability trends.
+
+## Why this Dashboard was Created
+VulnSignal is a personal dashboard created to build a clean, consolidated, and analytically honest timeline of vulnerability trends. It solves the feed issues by:
+* Evaluating exploit reference percentages only over a **matured 180-day cohort**.
+* Restricting KEV timing metrics to matured periods.
+* Unifying CVE publication, severity, exploitation indicators, and curated LLM coordinate disclosure events on a single timeline.
+
+## What it Provides
+* **A unified monthly timeline** tracking CVE counts, severity distribution, exploit-reference shares (matured), CISA KEV listings, and LLM coordinate disclosure events.
+* **Matured operational risk metrics**, including ransomware KEV additions, median remediation due windows, listed age, and high-EPSS items missing from KEV.
+* **12-month CWE trends** comparing current top weaknesses against the prior year's distribution.
+
+## What it is NOT for
+* **Real-time Alerting**: It is not a real-time security advisory feed. Recent months are marked as `enriching` and filtered to prevent lag artifacts from distorting trends.
+* **Exhaustive LLM Discovery Metrics**: It is not a tool to measure the total volume of LLM-assisted vulnerability discoveries; it merely documents a lower bound based on coordinate disclosure programs.
 
 **Live dashboard:** [llody9977.github.io/vulnsignal](https://llody9977.github.io/vulnsignal/)
 
