@@ -321,6 +321,20 @@ main {
   text-transform: uppercase;
 }
 
+.telemetry-badge {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 6px;
+  padding: 1px 4px;
+  font-size: 9px;
+  background: var(--critical);
+  color: var(--surface);
+  border-radius: 3px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
 .source-snapshot time {
   color: var(--muted);
   display: flex;
@@ -1355,7 +1369,30 @@ main {
   align-items: center;
   display: grid;
   gap: 12px;
-  grid-template-columns: 24px 90px minmax(80px, 1fr) 50px;
+  grid-template-columns: 24px 90px minmax(80px, 1fr) 50px 48px;
+}
+
+.cwe-change {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 10px;
+  font-weight: 700;
+  text-align: right;
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.cwe-change--up {
+  color: var(--critical);
+  background: rgba(159, 18, 57, 0.08);
+}
+
+.cwe-change--down {
+  color: var(--teal);
+  background: rgba(13, 148, 136, 0.08);
+}
+
+.cwe-change--flat {
+  color: var(--muted);
 }
 
 .cwe-row > span,
@@ -1634,7 +1671,7 @@ footer a { color: var(--accent-on-dark); }
   .operational-matrix article { min-height: 210px; padding: 14px; }
   .operational-matrix article > strong { font-size: 31px; }
   .era-labels { grid-template-columns: 1fr; }
-  .cwe-row { gap: 7px; grid-template-columns: 18px 72px minmax(60px, 1fr) 38px; }
+  .cwe-row { gap: 7px; grid-template-columns: 18px 72px minmax(60px, 1fr) 38px 36px; }
   .kev-table-card .panel-heading { padding: 19px; }
   .kev-table, .kev-table thead, .kev-table tbody, .kev-table tr, .kev-table th, .kev-table td { display: block; }
   .kev-table thead { display: none; }

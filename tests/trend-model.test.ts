@@ -66,6 +66,8 @@ test("year comparisons align the intersection when an interior month is missing"
     publicExploitReferences: 0,
     kevAdded: 0,
     partial: false,
+    enriching: false,
+    epssHigh: 0,
   });
   const matched = matchedYearPoints(
     [

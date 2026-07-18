@@ -11,6 +11,8 @@ export type MonthPoint = {
   publicExploitReferences: number;
   kevAdded: number;
   partial: boolean;
+  enriching: boolean;
+  epssHigh: number;
 };
 
 export type LlmEvidenceEvent = {
@@ -45,6 +47,8 @@ export type PeriodSummary = {
   monthlyAverage: number;
   peakMonth: MonthPoint | null;
   momentum: number | null;
+  epssHigh: number;
+  epssHighShare: number | null;
 };
 
 export function percentage(numerator: number, denominator: number) {
@@ -159,6 +163,7 @@ export function summarizePeriod(
       summary.unknown += point.unknown;
       summary.publicExploitReferences += point.publicExploitReferences;
       summary.kevAdded += point.kevAdded;
+      summary.epssHigh += point.epssHigh;
       return summary;
     },
     {
@@ -171,6 +176,7 @@ export function summarizePeriod(
       unknown: 0,
       publicExploitReferences: 0,
       kevAdded: 0,
+      epssHigh: 0,
     },
   );
   const scored =
@@ -195,21 +201,31 @@ export function summarizePeriod(
       priorThree.length
     : 0;
 
+  const exploitSelected = points.filter((p) => !p.enriching);
+  const useMatured = exploitSelected.length > 0;
+  const exploitPublished = useMatured
+    ? exploitSelected.reduce((sum, p) => sum + p.published, 0)
+    : totals.published;
+  const exploitRefs = useMatured
+    ? exploitSelected.reduce((sum, p) => sum + p.publicExploitReferences, 0)
+    : totals.publicExploitReferences;
+
+  const publicExploitShare = percentage(exploitRefs, exploitPublished);
+  const epssHighShare = percentage(totals.epssHigh, totals.published);
+
   return {
     ...totals,
     scored,
     criticalHigh,
     criticalHighShare: percentage(criticalHigh, scored),
     severityCoverage: percentage(scored, totals.published),
-    publicExploitShare: percentage(
-      totals.publicExploitReferences,
-      totals.published,
-    ),
+    publicExploitShare,
     llmEvidence,
     monthlyAverage: points.length
       ? Math.round((totals.published / points.length) * 10) / 10
       : 0,
     peakMonth,
     momentum: priorAverage ? change(lastAverage, priorAverage) : null,
+    epssHighShare,
   };
 }

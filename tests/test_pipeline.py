@@ -94,6 +94,7 @@ class PipelineUnitTests(unittest.TestCase):
         kev = {"CVE-2024-1": {"dateAdded": "2024-02-15"}}
         metrics = metric_window(
             records,
+            {r.cve_id: r for r in records},
             kev,
             dt.date(2024, 1, 1),
             dt.date(2024, 12, 31),
@@ -152,18 +153,20 @@ class PipelineUnitTests(unittest.TestCase):
                     validate_kev_payload(payload)
 
     def test_window_reconciliation_rejects_a_wrong_kev_rate(self):
+        records = [
+            Vulnerability(
+                "CVE-2024-1",
+                dt.date(2024, 1, 1),
+                "HIGH",
+                8.0,
+                "3.1",
+                False,
+                (),
+            )
+        ]
         metrics = metric_window(
-            [
-                Vulnerability(
-                    "CVE-2024-1",
-                    dt.date(2024, 1, 1),
-                    "HIGH",
-                    8.0,
-                    "3.1",
-                    False,
-                    (),
-                )
-            ],
+            records,
+            {r.cve_id: r for r in records},
             {"CVE-2024-1": {"dateAdded": "2024-02-01"}},
             dt.date(2024, 1, 1),
             dt.date(2024, 12, 31),
@@ -188,6 +191,7 @@ class PipelineUnitTests(unittest.TestCase):
         ]
         metrics = metric_window(
             records,
+            {r.cve_id: r for r in records},
             {"CVE-2024-8": {"dateAdded": "2025-01-01"}},
             dt.date(2024, 1, 1),
             dt.date(2024, 1, 31),
@@ -199,31 +203,34 @@ class PipelineUnitTests(unittest.TestCase):
 
     def test_aggregate_excludes_future_kev_from_counts_and_recent_list(self):
         cutoff = dt.datetime(2026, 7, 17, 12, tzinfo=dt.timezone.utc)
-        payload = aggregate(
-            {},
-            {
-                "count": 2,
-                "dateReleased": "2026-07-19T00:00:00Z",
-                "vulnerabilities": [
-                    {
-                        "cveID": "CVE-2026-1000",
-                        "dateAdded": "2026-06-15",
-                        "dueDate": "2026-07-01",
-                    },
-                    {
-                        "cveID": "CVE-2026-9999",
-                        "dateAdded": "2026-07-18",
-                        "dueDate": "2026-08-01",
-                    },
-                ]
-            },
-            [],
-            {"records": [], "programReports": []},
-            {"cve_records": [], "headline": {}},
-            cutoff,
-            2020,
-            [],
-        )
+        with tempfile.NamedTemporaryFile() as temp_epss:
+            epss_path = pathlib.Path(temp_epss.name)
+            payload = aggregate(
+                {},
+                {
+                    "count": 2,
+                    "dateReleased": "2026-07-19T00:00:00Z",
+                    "vulnerabilities": [
+                        {
+                            "cveID": "CVE-2026-1000",
+                            "dateAdded": "2026-06-15",
+                            "dueDate": "2026-07-01",
+                        },
+                        {
+                            "cveID": "CVE-2026-9999",
+                            "dateAdded": "2026-07-18",
+                            "dueDate": "2026-08-01",
+                        },
+                    ]
+                },
+                [],
+                {"records": [], "programReports": []},
+                {"cve_records": [], "headline": {}},
+                cutoff,
+                2020,
+                [],
+                epss_path,
+            )
         june = next(item for item in payload["monthly"] if item["month"] == "2026-06")
         july = next(item for item in payload["monthly"] if item["month"] == "2026-07")
         self.assertEqual(payload["sources"]["kev"]["count"], 2)
@@ -249,6 +256,7 @@ class PipelineUnitTests(unittest.TestCase):
         ]
         metrics = metric_window(
             records,
+            {r.cve_id: r for r in records},
             {"CVE-2024-9": {"dateAdded": "2024-01-20"}},
             dt.date(2024, 1, 1),
             dt.date(2024, 12, 31),
