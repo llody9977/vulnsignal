@@ -40,16 +40,20 @@ test("complete periods exclude the partial month and retain full historical year
 });
 
 test("year comparisons stop both series at the same complete month", () => {
+  const latestYear = Number(latestCompleteMonth.slice(0, 4));
+  const previousYear = latestYear - 1;
+  const latestMonthNumber = Number(latestCompleteMonth.slice(5, 7));
+  const monthSuffix = latestCompleteMonth.slice(5, 7);
   const matched = matchedYearPoints(
     dashboard.monthly,
-    2025,
-    2026,
+    previousYear,
+    latestYear,
     latestCompleteMonth,
   );
-  assert.equal(matched.monthCap, 6);
+  assert.equal(matched.monthCap, latestMonthNumber);
   assert.equal(matched.first.length, matched.second.length);
-  assert.equal(matched.first.at(-1)?.month, "2025-06");
-  assert.equal(matched.second.at(-1)?.month, "2026-06");
+  assert.equal(matched.first.at(-1)?.month, `${previousYear}-${monthSuffix}`);
+  assert.equal(matched.second.at(-1)?.month, latestCompleteMonth);
 });
 
 test("year comparisons align the intersection when an interior month is missing", () => {
@@ -107,6 +111,51 @@ test("month focus keeps six-month momentum context inside its trailing window", 
   assert.equal(rolling[0].month, "2025-07");
   assert.equal(rolling.at(-1)?.month, "2026-06");
   assert.notEqual(summarizePeriod(rolling, dashboard.llmDiscovery.events).momentum, null);
+});
+
+test("exploit-reference share never falls back to an enriching cohort", () => {
+  const point = (
+    month: string,
+    published: number,
+    publicExploitReferences: number,
+    enriching: boolean,
+  ): MonthPoint => ({
+    month,
+    published,
+    critical: 0,
+    high: 0,
+    medium: 0,
+    low: 0,
+    none: 0,
+    unknown: published,
+    severityCoverage: 0,
+    publicExploitReferences,
+    kevAdded: 0,
+    partial: false,
+    enriching,
+    epssHigh: 0,
+  });
+
+  const enrichingOnly = summarizePeriod(
+    [point("2026-06", 100, 5, true)],
+    [],
+  );
+  assert.equal(enrichingOnly.publicExploitShare, null);
+  assert.equal(enrichingOnly.publicExploitMatureMonths, 0);
+  assert.equal(enrichingOnly.publicExploitEnrichingMonths, 1);
+
+  const mixed = summarizePeriod(
+    [
+      point("2025-12", 100, 20, false),
+      point("2026-01", 200, 2, true),
+    ],
+    [],
+  );
+  assert.equal(mixed.publicExploitShare, 20);
+  assert.equal(mixed.publicExploitMatureReferences, 20);
+  assert.equal(mixed.publicExploitMaturePublished, 100);
+  assert.equal(mixed.publicExploitMatureMonths, 1);
+  assert.equal(mixed.publicExploitEnrichingMonths, 1);
 });
 
 test("LLM evidence uses the largest monthly lower bound and never sums programs", () => {

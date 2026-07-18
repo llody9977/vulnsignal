@@ -42,6 +42,10 @@ export type PeriodSummary = {
   severityCoverage: number | null;
   publicExploitReferences: number;
   publicExploitShare: number | null;
+  publicExploitMatureReferences: number;
+  publicExploitMaturePublished: number;
+  publicExploitMatureMonths: number;
+  publicExploitEnrichingMonths: number;
   kevAdded: number;
   llmEvidence: number;
   monthlyAverage: number;
@@ -201,16 +205,22 @@ export function summarizePeriod(
       priorThree.length
     : 0;
 
-  const exploitSelected = points.filter((p) => !p.enriching);
-  const useMatured = exploitSelected.length > 0;
-  const exploitPublished = useMatured
-    ? exploitSelected.reduce((sum, p) => sum + p.published, 0)
-    : totals.published;
-  const exploitRefs = useMatured
-    ? exploitSelected.reduce((sum, p) => sum + p.publicExploitReferences, 0)
-    : totals.publicExploitReferences;
+  const exploitSelected = points.filter((point) => !point.enriching);
+  const exploitPublished = exploitSelected.reduce(
+    (sum, point) => sum + point.published,
+    0,
+  );
+  const exploitRefs = exploitSelected.reduce(
+    (sum, point) => sum + point.publicExploitReferences,
+    0,
+  );
 
-  const publicExploitShare = percentage(exploitRefs, exploitPublished);
+  // NVD adds exploit-reference tags as records mature. Never substitute recent
+  // cohorts when a selected period has no mature month; that would turn an
+  // enrichment lag into an apparent downward trend.
+  const publicExploitShare = exploitSelected.length
+    ? percentage(exploitRefs, exploitPublished)
+    : null;
   const epssHighShare = percentage(totals.epssHigh, totals.published);
 
   return {
@@ -220,6 +230,10 @@ export function summarizePeriod(
     criticalHighShare: percentage(criticalHigh, scored),
     severityCoverage: percentage(scored, totals.published),
     publicExploitShare,
+    publicExploitMatureReferences: exploitRefs,
+    publicExploitMaturePublished: exploitPublished,
+    publicExploitMatureMonths: exploitSelected.length,
+    publicExploitEnrichingMonths: points.length - exploitSelected.length,
     llmEvidence,
     monthlyAverage: points.length
       ? Math.round((totals.published / points.length) * 10) / 10

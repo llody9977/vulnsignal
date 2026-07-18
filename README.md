@@ -3,130 +3,100 @@
 [![Refresh vulnerability data](https://github.com/llody9977/vulnsignal/actions/workflows/data-refresh.yml/badge.svg)](https://github.com/llody9977/vulnsignal/actions/workflows/data-refresh.yml)
 [![Deploy dashboard](https://github.com/llody9977/vulnsignal/actions/workflows/pages.yml/badge.svg)](https://github.com/llody9977/vulnsignal/actions/workflows/pages.yml)
 
-## Problem Statement
-Vulnerability data from NVD, CISA, and FIRST (EPSS) is highly fragmented and prone to severe measurement artifacts. For example:
-1. **Enrichment Lag**: NVD's delay in tagging exploit references makes recent months look like exploitation is dropping, when in reality, NVD just hasn't processed the tags yet.
-2. **Immature Denominators**: Calculating how many CVEs enter CISA KEV within 90 days across a pool of brand-new CVEs yields a deceptively low percentage because most of those CVEs haven't had 90 days to exist yet.
-
-This fragmentation and noise make it difficult to identify genuine macro vulnerability trends.
-
-## Why this Dashboard was Created
-VulnSignal is a personal dashboard created to build a clean, consolidated, and analytically honest timeline of vulnerability trends. It solves the feed issues by:
-* Evaluating exploit reference percentages only over a **matured 180-day cohort**.
-* Restricting KEV timing metrics to matured periods.
-* Unifying CVE publication, severity, exploitation indicators, and curated LLM coordinate disclosure events on a single timeline.
-
-## What it Provides
-* **A unified monthly timeline** tracking CVE counts, severity distribution, exploit-reference shares (matured), CISA KEV listings, and LLM coordinate disclosure events.
-* **Matured operational risk metrics**, including ransomware KEV additions, median remediation due windows, listed age, and high-EPSS items missing from KEV.
-* **12-month CWE trends** comparing current top weaknesses against the prior year's distribution.
-
-## What it is NOT for
-* **Real-time Alerting**: It is not a real-time security advisory feed. Recent months are marked as `enriching` and filtered to prevent lag artifacts from distorting trends.
-* **Exhaustive LLM Discovery Metrics**: It is not a tool to measure the total volume of LLM-assisted vulnerability discoveries; it merely documents a lower bound based on coordinate disclosure programs.
+I built VulnSignal as a personal project to examine trends in published vulnerability records, CISA KEV additions, public exploit-reference signals and selected LLM-assisted disclosure reports.
 
 **Live dashboard:** [llody9977.github.io/vulnsignal](https://llody9977.github.io/vulnsignal/)
 
-## What the dashboard reports
+[![VulnSignal — CVE, KEV and LLM disclosures on one timeline](public/og.png)](https://llody9977.github.io/vulnsignal/)
 
-- Year, month and aligned year-on-year report modes.
-- A unified CVE, KEV, exploit-reference and documented LLM disclosure chart.
-- Critical, high, medium, low, and unscored monthly severity lines.
-- An exact-value signal matrix aligned to the chart months.
-- Filtered publication volume, severity, exploit, KEV, coverage, peak, and momentum indicators.
-- The share of mature CVEs added to KEV and the time from NVD publication to
-  CISA listing.
-- Two adjacent 36-month periods showing how publication, severity, exploit and
-  KEV indicators changed over time.
-- A documented lower bound for LLM-assisted CVEs and the number of public CVE
-  IDs in the first-party source.
-- A snapshot ID, an input fingerprint and the update, release or review date
-  recorded for each source.
-- Severity coverage, leading CWEs and recently added KEVs.
+## What it shows
 
-## Data provenance
+- Year, month and aligned year-on-year views of CVEs published by NVD.
+- Monthly CVSS severity, CISA KEV additions, NVD exploit-tagged references and CVEs above a project-defined EPSS threshold.
+- Exact monthly values alongside the chart, including separate CVSS `NONE` and unscored records.
+- Source dates, a snapshot ID and content fingerprints for the inputs used to build each release.
+- Median and 75th-percentile time to KEV for an explicitly stated mature cohort.
+- Ransomware use, remediation due windows and the age of KEV additions over the latest 12 complete months.
+- Trailing-12-month CWE shares compared with the previous 12 months.
+- First-party LLM-assisted disclosure events shown as separate reported minimums, not a combined discovery total.
 
-VulnSignal downloads data directly from official and first-party public
-sources. Downloaded archives are kept in `.cache/`; only the aggregate
-dashboard dataset is stored in the repository.
+## Why I built it
+
+The upstream sources answer different questions and mature at different speeds. NVD publication volume measures published records rather than the underlying incidence of vulnerable software. Recent exploit-reference counts can also appear lower while NVD continues enriching those records. Changes in CNA participation and reporting processes may increase publication counts even when the underlying security environment has not changed at the same rate.
+
+VulnSignal brings these signals together while reducing known measurement artefacts:
+
+- Recent exploit-reference months remain visible but are marked as enriching. Comparisons are withheld until the selected periods contain mature data.
+- KEV timing is calculated only for CVEs with a complete observation period.
+- KEV-addition measures use their own latest-12-month window rather than borrowing the CVE maturity cohort.
+- LLM programme claims remain separate because the disclosed sets may overlap and the public sources do not support reliable deduplication.
+
+## Scope and limitations
+
+VulnSignal is a daily analytical snapshot, not a real-time advisory or patch-prioritisation feed. Publication growth does not necessarily mean that software is becoming vulnerable at the same rate, and an NVD reference tagged `Exploit` does not prove that linked code works.
+
+CVE, NVD and KEV do not reliably record how a vulnerability was discovered. The LLM timeline therefore contains only reviewed first-party programme reports or public CVE-ID releases. A blank month means that the registry has no recorded disclosure event; it does not mean zero LLM-assisted discoveries. Programme counts are never added together unless overlaps can be removed reliably.
+
+The optional `--as-of` value is a report cutoff, not a complete historical archive. It excludes later NVD publications and KEV events, while source freshness, NVD severity, CWE, exploit-reference and current EPSS fields still reflect the downloaded source snapshots. The dataset build time remains the actual time when the report was generated.
+
+## Data sources and freshness
+
+VulnSignal downloads directly from official and first-party public sources. Downloaded source archives are cached for validation and repeatable processing; the aggregate generated from them is committed as `data/dashboard.json`.
 
 | Source | Dashboard use | Official endpoint |
 | --- | --- | --- |
-| CVE Program, CVE List V5 | CVE source freshness and records changed during the last 24 hours | [CVE List downloads](https://www.cve.org/Downloads) and [CVEProject/cvelistV5](https://github.com/CVEProject/cvelistV5) |
-| NIST National Vulnerability Database | Published CVEs, CVSS severity, CWE, and references tagged as exploits | [NVD JSON 2.0 data feeds](https://nvd.nist.gov/vuln/data-feeds) |
-| CISA Known Exploited Vulnerabilities | Known-exploited membership, catalog additions, remediation due dates, and ransomware-use labels | [CISA KEV catalog](https://www.cisa.gov/known-exploited-vulnerabilities-catalog) and its [JSON feed](https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json) |
-| Anthropic coordinated disclosure | First-party machine-readable CVE counts and public CVE identifiers for Claude Mythos Preview findings | [Anthropic CVD payload](https://red.anthropic.com/2026/cvd/data/payload.json) |
-| Curated LLM evidence registry | Reviewed first-party programme claims and public CVE-ID evidence, including OpenAI Aardvark | [`data/llm-discovery-evidence.json`](data/llm-discovery-evidence.json) |
+| CVE Program, CVE List V5 | Source freshness and records changed during the previous 24 hours | [CVE List downloads](https://www.cve.org/Downloads) and [CVEProject/cvelistV5](https://github.com/CVEProject/cvelistV5) |
+| NIST National Vulnerability Database | Published CVEs, CVSS severity, CWE and references tagged as exploits | [NVD JSON 2.0 data feeds](https://nvd.nist.gov/vuln/data-feeds) |
+| CISA Known Exploited Vulnerabilities | Known-exploited membership, catalogue additions, remediation due dates and ransomware-use labels | [CISA KEV catalogue](https://www.cisa.gov/known-exploited-vulnerabilities-catalog) and [JSON feed](https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json) |
+| FIRST EPSS | Current exploitation-probability scores joined to published CVEs | [FIRST EPSS data and statistics](https://www.first.org/epss/data_stats) and [current CSV feed](https://epss.empiricalsecurity.com/epss_scores-current.csv.gz) |
+| Anthropic coordinated disclosure | Machine-readable programme minimum and public CVE identifiers for Claude Mythos Preview findings | [Anthropic CVD payload](https://red.anthropic.com/2026/cvd/data/payload.json) |
+| Curated LLM evidence register | Reviewed first-party programme claims, including OpenAI Aardvark | [`data/llm-discovery-evidence.json`](data/llm-discovery-evidence.json) |
 
-This product uses data from the NVD API but is not endorsed or certified by
-the NVD. NVD content can change as records are enriched or reassessed.
+The page distinguishes the dashboard build time from upstream source dates. For EPSS, it records the model version and `score_date` from the downloaded feed. The refresh rejects stale or structurally invalid EPSS data rather than labelling the dashboard build time as the EPSS update time.
 
-### Accuracy and freshness
+Every NVD yearly feed is checked against the SHA-256 value in its official META file. The pipeline calculates content fingerprints for the CVE List delta, CISA KEV, FIRST EPSS, Anthropic payload and curated LLM register. A fingerprint identifies the exact input used; it is not independent proof that an upstream source is complete or free from later revisions.
 
-The dashboard shows real source data, but it is a daily snapshot rather than a
-real-time feed. The snapshot ID on the page shows when the aggregate was
-built. The source cards distinguish feed updates, a catalogue release, the
-Anthropic payload date and the date when the curated LLM register was reviewed.
+This product uses data from NVD but is not endorsed or certified by NVD.
 
-Publication volume, severity, CWE and exploit-reference figures are based on
-active NVD records. The CVE List V5 delta log is used separately for CVE source
-activity and freshness. This distinction is shown in the dashboard because the
-two sources have different roles.
-
-The pipeline verifies every NVD yearly feed against the SHA-256 value in its
-official META file. For the CVE List delta, CISA KEV, Anthropic payload and the
-curated LLM register, it records locally calculated snapshot fingerprints.
-Those fingerprints identify the exact content used; they are not independent
-proof that an upstream file is complete or correct, and upstream records may
-be revised later.
-
-The optional `--as-of` value is a report cutoff, not a complete historical
-archive. It excludes CVE delta and KEV events after the cutoff, while NVD
-severity, CWE and reference fields still reflect the downloaded NVD snapshot.
-
-`app/page.tsx` imports `data/dashboard.json` directly. The daily refresh
-workflow rebuilds and validates this file, commits it when the source data has
-changed, and its successful completion triggers a new GitHub Pages build. If
-an upstream download or validation fails, the existing page remains on the
-last successful snapshot and its snapshot ID remains visible.
-
-## Interpreting the metrics
+## How to interpret the metrics
 
 | Metric | Meaning and limitation |
 | --- | --- |
-| Published CVEs | Active NVD records grouped by their publication month; rejected records are excluded. |
-| Severity | Primary assessments are preferred over secondary assessments. Within that class, versions are checked in order: CVSS v4.0, v3.1, v3.0, then v2. Scores are not maximized. |
-| Public exploit reference | The NVD record has a reference tagged `Exploit`. This is a useful public-availability signal, not proof that exploit code works or affects every configuration. |
-| KEV | CISA has placed the CVE in its Known Exploited Vulnerabilities catalog. This is distinct from an exploit-tagged reference. |
-| Added to KEV within 90 days | The CVE was added to the KEV catalog within 90 days of its NVD publication timestamp. This is listing timing, not the unknown date exploitation began. Recent CVEs without a complete 90-day observation period are excluded from the denominator. If a KEV listing predates the NVD publication date, it is counted as zero days and reported as a source-timing exception. |
-| Time to KEV | Median and 75th percentile days are calculated only for KEV-matched records in the stated mature cohort. The dashboard shows this sample size. |
-| Common CWE classes | Each CVE is counted once for every distinct valid CWE assigned in NVD. A CVE with more than one CWE can therefore contribute to more than one class. |
-| Earlier versus recent comparison | Two adjacent 36-month periods ending at the latest complete month. This is a rolling comparison of publication and cataloguing trends, not a measure of how many vulnerabilities were found by LLMs. |
-| LLM evidence timeline | Sparse first-party programme report or public-CVE-ID reveal events. These are evidence publication dates, not vulnerability discovery dates, and programme totals are never summed. |
+| Published CVEs | Active NVD records grouped by publication month; rejected records are excluded. This measures publication activity, not vulnerability incidence. |
+| Severity | Primary assessments are preferred over secondary assessments. Within that class, versions are checked in order: CVSS v4.0, v3.1, v3.0, then v2. Scores are not maximised. CVSS `NONE` (0.0) is kept separate from records without a score. |
+| Public exploit reference | The NVD record has a reference tagged `Exploit`. Raw recent counts remain visible and marked as enriching; comparisons are withheld when either selected period lacks mature data. |
+| KEV | CISA has placed the CVE in its Known Exploited Vulnerabilities catalogue. This confirms known exploitation and is distinct from an NVD exploit-tagged reference. |
+| Time to KEV | Median and 75th-percentile days from NVD publication to CISA listing, calculated for KEV-matched records in the displayed mature cohort. Listings that predate NVD publication count as zero days and remain visible as source-timing exceptions. |
+| EPSS ≥ 0.1 | A project-defined threshold applied to the current FIRST EPSS snapshot. Monthly and 36-month groups use each CVE's NVD publication month, so they are not historical EPSS scores as they stood in those months. |
+| Common CWE classes | Each CVE contributes once to every distinct valid CWE assigned in NVD. The dashboard compares shares of published CVEs, because raw counts are affected by changes in total publication volume. |
+| Earlier versus recent | Two adjacent 36-month publication periods ending at the latest complete month. This compares publication, severity, matured exploit-reference and current-snapshot EPSS signals; it does not measure an LLM discovery rate. |
+| LLM evidence | Sparse first-party programme report or public-CVE-ID release events. Dates are disclosure dates rather than discovery dates, and programme totals are not summed. |
 
-> [!IMPORTANT]
-> CVE, NVD and KEV do not reliably record how a vulnerability was discovered.
-> VulnSignal therefore shows an LLM-assisted count only when a first-party
-> source states it. Counts from different programmes remain separate unless
-> overlaps can be removed reliably. The registry is curated, not exhaustive; a
-> blank month means no disclosure event is recorded, not zero LLM-assisted
-> discoveries.
-
-## Data flow
+## Data pipeline
 
 ```mermaid
 flowchart LR
   CVE["CVE List V5 delta log"] --> Sync["Python aggregation and validation"]
   NVD["NVD JSON 2.0 feeds"] --> Sync
   KEV["CISA KEV JSON"] --> Sync
+  EPSS["FIRST EPSS daily CSV"] --> Sync
   Evidence["Curated LLM evidence"] --> Sync
   Anthropic["Anthropic CVD payload"] --> Sync
   Sync --> Dataset["data/dashboard.json"]
-  Dataset --> App["Next.js static dashboard"]
+  Dataset --> App["Static dashboard"]
   App --> Pages["GitHub Pages"]
 ```
 
-## Run locally
+`app/page.tsx` imports the generated dataset directly. The daily workflow downloads and validates the inputs, runs the complete test suite and produces the GitHub Pages export. It commits `data/dashboard.json` only when the validated generated output differs. The Pages workflow also checks the current clock and refuses to deploy a dashboard, CVE List, NVD or EPSS snapshot beyond its freshness limit. If a download, freshness check or reconciliation fails, the last successful snapshot remains published.
+
+## GitHub automation
+
+- `Refresh vulnerability data` runs daily at 09:17 UTC (17:17 SGT) and can also be started manually. It refreshes CVE, NVD, CISA KEV, FIRST EPSS and first-party LLM evidence before validating the aggregate.
+- `Deploy VulnSignal to GitHub Pages` runs for pushes to `main`, manual runs and successful data-refresh runs. The successful-refresh trigger is necessary because a commit made with the workflow token does not start another workflow automatically.
+
+All third-party GitHub Actions are pinned to full commit SHAs.
+
+## Development
 
 Requirements:
 
@@ -138,8 +108,7 @@ npm ci
 npm run dev
 ```
 
-The repository includes a generated dataset, so the dashboard can start
-without downloading the upstream feeds. To refresh it locally:
+The committed dataset lets the dashboard start without downloading the upstream feeds. The first full refresh downloads the yearly NVD archives and can take 30 minutes or more. Later runs reuse verified cached inputs where appropriate.
 
 ```bash
 npm run data:sync
@@ -147,54 +116,38 @@ npm run evidence:check
 npm run data:check
 ```
 
-The first refresh downloads the annual NVD archives and can take 30 minutes or
-more, depending on download speed and source availability. Later runs consult NVD
-metadata and reuse `.cache/` where possible.
-To include publication data before 2019, pass an earlier starting year:
+To include publication data before 2019:
 
 ```bash
 python3 scripts/sync_vulnerability_data.py --from-year 2010
 ```
 
-Useful commands:
-
 | Command | Purpose |
 | --- | --- |
-| `npm run dev` | Start the local dashboard. |
+| `npm run dev` | Start the development dashboard. |
 | `npm run data:sync` | Pull official sources and rebuild `data/dashboard.json`. |
 | `npm run evidence:check` | Validate the curated LLM register against its JSON Schema. |
-| `npm run data:check` | Validate the existing generated dataset without network access. |
+| `npm run data:check` | Validate the generated dataset without network access. |
+| `npm run data:check:freshness` | Apply the deployment-time freshness gates to the generated dataset. |
 | `npm run lint` | Run static checks. |
 | `npm test` | Build the app and run application and pipeline tests. |
 | `npm run check` | Run the full local verification suite. |
 | `npm run build:pages` | Produce the static GitHub Pages site in `out/`. |
 
-## GitHub automation
-
-The repository uses two GitHub Actions workflows:
-
-- `Refresh vulnerability data` runs every day at 09:17 UTC (17:17 SGT) and can
-  also be run manually. It restores a source cache, downloads the official CVE,
-  NVD, CISA and first-party LLM disclosure sources, validates the aggregate,
-  runs the full test suite, builds the Pages export and commits only
-  `data/dashboard.json` when every check passes.
-- `Deploy VulnSignal to GitHub Pages` runs for pushes to `main`, manual runs
-  and successful data-refresh runs. The successful-refresh trigger is required
-  because GitHub does not start another workflow from a commit pushed with the
-  workflow token. The Pages build therefore includes the new dataset only
-  after the refresh checks have passed.
-
-## Project layout
+## Project layout and hosting
 
 ```text
-app/                              Dashboard UI
-data/dashboard.json               Generated aggregate consumed by the UI
-data/llm-discovery-evidence.json  Curated evidence registry
-data/llm-discovery-evidence.schema.json  Registry contract
+app/                                Dashboard UI
+data/dashboard.json                 Generated aggregate consumed by the UI
+data/llm-discovery-evidence.json    Curated evidence register
+data/llm-discovery-evidence.schema.json  Register contract
 scripts/sync_vulnerability_data.py  Source ingestion and aggregation
-tests/                            Application and pipeline tests
-.github/workflows/                Daily refresh and Pages deployment
+tests/                              Application and pipeline tests
+.github/workflows/                  Daily refresh and GitHub Pages deployment
+.openai/hosting.json                Optional Sites preview configuration
+build/ and worker/                  Optional Vinext/Sites runtime support
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) before changing metric definitions or
-source handling. VulnSignal is released under the [MIT License](LICENSE).
+GitHub Pages is the canonical public deployment. The Vinext, Worker and `.openai/hosting.json` files support an optional Sites-compatible preview; they do not replace the GitHub Pages workflow.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) before changing metric definitions or source handling. VulnSignal is released under the [MIT Licence](LICENSE).
