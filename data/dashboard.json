@@ -1,16 +1,16 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-18T13:41:50Z",
+  "generatedAt": "2026-07-18T14:13:18Z",
   "snapshot": {
-    "id": "VS-20260718-1341Z",
-    "generatedAt": "2026-07-18T13:41:50Z",
+    "id": "VS-20260718-1413Z",
+    "generatedAt": "2026-07-18T14:13:18Z",
     "inputCount": 43,
-    "inputFingerprintSha256": "bc904b33a10e91ad1f05883b77702bbe81da85faeb09aaf838a46db6edc1c7ac",
+    "inputFingerprintSha256": "f2dcb7e267ac277333219b104cdad722421f6bec391de62bad279bfb3a4ba216",
     "inputs": [
       {
         "id": "cve-list-delta",
         "kind": "downloaded_snapshot",
-        "sha256": "f04427907d86c59f0f52e70c083de5eaf1387259f0386ea86914590b4f8654bd"
+        "sha256": "af6dba44378c482b2213d5c9288b982e366f3f0ee97b3861089689c5fc496d68"
       },
       {
         "id": "nvd-2002",
@@ -242,11 +242,11 @@
     "cve": {
       "name": "CVE Program · CVE List V5",
       "url": "https://github.com/CVEProject/cvelistV5",
-      "contentFingerprintSha256": "f04427907d86c59f0f52e70c083de5eaf1387259f0386ea86914590b4f8654bd",
-      "latestFetch": "2026-07-18T13:34:13.086000Z",
-      "changedRecords24h": 1052,
-      "newRecords24h": 250,
-      "updatedRecords24h": 896
+      "contentFingerprintSha256": "af6dba44378c482b2213d5c9288b982e366f3f0ee97b3861089689c5fc496d68",
+      "latestFetch": "2026-07-18T14:06:40.502000Z",
+      "changedRecords24h": 1016,
+      "newRecords24h": 234,
+      "updatedRecords24h": 858
     },
     "nvd": {
       "name": "NIST NVD · CVE JSON 2.0 feeds",
@@ -1036,14 +1036,14 @@
     ]
   },
   "changeDigest": {
-    "generatedAt": "2026-07-18T13:41:50Z",
+    "generatedAt": "2026-07-18T14:13:18Z",
     "cve": {
       "period": "last_24_hours",
-      "start": "2026-07-17T13:41:50Z",
-      "end": "2026-07-18T13:41:50Z",
-      "newRecords": 250,
-      "updatedRecords": 896,
-      "distinctChanged": 1052
+      "start": "2026-07-17T14:13:18Z",
+      "end": "2026-07-18T14:13:18Z",
+      "newRecords": 234,
+      "updatedRecords": 858,
+      "distinctChanged": 1016
     },
     "kev": {
       "period": "latest_catalog_date",
