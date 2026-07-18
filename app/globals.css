@@ -327,8 +327,8 @@ main {
   margin-left: 6px;
   padding: 1px 4px;
   font-size: 9px;
-  background: var(--critical);
-  color: var(--surface) !important;
+  background: rgba(159, 18, 57, 0.08);
+  color: var(--critical) !important;
   border-radius: 3px;
   font-weight: 700;
   text-transform: uppercase;
@@ -336,7 +336,7 @@ main {
 }
 
 .source-snapshot span .telemetry-badge {
-  color: var(--surface) !important;
+  color: var(--critical) !important;
 }
 
 .source-snapshot time {
