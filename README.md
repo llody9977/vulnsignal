@@ -167,21 +167,6 @@ The repository uses two GitHub Actions workflows:
   workflow token. The Pages build therefore includes the new dataset only
   after the refresh checks have passed.
 
-## Deploy a fork with GitHub Pages
-
-1. Create an empty GitHub repository.
-2. In **Settings → Pages**, set the build source to **GitHub Actions**.
-3. In **Settings → Actions → General**, allow read and write workflow
-   permissions so the refresh workflow can commit its generated dataset.
-4. Push the fork to `main` so the first Pages deployment starts with the
-   repository already configured.
-5. Run **Refresh vulnerability data** once from the Actions tab, or wait for
-   the daily schedule.
-
-If branch protection blocks direct workflow commits, explicitly allow the
-GitHub Actions bot for this generated-data path or adapt the refresh workflow
-to open a pull request instead.
-
 ## Project layout
 
 ```text
