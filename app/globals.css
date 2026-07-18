@@ -1515,7 +1515,8 @@ main {
   gap: 5px;
 }
 
-.signal { color: var(--muted); }
+.signal { color: var(--muted); text-decoration: none; transition: opacity 0.15s ease; }
+a.signal:hover { opacity: 0.75; text-decoration: none; }
 .signal--active { background: var(--accent-wash); border-color: var(--accent); color: var(--accent-dark); }
 .signal--ransomware { background: var(--critical); border-color: var(--critical); color: #fff; }
 
