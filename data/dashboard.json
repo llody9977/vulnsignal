@@ -1,16 +1,16 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-18T01:59:13Z",
+  "generatedAt": "2026-07-18T03:19:27Z",
   "snapshot": {
-    "id": "VS-20260718-0159Z",
-    "generatedAt": "2026-07-18T01:59:13Z",
+    "id": "VS-20260718-0319Z",
+    "generatedAt": "2026-07-18T03:19:27Z",
     "inputCount": 29,
-    "inputFingerprintSha256": "8ebfa561d4dc1600a302842907b049baf1c17dfe254d7eca3de9e5b872804ce0",
+    "inputFingerprintSha256": "ca87b3f8ce59de70b4125eeac2967dce24b5112249110e6cb08ebc8a225b8c8f",
     "inputs": [
       {
         "id": "cve-list-delta",
         "kind": "downloaded_snapshot",
-        "sha256": "d4340f44f3bd543ddf6e47747df9ef2af823a1da6cb3d3eaf85b518aca458311"
+        "sha256": "dc493fbc52cf65d975755623439d1a0011e99714f08b595fc00b8bb6dc7a728d"
       },
       {
         "id": "nvd-2002",
@@ -171,9 +171,9 @@
     "cve": {
       "name": "CVE Program · CVE List V5",
       "url": "https://github.com/CVEProject/cvelistV5",
-      "contentFingerprintSha256": "d4340f44f3bd543ddf6e47747df9ef2af823a1da6cb3d3eaf85b518aca458311",
-      "latestFetch": "2026-07-18T01:19:05.588000Z",
-      "changedRecords24h": 1112
+      "contentFingerprintSha256": "dc493fbc52cf65d975755623439d1a0011e99714f08b595fc00b8bb6dc7a728d",
+      "latestFetch": "2026-07-18T03:12:23.672000Z",
+      "changedRecords24h": 1144
     },
     "nvd": {
       "name": "NIST NVD · CVE JSON 2.0 feeds",
