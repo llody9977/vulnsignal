@@ -3,10 +3,7 @@
 [![Refresh vulnerability data](https://github.com/llody9977/vulnsignal/actions/workflows/data-refresh.yml/badge.svg)](https://github.com/llody9977/vulnsignal/actions/workflows/data-refresh.yml)
 [![Deploy dashboard](https://github.com/llody9977/vulnsignal/actions/workflows/pages.yml/badge.svg)](https://github.com/llody9977/vulnsignal/actions/workflows/pages.yml)
 
-VulnSignal is an open-source dashboard for monthly CVE publications, CVSS
-severity, CVEs with public exploit references, CISA Known Exploited
-Vulnerabilities (KEV) additions and documented LLM-assisted disclosures. It
-supports year, month and year-on-year views on one monthly timeline.
+VulnSignal is a personal dashboard created for understanding vulnerability trends, tracking monthly CVE publications, CVSS severity, CVEs with public exploit references, CISA Known Exploited Vulnerabilities (KEV) additions, and documented LLM-assisted disclosures. It supports year, month, and year-on-year views on a unified monthly timeline.
 
 **Live dashboard:** [llody9977.github.io/vulnsignal](https://llody9977.github.io/vulnsignal/)
 
