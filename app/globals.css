@@ -382,7 +382,7 @@ main {
 
 .section-heading > p {
   margin-bottom: 3px;
-  text-align: right;
+  text-align: left;
 }
 
 .data-state {
