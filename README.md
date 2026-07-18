@@ -171,20 +171,13 @@ The repository uses two GitHub Actions workflows:
 
 ```text
 app/                              Dashboard UI
-build/                            Build scripts for alternative deployments (Vite plugins)
 data/dashboard.json               Generated aggregate consumed by the UI
 data/llm-discovery-evidence.json  Curated evidence registry
 data/llm-discovery-evidence.schema.json  Registry contract
 scripts/sync_vulnerability_data.py  Source ingestion and aggregation
 tests/                            Application and pipeline tests
-worker/                           Cloudflare Worker entry point for alternative hosting
 .github/workflows/                Daily refresh and Pages deployment
-vite.config.ts                    Vite configuration for Cloudflare Worker deployment
-wrangler.toml                     Cloudflare Wrangler deployment config (alternative hosting)
-.openai/                          OpenAI deployment configuration
 ```
-
-*Note on deployment:* While the canonical production site is built and served statically via GitHub Pages using `next build` (configured in `.github/workflows/pages.yml`), the repository also contains dual-deploy scaffolding (`worker/`, `vite.config.ts`, `build/`, and `.openai/`) to support alternative hosting environments (such as Cloudflare Workers or OpenAI GPT hosting).
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) before changing metric definitions or
 source handling. VulnSignal is released under the [MIT License](LICENSE).
