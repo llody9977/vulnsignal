@@ -1,3 +1,4 @@
+import copy
 import datetime as dt
 import gzip
 import hashlib
@@ -9,12 +10,14 @@ from unittest import mock
 
 from scripts.sync_vulnerability_data import (
     EpssFeed,
+    SafeRedirectHandler,
     Vulnerability,
     aggregate,
     build_llm_events,
     cwe_values,
     cvss_details,
     fetch,
+    epss_history_dates,
     has_public_exploit_reference,
     kev_addition_metrics,
     metric_window,
@@ -24,6 +27,7 @@ from scripts.sync_vulnerability_data import (
     require_comparison_coverage,
     read_epss,
     rolling_comparison_windows,
+    select_cwe_analysis_ids,
     source_freshness,
     validate,
     validate_deploy_freshness,
@@ -36,6 +40,10 @@ from scripts.sync_vulnerability_data import (
 
 
 class PipelineUnitTests(unittest.TestCase):
+    def dashboard_payload(self) -> dict:
+        dashboard_path = pathlib.Path(__file__).resolve().parents[1] / "data" / "dashboard.json"
+        return json.loads(dashboard_path.read_text(encoding="utf-8"))
+
     def write_epss_fixture(
         self,
         path: pathlib.Path,
@@ -66,6 +74,7 @@ class PipelineUnitTests(unittest.TestCase):
             )
             self.assertEqual(feed.record_count, 2)
             self.assertEqual(feed.scores["CVE-2021-44228"], 0.99999)
+            self.assertEqual(feed.percentiles["CVE-2021-44228"], 1.0)
 
     def test_epss_parser_rejects_mock_duplicate_and_out_of_range_data(self):
         cases = (
@@ -88,6 +97,36 @@ class PipelineUnitTests(unittest.TestCase):
                     self.write_epss_fixture(path, rows, metadata=metadata)
                     with self.assertRaisesRegex(ValueError, message):
                         read_epss(path, minimum_records=1)
+
+    def test_epss_parser_rejects_bad_percentiles_and_record_overflow(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / "epss.csv.gz"
+            self.write_epss_fixture(path, ["CVE-2026-1000,0.1,1.01"])
+            with self.assertRaisesRegex(ValueError, "percentile is outside"):
+                read_epss(path, minimum_records=1)
+
+            self.write_epss_fixture(
+                path,
+                ["CVE-2026-1000,0.1,0.5", "CVE-2026-1001,0.2,0.6"],
+            )
+            with mock.patch(
+                "scripts.sync_vulnerability_data.MAX_EPSS_RECORDS", 1
+            ):
+                with self.assertRaisesRegex(ValueError, "record-count limit"):
+                    read_epss(path, minimum_records=1)
+
+    def test_epss_parser_enforces_a_true_decompressed_byte_limit(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / "epss.csv.gz"
+            self.write_epss_fixture(path, ["CVE-2026-1000,0.1,0.5"])
+            with mock.patch(
+                "scripts.sync_vulnerability_data.gzip_uncompressed_size",
+                return_value=0,
+            ), mock.patch(
+                "scripts.sync_vulnerability_data.MAX_EPSS_UNCOMPRESSED_BYTES", 16
+            ):
+                with self.assertRaisesRegex(ValueError, "decompressed source"):
+                    read_epss(path, minimum_records=1)
 
     def test_epss_freshness_rejects_stale_and_future_snapshots(self):
         now = dt.datetime(2026, 7, 18, 12, tzinfo=dt.timezone.utc)
@@ -125,8 +164,7 @@ class PipelineUnitTests(unittest.TestCase):
             validate_deploy_freshness(payload, checked_at)
 
     def test_validator_rejects_more_epss_matches_than_feed_records(self):
-        dashboard_path = pathlib.Path(__file__).resolve().parents[1] / "data" / "dashboard.json"
-        payload = json.loads(dashboard_path.read_text(encoding="utf-8"))
+        payload = self.dashboard_payload()
         payload["sources"]["epss"]["recordCount"] = (
             payload["sources"]["epss"]["matchedCveCount"] - 1
         )
@@ -137,6 +175,7 @@ class PipelineUnitTests(unittest.TestCase):
         class Response:
             def __init__(self):
                 self.read_count = 0
+                self.headers = {}
 
             def __enter__(self):
                 return self
@@ -148,25 +187,158 @@ class PipelineUnitTests(unittest.TestCase):
                 self.read_count += 1
                 return b"official-feed" if self.read_count == 1 else b""
 
+            def geturl(self):
+                return "https://example.test/epss.csv.gz"
+
+        class Opener:
+            def open(self, request, timeout):
+                self.request = request
+                self.timeout = timeout
+                return Response()
+
         with tempfile.TemporaryDirectory() as directory:
             destination = pathlib.Path(directory) / "epss.csv.gz"
             destination.write_bytes(b"poisoned-cache")
+            opener = Opener()
             with mock.patch(
-                "scripts.sync_vulnerability_data.urllib.request.urlopen",
-                return_value=Response(),
-            ) as urlopen:
+                "scripts.sync_vulnerability_data.urllib.request.build_opener",
+                return_value=opener,
+            ):
                 fetch(
                     "https://example.test/epss.csv.gz",
                     destination,
                     refresh=True,
                     use_local_mtime_validator=False,
+                    allowed_hosts=frozenset({"example.test"}),
                 )
-            request = urlopen.call_args.args[0]
+            request = opener.request
             self.assertNotIn(
                 "if-modified-since",
                 {key.lower() for key, _value in request.header_items()},
             )
             self.assertEqual(destination.read_bytes(), b"official-feed")
+
+    def test_fetch_rejects_non_https_unapproved_hosts_and_redirects(self):
+        with tempfile.TemporaryDirectory() as directory:
+            destination = pathlib.Path(directory) / "source.json"
+            for url, message in (
+                ("http://www.cisa.gov/source", "must use HTTPS"),
+                ("https://untrusted.example/source", "not allowlisted"),
+                ("https://www.cisa.gov:444/source", "unapproved port"),
+                ("https://user@www.cisa.gov/source", "user information"),
+            ):
+                with self.subTest(url=url):
+                    with self.assertRaisesRegex(ValueError, message):
+                        fetch(url, destination, refresh=True)
+            handler = SafeRedirectHandler(frozenset({"www.cisa.gov"}))
+            with self.assertRaisesRegex(ValueError, "not allowlisted"):
+                handler.redirect_request(
+                    None,
+                    None,
+                    302,
+                    "redirect",
+                    {},
+                    "https://evil.example/payload",
+                )
+
+    def test_fetch_enforces_stream_limit_and_cleans_partial_file(self):
+        class Response:
+            headers = {}
+
+            def __init__(self):
+                self.read_count = 0
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+            def geturl(self):
+                return "https://example.test/source"
+
+            def read(self, _size):
+                self.read_count += 1
+                return b"12345" if self.read_count == 1 else b""
+
+        class Opener:
+            def open(self, _request, timeout):
+                self.timeout = timeout
+                return Response()
+
+        with tempfile.TemporaryDirectory() as directory:
+            destination = pathlib.Path(directory) / "source.json"
+            destination.write_bytes(b"last-good")
+            with mock.patch(
+                "scripts.sync_vulnerability_data.urllib.request.build_opener",
+                return_value=Opener(),
+            ):
+                with self.assertRaisesRegex(ValueError, "4-byte limit"):
+                    fetch(
+                        "https://example.test/source",
+                        destination,
+                        refresh=True,
+                        max_bytes=4,
+                        allowed_hosts=frozenset({"example.test"}),
+                    )
+            self.assertEqual(destination.read_bytes(), b"last-good")
+            self.assertEqual([path.name for path in pathlib.Path(directory).iterdir()], ["source.json"])
+
+    def test_fetch_rejects_oversized_offline_cache_and_replaces_it_without_validator(self):
+        class Response:
+            headers = {}
+
+            def __init__(self):
+                self.read_count = 0
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+            def geturl(self):
+                return "https://example.test/source"
+
+            def read(self, _size):
+                self.read_count += 1
+                return b"ok" if self.read_count == 1 else b""
+
+        class Opener:
+            def open(self, request, timeout):
+                self.request = request
+                self.timeout = timeout
+                return Response()
+
+        with tempfile.TemporaryDirectory() as directory:
+            destination = pathlib.Path(directory) / "source.json"
+            destination.write_bytes(b"oversized")
+            with self.assertRaisesRegex(ValueError, "cached source exceeds"):
+                fetch(
+                    "https://example.test/source",
+                    destination,
+                    refresh=False,
+                    max_bytes=4,
+                    allowed_hosts=frozenset({"example.test"}),
+                )
+
+            opener = Opener()
+            with mock.patch(
+                "scripts.sync_vulnerability_data.urllib.request.build_opener",
+                return_value=opener,
+            ):
+                fetch(
+                    "https://example.test/source",
+                    destination,
+                    refresh=True,
+                    max_bytes=4,
+                    allowed_hosts=frozenset({"example.test"}),
+                )
+            self.assertNotIn(
+                "if-modified-since",
+                {key.lower() for key, _value in opener.request.header_items()},
+            )
+            self.assertEqual(destination.read_bytes(), b"ok")
 
     def test_date_and_percentage_helpers(self):
         self.assertEqual(parse_date("2026-07-17T08:00:00Z"), dt.date(2026, 7, 17))
@@ -302,9 +474,42 @@ class PipelineUnitTests(unittest.TestCase):
         self.assertEqual(metrics["ransomwareShare"], 50.0)
         self.assertEqual(metrics["dueWindowSample"], 2)
         self.assertEqual(metrics["medianDueWindow"], 17.5)
+        self.assertEqual(metrics["within7Count"], 0)
+        self.assertEqual(metrics["within7Share"], 0.0)
+        self.assertEqual(metrics["under21Count"], 1)
+        self.assertEqual(metrics["under21Share"], 50.0)
         self.assertEqual(metrics["ageSample"], 2)
         self.assertEqual(metrics["oldCount"], 1)
         self.assertEqual(metrics["oldShare"], 50.0)
+
+    def test_kev_deadline_share_uses_only_valid_due_window_records(self):
+        metrics = kev_addition_metrics(
+            {},
+            {
+                "CVE-2026-1000": {
+                    "cveID": "CVE-2026-1000",
+                    "dateAdded": "2026-01-01",
+                    "dueDate": "2026-01-08",
+                },
+                "CVE-2026-1001": {
+                    "cveID": "CVE-2026-1001",
+                    "dateAdded": "2026-01-01",
+                    "dueDate": "2026-01-09",
+                },
+                "CVE-2026-1002": {
+                    "cveID": "CVE-2026-1002",
+                    "dateAdded": "2026-01-01",
+                    "dueDate": None,
+                },
+            },
+            dt.date(2026, 1, 1),
+            dt.date(2026, 12, 31),
+            dt.date(2026, 12, 31),
+        )
+        self.assertEqual(metrics["count"], 3)
+        self.assertEqual(metrics["dueWindowSample"], 2)
+        self.assertEqual(metrics["within7Count"], 1)
+        self.assertEqual(metrics["within7Share"], 50.0)
 
     def test_cisa_kev_payload_rejects_duplicates_and_malformed_required_fields(self):
         valid_item = {
@@ -523,6 +728,100 @@ class PipelineUnitTests(unittest.TestCase):
         self.assertEqual(payload["coverage"]["recordCount"], 0)
         self.assertEqual(sum(month["published"] for month in payload["monthly"]), 0)
 
+    def test_priority_watch_filters_recent_non_kev_and_sorts_by_epss(self):
+        snapshot_time = dt.datetime(2026, 7, 18, 12, tzinfo=dt.timezone.utc)
+        records = {
+            record.cve_id: record
+            for record in (
+                Vulnerability(
+                    "CVE-2026-1000",
+                    dt.date(2026, 7, 1),
+                    "HIGH",
+                    8.0,
+                    "3.1",
+                    False,
+                    (),
+                    0.5,
+                    0.9,
+                ),
+                Vulnerability(
+                    "CVE-2026-1001",
+                    dt.date(2026, 6, 1),
+                    "CRITICAL",
+                    9.8,
+                    "3.1",
+                    True,
+                    (),
+                    0.9,
+                    0.99,
+                ),
+                Vulnerability(
+                    "CVE-2026-1002",
+                    dt.date(2026, 6, 1),
+                    "HIGH",
+                    8.0,
+                    "3.1",
+                    False,
+                    (),
+                    0.99,
+                    1.0,
+                ),
+                Vulnerability(
+                    "CVE-2025-1000",
+                    dt.date(2025, 1, 1),
+                    "HIGH",
+                    8.0,
+                    "3.1",
+                    False,
+                    (),
+                    0.95,
+                    0.995,
+                ),
+                Vulnerability(
+                    "CVE-2026-1003",
+                    dt.date(2026, 7, 1),
+                    "MEDIUM",
+                    5.0,
+                    "3.1",
+                    False,
+                    (),
+                    0.05,
+                    0.7,
+                ),
+            )
+        }
+        with tempfile.NamedTemporaryFile() as temp_epss:
+            payload = aggregate(
+                records,
+                {
+                    "count": 1,
+                    "dateReleased": "2026-07-18T00:00:00Z",
+                    "vulnerabilities": [
+                        {
+                            "cveID": "CVE-2026-1002",
+                            "dateAdded": "2026-07-10",
+                            "dueDate": "2026-07-17",
+                        }
+                    ],
+                },
+                [],
+                {"records": [], "programReports": []},
+                {"cve_records": [], "headline": {}},
+                snapshot_time,
+                2020,
+                [],
+                pathlib.Path(temp_epss.name),
+                EpssFeed({}, "v2026.06.15", snapshot_time, 5),
+            )
+        self.assertEqual(payload["priorityWatch"]["total"], 2)
+        self.assertEqual(
+            [item["cveId"] for item in payload["priorityWatch"]["items"]],
+            ["CVE-2026-1001", "CVE-2026-1000"],
+        )
+        self.assertEqual(
+            payload["priorityWatch"]["items"][0]["epssPercentile"], 0.99
+        )
+
     def test_kev_entries_before_nvd_publication_count_as_zero_day(self):
         records = [
             Vulnerability(
@@ -561,6 +860,78 @@ class PipelineUnitTests(unittest.TestCase):
         require_comparison_coverage(2020, dt.date(2026, 6, 1))
         with self.assertRaisesRegex(ValueError, "use 2020 or earlier"):
             require_comparison_coverage(2021, dt.date(2026, 6, 1))
+
+    def test_epss_history_samples_twelve_complete_month_ends(self):
+        dates = epss_history_dates(dt.date(2026, 7, 18))
+        self.assertEqual(len(dates), 12)
+        self.assertEqual(dates[0], dt.date(2025, 7, 31))
+        self.assertEqual(dates[-1], dt.date(2026, 6, 30))
+        self.assertTrue(
+            all(
+                date == (date.replace(day=28) + dt.timedelta(days=4)).replace(day=1)
+                - dt.timedelta(days=1)
+                for date in dates
+            )
+        )
+
+    def test_validator_stops_epss_movements_at_model_boundaries(self):
+        payload = self.dashboard_payload()
+        point = payload["epssHistory"]["points"][1]
+        point["modelVersion"] = "v2026.01.01"
+        point["comparableToPrevious"] = False
+        with self.assertRaisesRegex(ValueError, "movements cross a model boundary"):
+            validate(payload)
+
+    def test_priority_watch_validation_catches_sort_and_percentile_errors(self):
+        base = self.dashboard_payload()
+        reversed_payload = copy.deepcopy(base)
+        reversed_payload["priorityWatch"]["items"][:2] = reversed(
+            reversed_payload["priorityWatch"]["items"][:2]
+        )
+        with self.assertRaisesRegex(ValueError, "not sorted by EPSS"):
+            validate(reversed_payload)
+
+        percentile_payload = copy.deepcopy(base)
+        percentile_payload["priorityWatch"]["items"][0]["epssPercentile"] = 1.1
+        with self.assertRaisesRegex(ValueError, "priority-watch item is invalid"):
+            validate(percentile_payload)
+
+    def test_cwe_mover_and_source_name_validation(self):
+        payload = self.dashboard_payload()
+        payload["topCwes"][0]["name"] = ""
+        with self.assertRaisesRegex(ValueError, "invalid MITRE metadata"):
+            validate(payload)
+
+        payload = self.dashboard_payload()
+        mover = payload["cweMovers"]["rising"][0]
+        mover["count"] = 1
+        mover["priorCount"] = 1
+        with self.assertRaisesRegex(ValueError, "below the sample floor"):
+            validate(payload)
+
+    def test_cwe_analysis_selection_respects_the_sample_floor(self):
+        as_of = dt.date(2026, 7, 18)
+        records = [
+            Vulnerability(
+                f"CVE-2026-{1000 + index}",
+                dt.date(2026, 1, 1),
+                "HIGH",
+                8.0,
+                "3.1",
+                False,
+                ("CWE-79",),
+            )
+            for index in range(3)
+        ]
+        with mock.patch("scripts.sync_vulnerability_data.CWE_MOVER_MIN_COUNT", 2):
+            selected = select_cwe_analysis_ids(records, as_of)
+        self.assertEqual(selected, ["CWE-79"])
+
+    def test_change_digest_must_reconcile_with_source_activity(self):
+        payload = self.dashboard_payload()
+        payload["changeDigest"]["cve"]["newRecords"] += 1
+        with self.assertRaisesRegex(ValueError, "change digest does not reconcile"):
+            validate(payload)
 
     def test_source_freshness_excludes_batches_after_report_cutoff(self):
         cutoff = dt.datetime(2026, 7, 17, 12, tzinfo=dt.timezone.utc)
