@@ -397,7 +397,31 @@ export default function Home() {
                       <td data-label="Vulnerability"><a href={`https://www.cve.org/CVERecord?id=${item.cveId}`}>{item.cveId}</a><span>{item.name}</span></td>
                       <td data-label="Asset"><strong>{item.vendor}</strong><span>{item.product}</span></td>
                       <td data-label="Severity"><span className={`severity-badge severity-badge--${item.severity.toLowerCase()}`}>{item.severity === "UNKNOWN" ? "Unscored" : `${item.severity}${item.score ? ` ${item.score}` : ""}${item.cvssVersion ? ` (${item.cvssVersion.toLowerCase()})` : ""}`}</span></td>
-                      <td data-label="Signals"><div className="signal-list"><span className="signal signal--active">Known exploited</span>{item.ransomware === "Known" ? <span className="signal signal--ransomware">Ransomware</span> : null}{item.publicExploitReference ? <span className="signal">Exploit ref</span> : null}</div></td>
+                      <td data-label="Signals">
+                        <div className="signal-list">
+                          <a
+                            href="https://www.cisa.gov/known-exploited-vulnerabilities-catalog"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="signal signal--active"
+                          >
+                            Known exploited
+                          </a>
+                          {item.ransomware === "Known" ? (
+                            <span className="signal signal--ransomware">Ransomware</span>
+                          ) : null}
+                          {item.publicExploitReference ? (
+                            <a
+                              href={`https://nvd.nist.gov/vuln/detail/${item.cveId}#vulnHyperlinksSection`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="signal"
+                            >
+                              Exploit ref
+                            </a>
+                          ) : null}
+                        </div>
+                      </td>
                       <td data-label="Due">{dateLabel(item.dueDate, true)}</td>
                     </tr>
                   ))}
