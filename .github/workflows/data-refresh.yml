@@ -2,11 +2,12 @@ name: Refresh vulnerability data
 
 on:
   schedule:
+    # 17:17 Singapore time (09:17 UTC).
     - cron: "17 9 * * *"
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: vulnerability-data-refresh
@@ -14,15 +15,25 @@ concurrency:
 
 jobs:
   refresh:
-    name: Pull, validate, and publish aggregates
+    name: Pull and validate official sources
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    permissions:
+      contents: read
+    outputs:
+      source-sha: ${{ steps.source.outputs.sha }}
 
     steps:
-      - name: Check out the default branch
+      - name: Check out the default branch without stored credentials
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
           ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+
+      - name: Record the source revision
+        id: source
+        shell: bash
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Set up Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
@@ -32,7 +43,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
-          node-version: "22.13.0"
+          node-version: "22.23.1"
           cache: npm
 
       - name: Calculate the source-cache generation
@@ -41,7 +52,7 @@ jobs:
         run: echo "week=$(date -u +'%G-%V')" >> "$GITHUB_OUTPUT"
 
       - name: Restore official source archives
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: .cache
           key: vulnsignal-source-feeds-${{ runner.os }}-${{ steps.cache-key.outputs.week }}-${{ github.run_id }}
@@ -49,23 +60,74 @@ jobs:
             vulnsignal-source-feeds-${{ runner.os }}-${{ steps.cache-key.outputs.week }}-
             vulnsignal-source-feeds-${{ runner.os }}-
 
-      - name: Pull CVE, NVD, CISA KEV, EPSS, and LLM-disclosure data
+      - name: Pull CVE, NVD, CISA KEV, EPSS, CWE, and LLM-disclosure data
         run: python3 scripts/sync_vulnerability_data.py
 
-      - name: Validate the generated dataset
-        run: python3 scripts/sync_vulnerability_data.py --check
-
-      - name: Run ingestion unit tests
-        run: python3 -m unittest discover -s tests -p "test_*.py"
+      - name: Save the verified official source archives
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: .cache
+          key: vulnsignal-source-feeds-${{ runner.os }}-${{ steps.cache-key.outputs.week }}-${{ github.run_id }}
 
       - name: Install dashboard dependencies
         run: npm ci
 
-      - name: Validate the dashboard contract and Pages export
+      - name: Validate data, code, tests, and Pages export
+        run: npm run check
+
+      - name: Package only publishable generated files
+        shell: bash
         run: |
-          npm run lint
-          npm test
-          npm run build:pages
+          mkdir refresh-output
+          cp data/dashboard.json refresh-output/dashboard.json
+          (
+            cd refresh-output
+            sha256sum dashboard.json > SHA256SUMS
+          )
+
+      - name: Upload the validated refresh result
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: vulnerability-data-${{ github.run_id }}
+          path: refresh-output
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    name: Publish the validated aggregate
+    needs: refresh
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+
+    steps:
+      - name: Check out the current default branch
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      - name: Stop if source code changed during the refresh
+        shell: bash
+        env:
+          VALIDATED_SOURCE_SHA: ${{ needs.refresh.outputs.source-sha }}
+        run: test "$(git rev-parse HEAD)" = "$VALIDATED_SOURCE_SHA"
+
+      - name: Download the validated refresh result
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: vulnerability-data-${{ github.run_id }}
+          path: refresh-output
+
+      - name: Verify and install the generated files
+        shell: bash
+        run: |
+          (
+            cd refresh-output
+            sha256sum --check SHA256SUMS
+          )
+          cp refresh-output/dashboard.json data/dashboard.json
+          python3 scripts/sync_vulnerability_data.py --check
 
       - name: Commit the refreshed aggregate
         shell: bash
@@ -80,4 +142,6 @@ jobs:
           fi
 
           git commit -m "data: refresh vulnerability trends"
-          git push origin "HEAD:${{ github.event.repository.default_branch }}"
+          git push origin "HEAD:${DEFAULT_BRANCH}"
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}

@@ -3,25 +3,14 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 async function render() {
-  const workerUrl = new URL("../dist/server/index.js", import.meta.url);
-  workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);
-  const { default: worker } = await import(workerUrl.href);
-
-  return worker.fetch(
-    new Request("http://localhost/", { headers: { accept: "text/html" } }),
-    { ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } },
-    { waitUntil() {}, passThroughOnException() {} },
-  );
+  return readFile(new URL("../out/index.html", import.meta.url), "utf8");
 }
 
-test("server-renders the VulnSignal intelligence dashboard", async () => {
-  const response = await render();
-  assert.equal(response.status, 200);
-  assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
-
-  const html = await response.text();
-  assert.match(html, /<title>VulnSignal — CVE, KEV and LLM Disclosure Trends<\/title>/i);
-  assert.match(html, /One timeline/);
+test("static export renders the VulnSignal intelligence dashboard", async () => {
+  const html = await render();
+  assert.match(html, /<title>VulnSignal — CVE, KEV and EPSS Exploitation Signals<\/title>/i);
+  assert.match(html, /Vulnerability trends\./);
+  assert.match(html, /Exploitation signals\./);
   assert.match(html, /Interactive report/);
   assert.match(html, /Compare years/);
   assert.match(html, /Relative trend/);
@@ -32,10 +21,20 @@ test("server-renders the VulnSignal intelligence dashboard", async () => {
   assert.match(html, /SNAPSHOT ID/);
   assert.match(html, /VS-\d{8}-\d{4}Z/);
   assert.match(html, /Source data included/);
+  assert.match(html, /What changed/);
+  assert.match(html, /feed activity, not vulnerability incidence/);
+  assert.match(html, /Critical \+ high share/);
   assert.match(html, /Change in published vulnerability reporting/);
   assert.match(html, /does not measure an LLM discovery rate/);
   assert.match(html, /Median time to enter KEV/);
   assert.match(html, /75th percentile time to KEV/);
+  assert.match(html, /KEV deadlines within 7 days/);
+  assert.match(html, /90-day priority candidates/);
+  assert.match(html, /Elevated EPSS CVEs not in CISA KEV/);
+  assert.match(html, /EPSS threshold history/);
+  assert.match(html, /current scores are not applied backwards/i);
+  assert.match(html, /Largest share risers/);
+  assert.match(html, /cwe\.mitre\.org\/data\/definitions/);
   assert.match(html, /Recently added to CISA KEV/);
   assert.match(html, /CVE List V5/i);
   assert.match(html, /NVD JSON 2\.0/);
@@ -43,7 +42,6 @@ test("server-renders the VulnSignal intelligence dashboard", async () => {
   assert.match(html, /Reported minimum, not a total/);
   assert.match(html, /LLM disclosure events/);
   assert.match(html, /does not mean zero LLM-assisted discoveries/);
-  assert.match(html, /Not comparable — sparse disclosure evidence/);
   assert.match(html, /recent records are still being enriched/);
   assert.match(html, /None \(CVSS 0\.0\)/);
   assert.match(html, /project-defined threshold/);
@@ -53,6 +51,7 @@ test("server-renders the VulnSignal intelligence dashboard", async () => {
   assert.match(html, /≥ 28/);
   assert.match(html, /Counts from different programmes remain separate/);
   assert.doesNotMatch(html, /LLM CVE evidence disclosed/);
+  assert.doesNotMatch(html, /Reported LLM-assisted CVEs/);
   assert.doesNotMatch(html, /Higher reported minimum|Lower reported minimum/);
   assert.doesNotMatch(html, /Before and after ChatGPT|Every signal|recommended GitHub repository/i);
   assert.doesNotMatch(html, /T2K \/ P50|T2K \/ P75/);
@@ -97,6 +96,19 @@ test("project metadata and generated dataset are repo-ready", async () => {
   assert.ok(dataset.sources.anthropic.asOf);
   assert.ok(dataset.sources.llmRegistry.lastReviewed);
   assert.ok(dataset.sources.llmRegistry.programmeSources.some((source) => source.publisher === "OpenAI"));
+  assert.equal(dataset.priorityWatch.window.days, 90);
+  assert.equal(dataset.priorityWatch.window.threshold, dataset.sources.epss.projectThreshold);
+  assert.ok(dataset.priorityWatch.total >= dataset.priorityWatch.items.length);
+  assert.ok(dataset.priorityWatch.items.length <= 20);
+  assert.ok(dataset.priorityWatch.items.every((item) => item.epss >= dataset.priorityWatch.window.threshold));
+  assert.ok(dataset.epssHistory.points.length >= 1);
+  assert.equal(dataset.epssHistory.threshold, dataset.sources.epss.projectThreshold);
+  assert.ok(dataset.epssHistory.points.every((point) => point.sourceUrl && point.modelVersion));
+  assert.ok(dataset.risk.kevDeadlineComparison.current.within7Share >= 0);
+  assert.ok(dataset.topCwes.every((item) => item.name && item.url));
+  assert.ok(dataset.cweMovers.rising.length > 0);
+  assert.ok(dataset.cweMovers.falling.length > 0);
+  assert.equal(dataset.changeDigest.priority.count, dataset.priorityWatch.total);
   assert.equal(evidence.coverage, "curated_non_exhaustive");
   assert.ok(evidence.lastReviewed);
   assert.equal(evidence.headlineMinimum.cveCount, 28);

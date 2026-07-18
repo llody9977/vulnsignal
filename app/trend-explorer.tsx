@@ -5,10 +5,12 @@ import {
   availableYears,
   comparisonYearOptions,
   completeMonths,
+  hasRecordedValue,
   llmEvidenceForMonth,
   matchedYearPoints,
   monthsForYear,
   rollingMonths,
+  severityShare,
   summarizePeriod,
   type LlmEvidenceEvent,
   type MonthPoint,
@@ -17,6 +19,7 @@ import {
 type ViewMode = "year" | "month" | "compare";
 type ChartFamily = "signals" | "severity";
 type ScaleMode = "indexed" | "absolute";
+type SeverityMode = "count" | "share";
 type MetricKey =
   | "published"
   | "kevAdded"
@@ -40,6 +43,7 @@ type ChartSeries = {
   dashed?: boolean;
   render?: "line" | "event";
   shape?: "circle" | "square" | "diamond";
+  valueFormat?: "count" | "percent";
 };
 
 type ComparisonDisplay = {
@@ -52,6 +56,15 @@ type MatrixRow = {
   label: string;
   values: Array<number | null>;
   event?: boolean;
+  valueFormat?: "count" | "percent";
+};
+
+type PriorityKpi = {
+  total: number;
+  criticalHigh: number;
+  start: string;
+  end: string;
+  scoreDate?: string | null;
 };
 
 const metricOptions: Array<{ key: MetricKey; label: string }> = [
@@ -83,6 +96,10 @@ function percent(value: number | null) {
   return value === null ? "—" : `${value.toFixed(1)}%`;
 }
 
+function chartValue(value: number, format: ChartSeries["valueFormat"] = "count") {
+  return format === "percent" ? `${value.toFixed(1)}%` : number(value);
+}
+
 function monthLabel(value: string, short = false) {
   const date = new Date(`${value}-01T00:00:00Z`);
   return new Intl.DateTimeFormat("en-SG", {
@@ -103,6 +120,17 @@ function scoreDateLabel(value?: string | null) {
   if (!value) return "latest available score snapshot";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "latest available score snapshot";
+  return new Intl.DateTimeFormat("en-SG", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(date);
+}
+
+function shortDateLabel(value: string) {
+  const date = new Date(`${value.slice(0, 10)}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) return value;
   return new Intl.DateTimeFormat("en-SG", {
     day: "numeric",
     month: "short",
@@ -309,21 +337,37 @@ function UnifiedChart({
   const hasValues = (item: ChartSeries) => item.values.some((value) => value !== null);
   const hasRightAxis = series.some((item) => item.axis === "right" && hasValues(item));
   const hasLeftAxis = series.some((item) => item.axis === "left" && hasValues(item));
-  const leftAxisTitle = series
+  const leftUsesPercent = series.some(
+    (item) => item.axis === "left" && hasValues(item),
+  ) && series
     .filter((item) => item.axis === "left" && hasValues(item))
-    .map((item) => item.shortLabel)
-    .join(" / ");
-  const rightAxisTitle = series
+    .every((item) => item.valueFormat === "percent");
+  const rightUsesPercent = series.some(
+    (item) => item.axis === "right" && hasValues(item),
+  ) && series
     .filter((item) => item.axis === "right" && hasValues(item))
-    .map((item) => item.shortLabel)
-    .join(" / ");
+    .every((item) => item.valueFormat === "percent");
+  const leftAxisTitle = leftUsesPercent
+    ? "Share of monthly CVEs"
+    : series
+      .filter((item) => item.axis === "left" && hasValues(item))
+      .map((item) => item.shortLabel)
+      .join(" / ");
+  const rightAxisTitle = rightUsesPercent
+    ? "Share"
+    : series
+      .filter((item) => item.axis === "right" && hasValues(item))
+      .map((item) => item.shortLabel)
+      .join(" / ");
   const leftAxisLabels = scaleMode === "indexed"
     ? ["100%", "50%", "0"]
-    : [compact(axisMax.left), compact(axisMax.left / 2), "0"];
+    : leftUsesPercent
+      ? [`${axisMax.left.toFixed(1)}%`, `${(axisMax.left / 2).toFixed(1)}%`, "0%"]
+      : [compact(axisMax.left), compact(axisMax.left / 2), "0"];
   const rightAxisLabels = [
-    compact(axisMax.right),
-    compact(axisMax.right / 2),
-    "0",
+    rightUsesPercent ? `${axisMax.right.toFixed(1)}%` : compact(axisMax.right),
+    rightUsesPercent ? `${(axisMax.right / 2).toFixed(1)}%` : compact(axisMax.right / 2),
+    rightUsesPercent ? "0%" : "0",
   ];
   const safeActive = Math.min(Math.max(activeIndex, 0), Math.max(labels.length - 1, 0));
 
@@ -418,7 +462,7 @@ function UnifiedChart({
                         "--y": `${point.y}%`,
                         "--series": item.color,
                       } as CSSProperties}
-                      aria-label={`${labels[point.index]}: ${item.label} ${item.render === "event" ? "at least " : ""}${number(point.value)}`}
+                      aria-label={`${labels[point.index]}: ${item.label} ${item.render === "event" ? "at least " : ""}${chartValue(point.value, item.valueFormat)}`}
                       onFocus={() => onActiveIndex(point.index)}
                       onMouseEnter={() => onActiveIndex(point.index)}
                       onClick={() => onActiveIndex(point.index)}
@@ -473,7 +517,7 @@ function UnifiedChart({
                   ? item.render === "event" ? "No recorded event" : "—"
                   : item.render === "event"
                     ? `≥ ${number(item.values[safeActive] ?? 0)}`
-                    : number(item.values[safeActive] ?? 0)}
+                    : chartValue(item.values[safeActive] ?? 0, item.valueFormat)}
               </b>
             </span>
           ))}
@@ -487,19 +531,27 @@ function SignalMatrix({
   points,
   events,
   compareRows,
+  severityMode,
 }: {
   points: MonthPoint[];
   events: LlmEvidenceEvent[];
   compareRows?: MatrixRow[];
+  severityMode: SeverityMode;
 }) {
+  const severityValues = (
+    key: "critical" | "high" | "medium" | "low" | "none" | "unknown",
+  ) => points.map((point) => severityMode === "share"
+    ? severityShare(point, key)
+    : point[key]);
+  const severityFormat = severityMode === "share" ? "percent" as const : "count" as const;
   const standardRows: MatrixRow[] = [
     { label: "CVE", values: points.map((point) => point.published) },
-    { label: "Critical", values: points.map((point) => point.critical) },
-    { label: "High", values: points.map((point) => point.high) },
-    { label: "Medium", values: points.map((point) => point.medium) },
-    { label: "Low", values: points.map((point) => point.low) },
-    { label: "None (CVSS 0.0)", values: points.map((point) => point.none) },
-    { label: "Unscored", values: points.map((point) => point.unknown) },
+    { label: "Critical", values: severityValues("critical"), valueFormat: severityFormat },
+    { label: "High", values: severityValues("high"), valueFormat: severityFormat },
+    { label: "Medium", values: severityValues("medium"), valueFormat: severityFormat },
+    { label: "Low", values: severityValues("low"), valueFormat: severityFormat },
+    { label: "None (CVSS 0.0)", values: severityValues("none"), valueFormat: severityFormat },
+    { label: "Unscored", values: severityValues("unknown"), valueFormat: severityFormat },
     { label: "KEV", values: points.map((point) => point.kevAdded) },
     { label: "Exploit ref", values: points.map((point) => point.publicExploitReferences) },
     { label: "Current EPSS ≥ 0.1", values: points.map((point) => point.epssHigh) },
@@ -544,7 +596,13 @@ function SignalMatrix({
                           : `At least ${number(value)} CVEs reported in this disclosure event`
                         : undefined}
                     >
-                      {value === null ? "—" : row.event ? `≥ ${number(value)}` : number(value)}
+                      {value === null
+                        ? "—"
+                        : row.event
+                          ? `≥ ${number(value)}`
+                          : row.valueFormat === "percent"
+                            ? `${value.toFixed(1)}%`
+                            : number(value)}
                     </td>
                   );
                 })}
@@ -568,11 +626,13 @@ export function TrendExplorer({
   latestCompleteMonth,
   events,
   epssScoreDate,
+  priorityKpi,
 }: {
   monthly: MonthPoint[];
   latestCompleteMonth: string;
   events: LlmEvidenceEvent[];
   epssScoreDate?: string | null;
+  priorityKpi?: PriorityKpi | null;
 }) {
   const complete = useMemo(
     () => completeMonths(monthly, latestCompleteMonth),
@@ -587,6 +647,7 @@ export function TrendExplorer({
   const [viewMode, setViewMode] = useState<ViewMode>("year");
   const [chartFamily, setChartFamily] = useState<ChartFamily>("signals");
   const [scaleMode, setScaleMode] = useState<ScaleMode>("absolute");
+  const [severityMode, setSeverityMode] = useState<SeverityMode>("count");
   const [selectedYear, setSelectedYear] = useState(latestYear);
   const [selectedMonth, setSelectedMonth] = useState(latestCompleteMonth);
   const [compareFirst, setCompareFirst] = useState(priorYear);
@@ -690,13 +751,19 @@ export function TrendExplorer({
       shape: "diamond",
     },
   ];
+  const severityValues = (
+    key: "critical" | "high" | "medium" | "low" | "none" | "unknown",
+  ) => chartPoints.map((point) => severityMode === "share"
+    ? severityShare(point, key)
+    : point[key]);
+  const severityFormat = severityMode === "share" ? "percent" as const : "count" as const;
   const severitySeries: ChartSeries[] = [
-    { key: "critical", label: "Critical", shortLabel: "Critical", values: chartPoints.map((point) => point.critical), color: "var(--critical)", axis: "left", shape: "square" },
-    { key: "high", label: "High", shortLabel: "High", values: chartPoints.map((point) => point.high), color: "var(--amber)", axis: "left" },
-    { key: "medium", label: "Medium", shortLabel: "Medium", values: chartPoints.map((point) => point.medium), color: "var(--accent)", axis: "left", dashed: true },
-    { key: "low", label: "Low", shortLabel: "Low", values: chartPoints.map((point) => point.low), color: "var(--teal)", axis: "left", shape: "diamond" },
-    { key: "none", label: "None (CVSS 0.0)", shortLabel: "None", values: chartPoints.map((point) => point.none), color: "var(--neutral)", axis: "left" },
-    { key: "unknown", label: "Unscored", shortLabel: "Unscored", values: chartPoints.map((point) => point.unknown), color: "var(--neutral)", axis: "left", dashed: true, shape: "square" },
+    { key: "critical", label: "Critical", shortLabel: "Critical", values: severityValues("critical"), valueFormat: severityFormat, color: "var(--critical)", axis: "left", shape: "square" },
+    { key: "high", label: "High", shortLabel: "High", values: severityValues("high"), valueFormat: severityFormat, color: "var(--amber)", axis: "left" },
+    { key: "medium", label: "Medium", shortLabel: "Medium", values: severityValues("medium"), valueFormat: severityFormat, color: "var(--accent)", axis: "left", dashed: true },
+    { key: "low", label: "Low", shortLabel: "Low", values: severityValues("low"), valueFormat: severityFormat, color: "var(--teal)", axis: "left", shape: "diamond" },
+    { key: "none", label: "None (CVSS 0.0)", shortLabel: "None", values: severityValues("none"), valueFormat: severityFormat, color: "var(--neutral)", axis: "left" },
+    { key: "unknown", label: "Unscored", shortLabel: "Unscored", values: severityValues("unknown"), valueFormat: severityFormat, color: "var(--neutral)", axis: "left", dashed: true, shape: "square" },
   ];
   const comparisonSeries: ChartSeries[] = [
     {
@@ -732,7 +799,13 @@ export function TrendExplorer({
     : chartFamily === "signals"
       ? signalSeries
       : severitySeries;
-  const visibleSeries = allSeries.filter((series) => !hiddenSeries.includes(series.key));
+  const availableSeries = allSeries.filter((series) =>
+    hasRecordedValue(series.values),
+  );
+  const visibleSeries = availableSeries.filter((series) => !hiddenSeries.includes(series.key));
+  const llmLayerOmitted = viewMode !== "compare"
+    && chartFamily === "signals"
+    && signalSeries.find((series) => series.key === "llmEvidence")?.values.every((value) => value === null);
   const effectiveScale = viewMode === "compare" || chartFamily === "severity" ? "absolute" : scaleMode;
   const safeActive = Math.min(activeIndex, Math.max(labels.length - 1, 0));
   const comparisonMetricLabel = metricOptions.find(
@@ -918,16 +991,16 @@ export function TrendExplorer({
 
       <div className="indicator-grid">
         <MetricCell
+          label="Critical + high share"
+          value={percent(summary.criticalHighShare)}
+          detail={`${number(summary.criticalHigh)} critical or high CVEs among scored records`}
+          comparison={pointComparison(summary.criticalHighShare, baseline.criticalHighShare, baselineLabel, hasBaseline)}
+        />
+        <MetricCell
           label="CVEs published"
           value={number(summary.published)}
           detail={`${compact(summary.monthlyAverage)} average per complete month`}
           comparison={relativeComparison(summary.published, baseline.published, baselineLabel, hasBaseline)}
-        />
-        <MetricCell
-          label="Critical + high"
-          value={number(summary.criticalHigh)}
-          detail={`${percent(summary.criticalHighShare)} of scored CVEs`}
-          comparison={relativeComparison(summary.criticalHigh, baseline.criticalHigh, baselineLabel, hasBaseline)}
         />
         <MetricCell
           label="KEV additions"
@@ -949,16 +1022,24 @@ export function TrendExplorer({
           )}
         />
         <MetricCell
-          label="Reported LLM-assisted CVEs"
-          value={summary.llmEvidence ? `≥ ${number(summary.llmEvidence)}` : "—"}
-          detail="Largest count in one first-party programme report or public CVE-ID release. Counts from different programmes remain separate."
-          comparison={llmComparison()}
-        />
-        <MetricCell
           label="CVEs with severity scores"
           value={percent(summary.severityCoverage)}
           detail={`${number(summary.unknown)} records remain unscored`}
           comparison={pointComparison(summary.severityCoverage, baseline.severityCoverage, baselineLabel, hasBaseline)}
+        />
+        <MetricCell
+          label="90-day priority candidates"
+          value={priorityKpi ? number(priorityKpi.total) : "—"}
+          detail={priorityKpi
+            ? `${number(priorityKpi.criticalHigh)} are critical or high; published ${shortDateLabel(priorityKpi.start)}–${shortDateLabel(priorityKpi.end)}`
+            : "Current watchlist data is not available"}
+          comparison={{
+            tone: "unavailable",
+            label: "Current watchlist — not a period trend",
+            baseline: priorityKpi
+              ? `EPSS snapshot: ${scoreDateLabel(priorityKpi.scoreDate)}`
+              : undefined,
+          }}
         />
       </div>
 
@@ -975,13 +1056,26 @@ export function TrendExplorer({
                 <button type="button" key={mode} aria-pressed={scaleMode === mode} onClick={() => setScaleMode(mode)}>{mode === "indexed" ? "Relative trend" : "Actual counts"}</button>
               ))}
             </div>
+          ) : viewMode !== "compare" && chartFamily === "severity" ? (
+            <div className="scale-control" aria-label="Severity display">
+              <span>Severity display</span>
+              {(["count", "share"] as SeverityMode[]).map((mode) => (
+                <button type="button" key={mode} aria-pressed={severityMode === mode} onClick={() => setSeverityMode(mode)}>{mode === "count" ? "Counts" : "Share"}</button>
+              ))}
+            </div>
           ) : <span className="scale-note">Actual counts on one scale</span>}
         </div>
 
         <div className="scale-explainer" role="note">
-          <strong>{effectiveScale === "indexed" ? "Relative trend" : "Actual counts"}</strong>
+          <strong>{chartFamily === "severity" && viewMode !== "compare" && severityMode === "share"
+            ? "Share of monthly CVEs"
+            : effectiveScale === "indexed"
+              ? "Relative trend"
+              : "Actual counts"}</strong>
           <span>
-            {effectiveScale === "indexed"
+            {chartFamily === "severity" && viewMode !== "compare" && severityMode === "share"
+              ? "Each severity category is divided by all CVEs published that month. None and Unscored remain separate, so the six categories reconcile to 100%."
+              : effectiveScale === "indexed"
               ? "Each line is scaled against its own peak, shown as 100%. LLM markers show separate disclosure events and are scaled against the largest reported minimum."
               : viewMode === "compare" && compareMetric === "epssHigh"
                 ? `Each line groups CVEs by publication month and applies the current EPSS snapshot dated ${scoreDateLabel(epssScoreDate)}.`
@@ -993,8 +1087,8 @@ export function TrendExplorer({
           </span>
         </div>
 
-        <div className="series-legend" aria-label="Visible chart layers">
-          {allSeries.map((item) => {
+        {availableSeries.length ? <div className="series-legend" aria-label="Visible chart layers">
+          {availableSeries.map((item) => {
             const visible = !hiddenSeries.includes(item.key);
             return (
               <button type="button" key={item.key} aria-pressed={visible} onClick={() => toggleSeries(item.key)}>
@@ -1003,7 +1097,9 @@ export function TrendExplorer({
               </button>
             );
           })}
-        </div>
+        </div> : null}
+        {llmLayerOmitted ? <p className="legend-status">No LLM disclosure event is recorded in this period, so no LLM legend marker is shown. This does not mean zero LLM-assisted discoveries.</p> : null}
+        {!availableSeries.length ? <p className="legend-status">No recorded events are available for the selected months. A blank period does not mean zero LLM-assisted discoveries.</p> : null}
 
         <UnifiedChart
           labels={labels}
@@ -1021,7 +1117,7 @@ export function TrendExplorer({
           <div><p className="eyebrow">Monthly values</p><h3>Monthly values by indicator</h3></div>
           <span>Exact monthly values. Scroll horizontally on smaller screens.</span>
         </div>
-        <SignalMatrix points={chartPoints} events={events} compareRows={compareRows} />
+        <SignalMatrix points={chartPoints} events={events} compareRows={compareRows} severityMode={severityMode} />
       </article>
     </section>
   );

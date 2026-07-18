@@ -38,6 +38,89 @@ type DateWindow = {
   scoreDate?: string | null;
 };
 
+type PriorityWatchItem = {
+  cveId: string;
+  published: string;
+  severity: string;
+  score: number | null;
+  cvssVersion: string | null;
+  epss: number;
+  epssPercentile: number;
+  publicExploitReference: boolean;
+  url: string;
+};
+
+type PriorityWatch = {
+  window: {
+    start: string;
+    end: string;
+    days: number;
+    scoreDate: string;
+    threshold: number;
+    thresholdSemantics: string;
+  };
+  total: number;
+  criticalHigh: number;
+  publicExploitReferences: number;
+  items: PriorityWatchItem[];
+};
+
+type EpssHistoryPoint = {
+  date: string;
+  modelVersion: string;
+  recordCount: number;
+  highCount: number;
+  notInKevCount: number;
+  enteredHigh: number | null;
+  exitedHigh: number | null;
+  comparableToPrevious: boolean;
+  sampleKind: "month_end" | "current";
+  sourceUrl: string;
+  sha256: string;
+};
+
+type EpssHistory = {
+  threshold: number;
+  semantics: string;
+  modelBoundaryPolicy: string;
+  points: EpssHistoryPoint[];
+};
+
+type ComparisonWindow = {
+  start: string;
+  end: string;
+  count?: number;
+  dueWindowSample?: number;
+  within7Count?: number;
+  within7Share?: number | null;
+  under21Count?: number;
+  under21Share?: number | null;
+  ransomwareCount?: number;
+  ransomwareShare?: number | null;
+  ageSample?: number;
+  oldCount?: number;
+  oldShare?: number | null;
+  publishedCves?: number;
+  matureCves?: number;
+  sample?: number;
+  medianDays?: number | null;
+  p75Days?: number | null;
+};
+
+type CweRow = {
+  cwe: string;
+  name?: string;
+  url?: string;
+  count: number;
+  priorCount?: number;
+  change?: number;
+  recentTotal?: number;
+  priorTotal?: number;
+  recentShare?: number;
+  priorShare?: number;
+  changePoints?: number;
+};
+
 type DashboardData = {
   generatedAt: string;
   snapshot: {
@@ -139,6 +222,24 @@ type DashboardData = {
     kevAdditionsWindow?: DateWindow;
     kevTimingWindow?: DateWindow;
     epssCohortWindow?: DateWindow;
+    kevDeadlineComparison?: {
+      current: ComparisonWindow;
+      prior: ComparisonWindow;
+      within7ShareChangePoints: number | null;
+      under21ShareChangePoints: number | null;
+    };
+    kevAdditionComparison?: {
+      current: ComparisonWindow;
+      prior: ComparisonWindow;
+      ransomwareShareChangePoints: number | null;
+      oldShareChangePoints: number | null;
+    };
+    kevTimingComparison?: {
+      current: ComparisonWindow;
+      prior: ComparisonWindow;
+      medianDaysChange: number | null;
+      p75DaysChange: number | null;
+    };
   };
   llmDiscovery: {
     value: number | null;
@@ -156,15 +257,46 @@ type DashboardData = {
     recent: WindowMetrics;
   };
   monthly: MonthPoint[];
-  topCwes: {
-    cwe: string;
-    count: number;
-    priorCount?: number;
-    change?: number;
-    recentShare?: number;
-    priorShare?: number;
-    changePoints?: number;
-  }[];
+  topCwes: CweRow[];
+  priorityWatch?: PriorityWatch;
+  epssHistory?: EpssHistory;
+  cweMovers?: {
+    window: {
+      currentStart: string;
+      currentEnd: string;
+      priorStart: string;
+      priorEnd: string;
+    };
+    sampleFloor: number;
+    denominatorSemantics: string;
+    rising: CweRow[];
+    falling: CweRow[];
+  };
+  changeDigest?: {
+    cve: {
+      period: string;
+      newRecords: number;
+      updatedRecords: number;
+      distinctChanged: number;
+    };
+    kev: {
+      period: string;
+      date: string | null;
+      additions: number;
+    };
+    epss: {
+      period: string;
+      from: string | null;
+      to: string | null;
+      enteredHigh: number | null;
+      exitedHigh: number | null;
+      comparable: boolean;
+    };
+    priority: {
+      period: string;
+      count: number;
+    };
+  };
   recentKev: {
     cveId: string;
     vendor: string;
@@ -198,6 +330,10 @@ function dateLabel(value: string, includeDay = false) {
     ...(includeDay ? { day: "numeric" } : {}),
     timeZone: "UTC",
   }).format(date);
+}
+
+function shortDateLabel(value: string) {
+  return dateLabel(value.slice(0, 10), true);
 }
 
 function timestampLabel(value: string | null) {
@@ -268,6 +404,182 @@ function ComparisonRow({
   );
 }
 
+function probability(value: number) {
+  return `${(value * 100).toFixed(value >= 0.1 ? 1 : 2)}%`;
+}
+
+function percentileLabel(value: number) {
+  return `${(value * 100).toFixed(1)}th percentile`;
+}
+
+function ageLabel(published: string, asOf: string) {
+  const start = new Date(`${published.slice(0, 10)}T00:00:00Z`).getTime();
+  const end = new Date(`${asOf.slice(0, 10)}T00:00:00Z`).getTime();
+  if (!Number.isFinite(start) || !Number.isFinite(end)) return "Age unavailable";
+  const days = Math.max(0, Math.floor((end - start) / 86_400_000));
+  return `${number(days)} ${days === 1 ? "day" : "days"} old`;
+}
+
+function DeltaTag({
+  value,
+  unit,
+}: {
+  value: number | null | undefined;
+  unit: "days" | "points";
+}) {
+  if (value === null || value === undefined) {
+    return <em className="metric-delta metric-delta--neutral">No prior comparison</em>;
+  }
+  const direction = value > 0 ? "↑" : value < 0 ? "↓" : "→";
+  const label = unit === "points"
+    ? `${Math.abs(value).toFixed(1)} percentage points`
+    : `${number(Math.abs(value))} ${Math.abs(value) === 1 ? "day" : "days"}`;
+  return (
+    <em className={`metric-delta metric-delta--${value > 0 ? "up" : value < 0 ? "down" : "neutral"}`}>
+      {direction} {label} vs prior period
+    </em>
+  );
+}
+
+function WhatChanged({
+  digest,
+}: {
+  digest?: DashboardData["changeDigest"];
+}) {
+  if (!digest) return null;
+  const epssText = digest.epss.comparable
+    ? `${number(digest.epss.enteredHigh ?? 0)} entered and ${number(digest.epss.exitedHigh ?? 0)} exited the project threshold`
+    : "Not compared across an EPSS model boundary";
+  return (
+    <section className="change-digest" aria-labelledby="change-digest-title">
+      <div className="change-digest__heading">
+        <div><p className="eyebrow">Source activity / stated windows</p><h2 id="change-digest-title">What changed</h2></div>
+        <p>Source activity and security signals are kept separate.</p>
+      </div>
+      <div className="change-digest__grid">
+        <article>
+          <span>Source maintenance · last 24 hours</span>
+          <strong>{number(digest.cve.distinctChanged)} CVE records changed</strong>
+          <p>{number(digest.cve.newRecords)} newly published and {number(digest.cve.updatedRecords)} updated in 24 hours; categories can overlap. This is feed activity, not vulnerability incidence.</p>
+        </article>
+        <article>
+          <span>Confirmed exploitation · latest catalog date</span>
+          <strong>{number(digest.kev.additions)} KEV additions</strong>
+          <p>{digest.kev.date ? `Added by CISA on ${dateLabel(digest.kev.date, true)}.` : "No dated KEV additions in this refresh."}</p>
+        </article>
+        <article>
+          <span>EPSS threshold movement · adjacent sample</span>
+          <strong>{epssText}</strong>
+          <p>Uses adjacent official snapshots only when their model versions are comparable.</p>
+        </article>
+        <article>
+          <span>Current priority watch · current snapshot</span>
+          <strong>{number(digest.priority.count)} candidates</strong>
+          <p>Current EPSS ≥ 0.1, published in 90 days and not listed in CISA KEV.</p>
+        </article>
+      </div>
+    </section>
+  );
+}
+
+function PriorityWatchPanel({ watch }: { watch?: PriorityWatch }) {
+  const visibleItems = watch?.items.slice(0, 10) ?? [];
+  return (
+    <article className="flat-panel priority-watch">
+      <div className="panel-heading">
+        <div><p className="eyebrow">Priority watch / 90 days</p><h3>Elevated EPSS CVEs not in CISA KEV</h3></div>
+        <span>{watch ? `EPSS scores ${timestampLabel(watch.window.scoreDate)}` : "Awaiting EPSS history"}</span>
+      </div>
+      {watch ? (
+        <>
+          <div className="priority-watch__summary">
+            <div><span>Candidates</span><strong>{number(watch.total)}</strong></div>
+            <div><span>Critical or high</span><strong>{number(watch.criticalHigh)}</strong></div>
+            <div><span>Exploit reference</span><strong>{number(watch.publicExploitReferences)}</strong></div>
+          </div>
+          <p className="priority-watch__note">
+            Published {dateLabel(watch.window.start, true)}–{dateLabel(watch.window.end, true)}. EPSS ≥ 0.1 is a project-defined current-score threshold. Not appearing in CISA KEV does not prove that exploitation has not occurred.
+          </p>
+          {visibleItems.length ? (
+            <div className="priority-table-wrap">
+              <table className="priority-table">
+                <caption>Highest EPSS probabilities among CVEs published in the 90-day priority-watch window and not listed in CISA KEV</caption>
+                <thead><tr><th>Vulnerability</th><th>Published</th><th>Severity</th><th>EPSS probability</th><th>Signals</th></tr></thead>
+                <tbody>
+                  {visibleItems.map((item) => (
+                    <tr key={item.cveId}>
+                      <td data-label="Vulnerability"><a href={item.url}>{item.cveId}</a></td>
+                      <td data-label="Published"><strong>{dateLabel(item.published, true)}</strong><span>{ageLabel(item.published, watch.window.scoreDate)}</span></td>
+                      <td data-label="Severity"><span className={`severity-badge severity-badge--${item.severity.toLowerCase()}`}>{item.severity === "UNKNOWN" ? "Unscored" : `${item.severity}${item.score === null ? "" : ` ${item.score}`}`}</span>{item.cvssVersion ? <small>CVSS {item.cvssVersion}</small> : null}</td>
+                      <td data-label="EPSS probability"><strong>{probability(item.epss)}</strong><span>{percentileLabel(item.epssPercentile)}</span></td>
+                      <td data-label="Signals"><span className="signal">Not in KEV</span>{item.publicExploitReference ? <span className="signal signal--active">Exploit reference</span> : null}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {watch.items.length > visibleItems.length ? <p className="table-note">Showing the {number(visibleItems.length)} highest EPSS probabilities from {number(watch.total)} candidates; the snapshot retains the top {number(watch.items.length)} detailed rows.</p> : null}
+            </div>
+          ) : <p className="panel-empty">No qualifying CVEs were found in this snapshot.</p>}
+        </>
+      ) : <p className="panel-empty">Priority-watch data is not available in this snapshot.</p>}
+    </article>
+  );
+}
+
+function EpssHistoryPanel({ history }: { history?: EpssHistory }) {
+  const points = history?.points ?? [];
+  const shares = points.map((point) => point.recordCount
+    ? Math.round((point.highCount / point.recordCount) * 10_000) / 100
+    : 0);
+  const maximum = Math.max(...shares, 0.1);
+  const plotted = points.map((point, index) => ({
+    ...point,
+    share: shares[index],
+    x: points.length === 1 ? 50 : 5 + (index / (points.length - 1)) * 90,
+    y: 44 - (shares[index] / maximum) * 34,
+  }));
+  const models = Array.from(new Set(points.map((point) => point.modelVersion)));
+  return (
+    <article className="flat-panel epss-history">
+      <div className="panel-heading">
+        <div><p className="eyebrow">Official historical snapshots</p><h3>EPSS threshold history</h3></div>
+        <span>{points.length} dated samples</span>
+      </div>
+      {plotted.length ? (
+        <>
+          <div className="epss-history__chart" role="img" aria-label={`Historical share of EPSS records at or above ${history?.threshold ?? 0.1}, from ${shortDateLabel(points[0].date)} to ${shortDateLabel(points.at(-1)!.date)}`}>
+            <span className="epss-history__max">{maximum.toFixed(2)}%</span>
+            <span className="epss-history__zero">0%</span>
+            <svg viewBox="0 0 100 50" preserveAspectRatio="none" aria-hidden="true">
+              {plotted.map((point, index) => index > 0 && !point.comparableToPrevious
+                ? <line className="model-boundary" key={`${point.date}-boundary`} x1={point.x} y1="6" x2={point.x} y2="45" vectorEffect="non-scaling-stroke" />
+                : null)}
+              {plotted.slice(1).map((point, index) => {
+                const previous = plotted[index];
+                if (!point.comparableToPrevious) return null;
+                return <line key={`${point.date}-line`} x1={previous.x} y1={previous.y} x2={point.x} y2={point.y} vectorEffect="non-scaling-stroke" />;
+              })}
+              {plotted.map((point) => <circle key={point.date} cx={point.x} cy={point.y} r="1.4" vectorEffect="non-scaling-stroke" />)}
+            </svg>
+            {plotted.map((point, index) => index === 0 || !point.comparableToPrevious
+              ? <span className="epss-history__model-marker" key={`${point.date}-model`} style={{ "--x": `${point.x}%` } as CSSProperties}>{point.modelVersion}</span>
+              : null)}
+          </div>
+          <div className="epss-history__axis"><span>{dateLabel(points[0].date)}</span><span>{dateLabel(points.at(-1)!.date)}</span></div>
+          <div className="epss-history__latest">
+            <span>Latest sampled share</span>
+            <strong>{shares.at(-1)?.toFixed(2)}%</strong>
+            <small>{number(points.at(-1)?.notInKevCount ?? 0)} threshold records not in KEV</small>
+          </div>
+          <div className="epss-models"><span>Model versions</span>{models.map((model) => <em key={model}>{model}</em>)}</div>
+          <a className="panel-source-link" href={points.at(-1)?.sourceUrl}>View latest historical source ↗</a>
+          <p className="panel-note">Each point comes from its dated official EPSS snapshot. Dashed markers show model changes and lines stop at those boundaries; current scores are not applied backwards.</p>
+        </>
+      ) : <p className="panel-empty">Historical EPSS samples are not available in this snapshot.</p>}
+    </article>
+  );
+}
+
 export default function Home() {
   const maxCwe = Math.max(
     ...dashboard.topCwes.map((item) => item.recentShare ?? item.count),
@@ -277,12 +589,15 @@ export default function Home() {
     start: dashboard.risk.matureCohortStart,
     end: dashboard.risk.matureCohortEnd,
   };
+  const timingComparison = dashboard.risk.kevTimingComparison;
+  const additionComparison = dashboard.risk.kevAdditionComparison;
+  const deadlineComparison = dashboard.risk.kevDeadlineComparison;
   const kevTimingPeriod = dateRangeLabel(
-    dashboard.risk.kevTimingWindow,
+    timingComparison?.current ?? dashboard.risk.kevTimingWindow,
     fallbackMatureWindow,
   );
   const kevAdditionsPeriod = dateRangeLabel(
-    dashboard.risk.kevAdditionsWindow,
+    additionComparison?.current ?? dashboard.risk.kevAdditionsWindow,
     fallbackMatureWindow,
   );
   const epssCohortPeriod = dateRangeLabel(
@@ -292,6 +607,13 @@ export default function Home() {
   const epssScoreDate = dashboard.sources.epss?.scoreDate
     ?? dashboard.risk.epssCohortWindow?.scoreDate
     ?? null;
+  const priorityKpi = dashboard.priorityWatch ? {
+    total: dashboard.priorityWatch.total,
+    criticalHigh: dashboard.priorityWatch.criticalHigh,
+    start: dashboard.priorityWatch.window.start,
+    end: dashboard.priorityWatch.window.end,
+    scoreDate: dashboard.priorityWatch.window.scoreDate,
+  } : null;
   const sourceUpdates = [
     { label: "CVE List", qualifier: "Updated", value: dashboard.sources.cve.latestFetch, url: dashboard.sources.cve.url },
     { label: "NVD", qualifier: "Updated", value: dashboard.sources.nvd.latestSourceUpdate, url: dashboard.sources.nvd.url },
@@ -325,11 +647,11 @@ export default function Home() {
       <div className="page" id="top">
         <section className="hero">
           <div className="hero__copy">
-            <p className="kicker">DAILY CVE AND KEV REPORT</p>
-            <h1>CVE, KEV and LLM disclosures.<br /><em>One timeline.</em></h1>
+            <p className="kicker">DAILY VULNERABILITY REPORT</p>
+            <h1>Vulnerability trends.<br /><em>Exploitation signals.</em></h1>
             <p>
               Compare monthly CVE publications, CVSS severity, CISA KEV additions,
-              public exploit references, current EPSS signals and documented LLM-assisted disclosures.
+              public exploit references and EPSS probability signals. Documented LLM-assisted disclosures remain a separate evidence ledger.
             </p>
           </div>
           <div className="hero__status">
@@ -358,11 +680,14 @@ export default function Home() {
           </div>
         </section>
 
+        <WhatChanged digest={dashboard.changeDigest} />
+
         <TrendExplorer
           monthly={dashboard.monthly}
           latestCompleteMonth={dashboard.coverage.latestCompleteMonth}
           events={dashboard.llmDiscovery.events ?? []}
           epssScoreDate={epssScoreDate}
+          priorityKpi={priorityKpi}
         />
 
         <section className="section" id="context">
@@ -371,18 +696,25 @@ export default function Home() {
             <p>Each metric states the period and records included.</p>
           </div>
 
+          <div className="priority-history-grid">
+            <PriorityWatchPanel watch={dashboard.priorityWatch} />
+            <EpssHistoryPanel history={dashboard.epssHistory} />
+          </div>
+
           <div className="operational-matrix">
             <article>
               <span>Median time to enter KEV</span>
               <small>{kevTimingPeriod}</small>
-              <strong>{dashboard.risk.medianDaysToKev === null ? "—" : `${number(dashboard.risk.medianDaysToKev)} days`}</strong>
-              <p>Half of the {number(dashboard.risk.kevTimingSample)} KEV-matched CVEs were listed within this time. The {number(dashboard.risk.prePublicationKev)} already-listed records count as zero days.</p>
+              <strong>{(timingComparison?.current.medianDays ?? dashboard.risk.medianDaysToKev) === null ? "—" : `${number(timingComparison?.current.medianDays ?? dashboard.risk.medianDaysToKev ?? 0)} days`}</strong>
+              <DeltaTag value={timingComparison?.medianDaysChange} unit="days" />
+              <p>Half of {number(timingComparison?.current.sample ?? dashboard.risk.kevTimingSample)} KEV-matched CVEs were listed within this time. Already-listed records count as zero days.</p>
             </article>
             <article>
               <span>75th percentile time to KEV</span>
               <small>{kevTimingPeriod}</small>
-              <strong>{dashboard.risk.p75DaysToKev === null ? "—" : `${number(dashboard.risk.p75DaysToKev)} days`}</strong>
-              <p>75% of the same {number(dashboard.risk.kevTimingSample)} KEV-matched CVEs were listed within this time, measured from NVD publication.</p>
+              <strong>{(timingComparison?.current.p75Days ?? dashboard.risk.p75DaysToKev) === null ? "—" : `${number(timingComparison?.current.p75Days ?? dashboard.risk.p75DaysToKev ?? 0)} days`}</strong>
+              <DeltaTag value={timingComparison?.p75DaysChange} unit="days" />
+              <p>75% of the same {number(timingComparison?.current.sample ?? dashboard.risk.kevTimingSample)} matched CVEs entered KEV within this time after NVD publication.</p>
             </article>
             <article>
               <span>CISA KEV catalog</span>
@@ -399,20 +731,23 @@ export default function Home() {
             <article>
               <span>Ransomware in KEV additions</span>
               <small>{kevAdditionsPeriod}</small>
-              <strong>{percent(dashboard.risk.ransomwareKevShare)}</strong>
-              <p>Of {number(dashboard.risk.kevAdditionsCount)} KEV additions, {number(dashboard.risk.ransomwareKevCount)} are known to be used in ransomware campaigns.</p>
+              <strong>{percent(additionComparison?.current.ransomwareShare ?? dashboard.risk.ransomwareKevShare)}</strong>
+              <DeltaTag value={additionComparison?.ransomwareShareChangePoints} unit="points" />
+              <p>{number(additionComparison?.current.ransomwareCount ?? dashboard.risk.ransomwareKevCount)} of {number(additionComparison?.current.count ?? dashboard.risk.kevAdditionsCount)} additions are known to be used in ransomware campaigns.</p>
             </article>
             <article>
-              <span>Remediation due window</span>
-              <small>{kevAdditionsPeriod}</small>
-              <strong>{dashboard.risk.medianKevDueWindow === null ? "—" : `${number(dashboard.risk.medianKevDueWindow)} days`}</strong>
-              <p>Median across {number(dashboard.risk.kevDueWindowSample)} of {number(dashboard.risk.kevAdditionsCount)} additions with valid listing and remediation due dates.</p>
+              <span>KEV deadlines within 7 days</span>
+              <small>{dateRangeLabel(deadlineComparison?.current, dashboard.risk.kevAdditionsWindow)}</small>
+              <strong>{percent(deadlineComparison?.current.within7Share ?? null)}</strong>
+              <DeltaTag value={deadlineComparison?.within7ShareChangePoints} unit="points" />
+              <p>{number(deadlineComparison?.current.within7Count ?? 0)} of {number(deadlineComparison?.current.dueWindowSample ?? 0)} additions required accelerated remediation within seven days.</p>
             </article>
             <article>
               <span>KEV additions &gt;2 years old</span>
               <small>{kevAdditionsPeriod}</small>
-              <strong>{percent(dashboard.risk.oldKevShare)}</strong>
-              <p>{number(dashboard.risk.oldKevCount)} of {number(dashboard.risk.kevAgeSample)} additions with matched NVD publication dates were listed more than two years later.</p>
+              <strong>{percent(additionComparison?.current.oldShare ?? dashboard.risk.oldKevShare)}</strong>
+              <DeltaTag value={additionComparison?.oldShareChangePoints} unit="points" />
+              <p>{number(additionComparison?.current.oldCount ?? dashboard.risk.oldKevCount)} of {number(additionComparison?.current.ageSample ?? dashboard.risk.kevAgeSample)} additions with publication dates were listed more than two years later.</p>
             </article>
             <article>
               <span>EPSS ≥ 0.1 not in CISA KEV</span>
@@ -467,13 +802,37 @@ export default function Home() {
               <div><p className="eyebrow">CWE / Trailing 12 months</p><h3>Most common CWE classes</h3></div>
               <span>Share of CVEs · change vs prior 12 months</span>
             </div>
+            {dashboard.cweMovers ? (
+              <div className="cwe-movers" aria-label="Largest CWE share changes">
+                <article>
+                  <span>Largest share risers</span>
+                  {dashboard.cweMovers.rising.slice(0, 2).map((item) => (
+                    <a href={item.url} key={item.cwe}>
+                      <strong>{item.cwe}</strong>
+                      <span>{item.name}</span>
+                      <em>+{Math.abs(item.changePoints ?? 0).toFixed(1)} percentage points</em>
+                    </a>
+                  ))}
+                </article>
+                <article>
+                  <span>Largest share fallers</span>
+                  {dashboard.cweMovers.falling.slice(0, 2).map((item) => (
+                    <a href={item.url} key={item.cwe}>
+                      <strong>{item.cwe}</strong>
+                      <span>{item.name}</span>
+                      <em>−{Math.abs(item.changePoints ?? 0).toFixed(1)} percentage points</em>
+                    </a>
+                  ))}
+                </article>
+              </div>
+            ) : null}
             <div className="cwe-list">
               {dashboard.topCwes.map((item, index) => {
                 const hasShare = item.recentShare !== undefined;
                 const recentValue = item.recentShare ?? item.count;
                 const change = item.changePoints ?? item.change ?? 0;
                 const changeText = hasShare
-                  ? `${change > 0 ? "+" : change < 0 ? "−" : ""}${Math.abs(change).toFixed(1)} pp`
+                  ? `${change > 0 ? "+" : change < 0 ? "−" : ""}${Math.abs(change).toFixed(1)} points`
                   : change > 0
                     ? `+${number(change)}`
                     : change < 0
@@ -483,7 +842,7 @@ export default function Home() {
                 return (
                   <div className="cwe-row" key={item.cwe}>
                     <span>{String(index + 1).padStart(2, "0")}</span>
-                    <strong>{item.cwe}</strong>
+                    <strong><a href={item.url ?? `https://cwe.mitre.org/data/definitions/${item.cwe.replace("CWE-", "")}.html`}>{item.cwe}<small>{item.name ?? "Official CWE definition"}</small></a></strong>
                     <div title={`${number(item.count)} CVEs`}><i style={{ "--bar": `${(recentValue / maxCwe) * 100}%` } as CSSProperties} /></div>
                     <em className="cwe-count" title={`${number(item.count)} CVEs`}>{hasShare ? percent(item.recentShare ?? null) : number(item.count)}</em>
                     <span className={`cwe-change ${changeClass}`} title="Percentage-point change vs prior 12 months">{changeText}</span>

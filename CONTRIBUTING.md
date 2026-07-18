@@ -8,7 +8,7 @@ documentation, tests, and evidence methodology are welcome.
 
 Requirements:
 
-- Node.js 22.13 or later
+- Node.js 22.23.1 or a later 22.x release
 - Python 3.11 or later
 
 ```bash
@@ -39,6 +39,8 @@ that Markdown links and examples are accurate.
 - Prefer an issuing authority or original publisher over mirrors and derived
   APIs. Explain provenance, update frequency, licensing or attribution, and
   how failures are handled when proposing a new source.
+- Keep downloads on HTTPS allowlisted hosts and set defensible compressed,
+  decompressed and record-count limits for every new feed.
 - Preserve source uncertainty. Missing severity is not low severity, an NVD
   `Exploit` reference is not equivalent to CISA KEV membership, and a KEV entry
   does not show that every product configuration is exploitable.

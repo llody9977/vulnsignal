@@ -55,9 +55,26 @@ export type PeriodSummary = {
   epssHighShare: number | null;
 };
 
+export type SeverityMetricKey =
+  | "critical"
+  | "high"
+  | "medium"
+  | "low"
+  | "none"
+  | "unknown";
+
 export function percentage(numerator: number, denominator: number) {
   if (!denominator) return null;
   return Math.round((numerator / denominator) * 1000) / 10;
+}
+
+export function severityShare(point: MonthPoint, key: SeverityMetricKey) {
+  if (!point.published) return null;
+  return Math.round((point[key] / point.published) * 1000) / 10;
+}
+
+export function hasRecordedValue(values: Array<number | null>) {
+  return values.some((value) => value !== null);
 }
 
 export function change(current: number, previous: number) {
