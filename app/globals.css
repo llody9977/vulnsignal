@@ -328,11 +328,15 @@ main {
   padding: 1px 4px;
   font-size: 9px;
   background: var(--critical);
-  color: var(--surface);
+  color: var(--surface) !important;
   border-radius: 3px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0;
+}
+
+.source-snapshot span .telemetry-badge {
+  color: var(--surface) !important;
 }
 
 .source-snapshot time {
@@ -1582,7 +1586,7 @@ main {
 
 .source-strip span { color: #aab5c4; letter-spacing: 0.08em; }
 .source-strip a { color: var(--accent-on-dark); }
-.source-strip em { color: #c3ccd8; font-style: normal; margin-left: auto; max-width: 440px; text-align: right; }
+.source-strip em { color: #c3ccd8; font-style: normal; flex-basis: 100%; margin-top: 4px; text-align: left; }
 
 footer {
   align-items: center;
