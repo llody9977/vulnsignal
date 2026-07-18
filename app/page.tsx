@@ -279,7 +279,7 @@ export default function Home() {
                     {source.label}
                     {source.label === "CVE List" && (
                       <span className="telemetry-badge">
-                        {number(dashboard.sources.cve.changedRecords24h)} changes/24h
+                        ({number(dashboard.sources.cve.changedRecords24h)} changes/24h)
                       </span>
                     )}
                   </span>
