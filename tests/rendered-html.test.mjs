@@ -23,6 +23,8 @@ test("static export renders the VulnSignal intelligence dashboard", async () => 
   assert.match(html, /Source data included/);
   assert.match(html, /What changed/);
   assert.match(html, /feed activity, not vulnerability incidence/);
+  assert.match(html, /Confirmed exploitation · CISA KEV/);
+  assert.doesNotMatch(html, /Confirmed exploitation · latest catalog date/);
   assert.match(html, /Critical \+ high share/);
   assert.match(html, /Change in published vulnerability reporting/);
   assert.match(html, /does not measure an LLM discovery rate/);
