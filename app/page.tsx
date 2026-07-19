@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import rawDashboard from "@/data/dashboard.json";
 import { TrendExplorer } from "./trend-explorer";
 import type { LlmEvidenceEvent, MonthPoint } from "./trend-model";
@@ -337,6 +337,34 @@ function shortDateLabel(value: string) {
   return dateLabel(value.slice(0, 10), true);
 }
 
+function MetricValue({
+  children,
+  href,
+  tooltip,
+}: {
+  children: ReactNode;
+  href?: string;
+  tooltip: string;
+}) {
+  if (href) {
+    return (
+      <a className="metric-value metric-value--link" href={href} title={tooltip}>
+        <span>{children}</span><b aria-hidden="true">↗</b>
+      </a>
+    );
+  }
+  return (
+    <span
+      className="metric-value metric-value--info"
+      data-tooltip={tooltip}
+      tabIndex={0}
+      aria-label={tooltip}
+    >
+      {children}
+    </span>
+  );
+}
+
 function timestampLabel(value: string | null) {
   if (!value) return "Not available";
   const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(value);
@@ -392,13 +420,13 @@ function ComparisonRow({
           className="comparison-bar comparison-bar--pre"
           style={{ "--bar": `${(safeEarlier / max) * 100}%` } as CSSProperties}
         >
-          <span>{earlier === null ? "—" : `${number(earlier)}${suffix}`}</span>
+          <span><MetricValue tooltip={`${label}, earlier period value`}>{earlier === null ? "—" : `${number(earlier)}${suffix}`}</MetricValue></span>
         </div>
         <div
           className="comparison-bar comparison-bar--recent"
           style={{ "--bar": `${(safeRecent / max) * 100}%` } as CSSProperties}
         >
-          <span>{recent === null ? "—" : `${number(recent)}${suffix}`}</span>
+          <span><MetricValue tooltip={`${label}, recent period value`}>{recent === null ? "—" : `${number(recent)}${suffix}`}</MetricValue></span>
         </div>
       </div>
     </div>
@@ -444,8 +472,10 @@ function DeltaTag({
 
 function WhatChanged({
   digest,
+  cveUrl,
 }: {
   digest?: DashboardData["changeDigest"];
+  cveUrl: string;
 }) {
   if (!digest) return null;
   const epssText = digest.epss.comparable
@@ -460,22 +490,22 @@ function WhatChanged({
       <div className="change-digest__grid">
         <article>
           <span>Source maintenance · last 24 hours</span>
-          <strong>{number(digest.cve.distinctChanged)} CVE records changed</strong>
+          <strong><MetricValue href={cveUrl} tooltip="Open the official CVE List source">{number(digest.cve.distinctChanged)} CVE records changed</MetricValue></strong>
           <p>{number(digest.cve.newRecords)} newly published and {number(digest.cve.updatedRecords)} updated in 24 hours; categories can overlap. This is feed activity, not vulnerability incidence.</p>
         </article>
         <article>
           <span>Confirmed exploitation · latest catalog date</span>
-          <strong>{number(digest.kev.additions)} KEV additions</strong>
+          <strong><MetricValue href="#kev-watch" tooltip="Jump to the recently added CISA KEV records">{number(digest.kev.additions)} KEV additions</MetricValue></strong>
           <p>{digest.kev.date ? `Added by CISA on ${dateLabel(digest.kev.date, true)}.` : "No dated KEV additions in this refresh."}</p>
         </article>
         <article>
           <span>EPSS threshold movement · adjacent sample</span>
-          <strong>{epssText}</strong>
+          <strong><MetricValue href="#epss-history" tooltip="Jump to the EPSS threshold history">{epssText}</MetricValue></strong>
           <p>Uses adjacent official snapshots only when their model versions are comparable.</p>
         </article>
         <article>
           <span>Current priority watch · current snapshot</span>
-          <strong>{number(digest.priority.count)} candidates</strong>
+          <strong><MetricValue href="#priority-watch-panel" tooltip="Jump to the elevated EPSS candidate table">{number(digest.priority.count)} candidates</MetricValue></strong>
           <p>Current EPSS ≥ 0.1, published in 90 days and not listed in CISA KEV.</p>
         </article>
       </div>
@@ -486,7 +516,7 @@ function WhatChanged({
 function PriorityWatchPanel({ watch }: { watch?: PriorityWatch }) {
   const visibleItems = watch?.items.slice(0, 10) ?? [];
   return (
-    <article className="flat-panel priority-watch">
+    <article className="flat-panel priority-watch" id="priority-watch-panel">
       <div className="panel-heading">
         <div><p className="eyebrow">Priority watch / 90 days</p><h3>Elevated EPSS CVEs not in CISA KEV</h3></div>
         <span>{watch ? `EPSS scores ${timestampLabel(watch.window.scoreDate)}` : "Awaiting EPSS history"}</span>
@@ -494,15 +524,15 @@ function PriorityWatchPanel({ watch }: { watch?: PriorityWatch }) {
       {watch ? (
         <>
           <div className="priority-watch__summary">
-            <div><span>Candidates</span><strong>{number(watch.total)}</strong></div>
-            <div><span>Critical or high</span><strong>{number(watch.criticalHigh)}</strong></div>
-            <div><span>Exploit reference</span><strong>{number(watch.publicExploitReferences)}</strong></div>
+            <div><span>Candidates</span><strong><MetricValue href="#priority-watch-table" tooltip="Jump to the highest-probability candidate records">{number(watch.total)}</MetricValue></strong></div>
+            <div><span>Critical or high</span><strong><MetricValue href="#priority-watch-table" tooltip="Jump to candidate severity and EPSS details">{number(watch.criticalHigh)}</MetricValue></strong></div>
+            <div><span>Exploit reference</span><strong><MetricValue href="#priority-watch-table" tooltip="Jump to candidate exploit-reference details">{number(watch.publicExploitReferences)}</MetricValue></strong></div>
           </div>
           <p className="priority-watch__note">
             Published {dateLabel(watch.window.start, true)}–{dateLabel(watch.window.end, true)}. EPSS ≥ 0.1 is a project-defined current-score threshold. Not appearing in CISA KEV does not prove that exploitation has not occurred. “Yes” under exploit reference means NVD has at least one reference tagged <code>Exploit</code>; “No” means that tag is absent in this snapshot.
           </p>
           {visibleItems.length ? (
-            <div className="priority-table-wrap">
+            <div className="priority-table-wrap" id="priority-watch-table">
               <table className="priority-table">
                 <caption>Highest EPSS probabilities among CVEs published in the 90-day priority-watch window and not listed in CISA KEV</caption>
                 <thead><tr><th>Vulnerability</th><th>Published</th><th>Severity</th><th>EPSS probability</th><th>Exploit reference</th></tr></thead>
@@ -521,7 +551,7 @@ function PriorityWatchPanel({ watch }: { watch?: PriorityWatch }) {
                   ))}
                 </tbody>
               </table>
-              {watch.items.length > visibleItems.length ? <p className="table-note">Showing the {number(visibleItems.length)} highest EPSS probabilities here. Use the “90-day priority candidates” tile breakdown to search all {number(watch.items.length)} detailed candidate rows retained in this snapshot.</p> : null}
+              {watch.items.length > visibleItems.length ? <p className="table-note">Showing the {number(visibleItems.length)} highest EPSS probabilities here. Select the “90-day priority candidates” value in the report tiles to search all {number(watch.items.length)} detailed candidate rows retained in this snapshot.</p> : null}
             </div>
           ) : <p className="panel-empty">No qualifying CVEs were found in this snapshot.</p>}
         </>
@@ -544,7 +574,7 @@ function EpssHistoryPanel({ history }: { history?: EpssHistory }) {
   }));
   const models = Array.from(new Set(points.map((point) => point.modelVersion)));
   return (
-    <article className="flat-panel epss-history">
+    <article className="flat-panel epss-history" id="epss-history">
       <div className="panel-heading">
         <div><p className="eyebrow">Official historical snapshots</p><h3>EPSS threshold history</h3></div>
         <span>{points.length} dated samples</span>
@@ -572,7 +602,7 @@ function EpssHistoryPanel({ history }: { history?: EpssHistory }) {
           <div className="epss-history__axis"><span>{dateLabel(points[0].date)}</span><span>{dateLabel(points.at(-1)!.date)}</span></div>
           <div className="epss-history__latest">
             <span>Latest sampled share</span>
-            <strong>{shares.at(-1)?.toFixed(2)}%</strong>
+            <strong><MetricValue href={points.at(-1)?.sourceUrl} tooltip="Open the official dated EPSS snapshot">{shares.at(-1)?.toFixed(2)}%</MetricValue></strong>
             <small>{number(points.at(-1)?.notInKevCount ?? 0)} threshold records not in KEV</small>
           </div>
           <div className="epss-models"><span>Model versions</span>{models.map((model) => <em key={model}>{model}</em>)}</div>
@@ -619,6 +649,9 @@ export default function Home() {
     { label: "EPSS", qualifier: "Score date", value: epssScoreDate, url: dashboard.sources.epss?.url ?? "https://www.first.org/epss/" },
     { label: "LLM register", qualifier: "Reviewed", value: dashboard.sources.llmRegistry.lastReviewed, url: dashboard.sources.llmRegistry.url },
   ];
+  const headlineLlmSource = dashboard.llmDiscovery.programReports.find(
+    (report) => report.count === dashboard.llmDiscovery.value,
+  )?.sourceUrl;
 
   return (
     <main>
@@ -652,10 +685,10 @@ export default function Home() {
             </p>
           </div>
           <div className="hero__status">
-            <div><span>Snapshot built</span><strong>{timestampLabel(dashboard.generatedAt)}</strong></div>
-            <div><span>Latest complete month</span><strong>{dateLabel(dashboard.coverage.latestCompleteMonth)}</strong></div>
-            <div><span>CVE records covered</span><strong>{number(dashboard.coverage.recordCount)}</strong></div>
-            <div><span>Refresh schedule</span><strong>{dashboard.project.refreshSchedule || "Daily"}</strong></div>
+            <div><span>Snapshot built</span><strong><MetricValue tooltip="UTC time when this validated dashboard snapshot was generated">{timestampLabel(dashboard.generatedAt)}</MetricValue></strong></div>
+            <div><span>Latest complete month</span><strong><MetricValue href="#reporting" tooltip="Jump to the interactive monthly and yearly report">{dateLabel(dashboard.coverage.latestCompleteMonth)}</MetricValue></strong></div>
+            <div><span>CVE records covered</span><strong><MetricValue href={dashboard.sources.nvd.url} tooltip="Open the official NVD source used for CVE trend records">{number(dashboard.coverage.recordCount)}</MetricValue></strong></div>
+            <div><span>Refresh schedule</span><strong><MetricValue tooltip="Scheduled refresh cadence for the GitHub data pipeline">{dashboard.project.refreshSchedule || "Daily"}</MetricValue></strong></div>
           </div>
           <div className="source-snapshot" aria-label="Source dates included in this snapshot">
             <strong>Source data included</strong>
@@ -677,7 +710,7 @@ export default function Home() {
           </div>
         </section>
 
-        <WhatChanged digest={dashboard.changeDigest} />
+        <WhatChanged digest={dashboard.changeDigest} cveUrl={dashboard.sources.cve.url} />
 
         <TrendExplorer
           monthly={dashboard.monthly}
@@ -702,54 +735,54 @@ export default function Home() {
             <article>
               <span>Median time to enter KEV</span>
               <small>{kevTimingPeriod}</small>
-              <strong>{(timingComparison?.current.medianDays ?? dashboard.risk.medianDaysToKev) === null ? "—" : `${number(timingComparison?.current.medianDays ?? dashboard.risk.medianDaysToKev ?? 0)} days`}</strong>
+              <strong><MetricValue tooltip={`Median across ${number(timingComparison?.current.sample ?? dashboard.risk.kevTimingSample)} KEV-matched CVEs in the stated period`}>{(timingComparison?.current.medianDays ?? dashboard.risk.medianDaysToKev) === null ? "—" : `${number(timingComparison?.current.medianDays ?? dashboard.risk.medianDaysToKev ?? 0)} days`}</MetricValue></strong>
               <DeltaTag value={timingComparison?.medianDaysChange} unit="days" />
               <p>Half of {number(timingComparison?.current.sample ?? dashboard.risk.kevTimingSample)} KEV-matched CVEs were listed within this time. Already-listed records count as zero days.</p>
             </article>
             <article>
               <span>75th percentile time to KEV</span>
               <small>{kevTimingPeriod}</small>
-              <strong>{(timingComparison?.current.p75Days ?? dashboard.risk.p75DaysToKev) === null ? "—" : `${number(timingComparison?.current.p75Days ?? dashboard.risk.p75DaysToKev ?? 0)} days`}</strong>
+              <strong><MetricValue tooltip={`75th percentile across ${number(timingComparison?.current.sample ?? dashboard.risk.kevTimingSample)} KEV-matched CVEs in the stated period`}>{(timingComparison?.current.p75Days ?? dashboard.risk.p75DaysToKev) === null ? "—" : `${number(timingComparison?.current.p75Days ?? dashboard.risk.p75DaysToKev ?? 0)} days`}</MetricValue></strong>
               <DeltaTag value={timingComparison?.p75DaysChange} unit="days" />
               <p>75% of the same {number(timingComparison?.current.sample ?? dashboard.risk.kevTimingSample)} matched CVEs entered KEV within this time after NVD publication.</p>
             </article>
             <article>
               <span>CISA KEV catalog</span>
               <small>Released {timestampLabel(dashboard.sources.kev.released)}</small>
-              <strong>{number(dashboard.risk.catalogKev)}</strong>
+              <strong><MetricValue href={dashboard.sources.kev.url} tooltip="Open the official CISA KEV catalog">{number(dashboard.risk.catalogKev)}</MetricValue></strong>
               <p>Known exploited vulnerabilities currently listed by CISA.</p>
             </article>
             <article>
               <span>Severity coverage</span>
               <small>{dateLabel(dashboard.latestCompleteMonth.month)}</small>
-              <strong>{percent(dashboard.latestCompleteMonth.severityCoverage)}</strong>
+              <strong><MetricValue href="#reporting" tooltip="Jump to the interactive severity report and metric details">{percent(dashboard.latestCompleteMonth.severityCoverage)}</MetricValue></strong>
               <p>Share of CVEs in the latest complete month with a CVSS score.</p>
             </article>
             <article>
               <span>Ransomware in KEV additions</span>
               <small>{kevAdditionsPeriod}</small>
-              <strong>{percent(additionComparison?.current.ransomwareShare ?? dashboard.risk.ransomwareKevShare)}</strong>
+              <strong><MetricValue href={dashboard.sources.kev.url} tooltip="Open the official CISA KEV catalog containing ransomware-use flags">{percent(additionComparison?.current.ransomwareShare ?? dashboard.risk.ransomwareKevShare)}</MetricValue></strong>
               <DeltaTag value={additionComparison?.ransomwareShareChangePoints} unit="points" />
               <p>{number(additionComparison?.current.ransomwareCount ?? dashboard.risk.ransomwareKevCount)} of {number(additionComparison?.current.count ?? dashboard.risk.kevAdditionsCount)} additions are known to be used in ransomware campaigns.</p>
             </article>
             <article>
               <span>KEV deadlines within 7 days</span>
               <small>{dateRangeLabel(deadlineComparison?.current, dashboard.risk.kevAdditionsWindow)}</small>
-              <strong>{percent(deadlineComparison?.current.within7Share ?? null)}</strong>
+              <strong><MetricValue href={dashboard.sources.kev.url} tooltip="Open the official CISA KEV catalog containing required-action due dates">{percent(deadlineComparison?.current.within7Share ?? null)}</MetricValue></strong>
               <DeltaTag value={deadlineComparison?.within7ShareChangePoints} unit="points" />
               <p>{number(deadlineComparison?.current.within7Count ?? 0)} of {number(deadlineComparison?.current.dueWindowSample ?? 0)} additions required accelerated remediation within seven days.</p>
             </article>
             <article>
               <span>KEV additions &gt;2 years old</span>
               <small>{kevAdditionsPeriod}</small>
-              <strong>{percent(additionComparison?.current.oldShare ?? dashboard.risk.oldKevShare)}</strong>
+              <strong><MetricValue href={dashboard.sources.kev.url} tooltip="Open the official CISA KEV catalog used for this age comparison">{percent(additionComparison?.current.oldShare ?? dashboard.risk.oldKevShare)}</MetricValue></strong>
               <DeltaTag value={additionComparison?.oldShareChangePoints} unit="points" />
               <p>{number(additionComparison?.current.oldCount ?? dashboard.risk.oldKevCount)} of {number(additionComparison?.current.ageSample ?? dashboard.risk.kevAgeSample)} additions with publication dates were listed more than two years later.</p>
             </article>
             <article>
               <span>EPSS ≥ 0.1 not in CISA KEV</span>
               <small>{epssCohortPeriod} · scores {timestampLabel(epssScoreDate)}</small>
-              <strong>{percent(dashboard.risk.highEpssNotInKevShare)}</strong>
+              <strong><MetricValue href="#priority-watch-panel" tooltip="Jump to the elevated EPSS candidates not listed in CISA KEV">{percent(dashboard.risk.highEpssNotInKevShare)}</MetricValue></strong>
               <p>{number(dashboard.risk.highEpssNotInKevCount)} of {number(dashboard.risk.highEpss)} CVEs meeting this project-defined threshold are not in CISA KEV. Scores are current, not historical.</p>
             </article>
           </div>
@@ -777,7 +810,7 @@ export default function Home() {
                 <div><p className="eyebrow">LLM disclosure evidence</p><h3>Reported minimum, not a total</h3></div>
               </div>
               <div className="evidence-score">
-                <strong>{dashboard.llmDiscovery.value === null ? "—" : `≥ ${number(dashboard.llmDiscovery.value)}`}</strong>
+                <strong><MetricValue href={headlineLlmSource} tooltip={headlineLlmSource ? "Open the first-party programme report supporting this value" : "No single linked programme report is available for this value"}>{dashboard.llmDiscovery.value === null ? "—" : `≥ ${number(dashboard.llmDiscovery.value)}`}</MetricValue></strong>
                 <span>Largest CVE count reported by one programme</span>
               </div>
               <div className="evidence-ledger">

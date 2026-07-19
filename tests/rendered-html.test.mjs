@@ -30,8 +30,13 @@ test("static export renders the VulnSignal intelligence dashboard", async () => 
   assert.match(html, /75th percentile time to KEV/);
   assert.match(html, /KEV deadlines within 7 days/);
   assert.match(html, /90-day priority candidates/);
-  assert.equal((html.match(/View breakdown/g) ?? []).length, 6);
+  assert.doesNotMatch(html, /View breakdown/);
+  assert.equal((html.match(/indicator-cell__value-link/g) ?? []).length, 6);
   assert.equal((html.match(/aria-haspopup="dialog"/g) ?? []).length, 6);
+  assert.match(html, /metric-value--link/);
+  assert.match(html, /metric-value--info/);
+  assert.match(html, /data-tooltip="UTC time when this validated dashboard snapshot was generated"/);
+  assert.match(html, /href="#priority-watch-table"/);
   assert.match(html, /id="indicator-drilldown"/);
   assert.match(html, /aria-labelledby="indicator-drilldown-title"/);
   assert.match(html, /Elevated EPSS CVEs not in CISA KEV/);

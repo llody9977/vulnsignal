@@ -72,6 +72,93 @@ summary:focus-visible {
   outline-offset: 3px;
 }
 
+.metric-value {
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+}
+
+.metric-value--link {
+  align-items: baseline;
+  border-bottom: 1px solid currentColor;
+  color: var(--accent-dark);
+  display: inline-flex;
+  gap: 7px;
+}
+
+.metric-value--link:hover {
+  color: var(--accent);
+}
+
+.hero__status .metric-value--link,
+.evidence-card .metric-value--link {
+  color: var(--accent-on-dark);
+}
+
+.hero__status .metric-value--link:hover,
+.evidence-card .metric-value--link:hover {
+  color: #b3c8ff;
+}
+
+.metric-value--link b {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.48em;
+  font-weight: 500;
+}
+
+.metric-value--info {
+  border-bottom: 1px dotted var(--rule-strong);
+  cursor: help;
+  display: inline-block;
+  position: relative;
+}
+
+.metric-value--info::after {
+  background: var(--ink);
+  bottom: calc(100% + 9px);
+  color: #fff;
+  content: attr(data-tooltip);
+  font-family: var(--font-geist-sans), "Helvetica Neue", sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  left: 50%;
+  letter-spacing: 0;
+  line-height: 1.45;
+  max-width: min(260px, calc(100vw - 40px));
+  opacity: 0;
+  padding: 8px 10px;
+  pointer-events: none;
+  position: absolute;
+  text-align: left;
+  transform: translate(-50%, 4px);
+  transition: opacity 120ms ease, transform 120ms ease;
+  visibility: hidden;
+  white-space: normal;
+  width: max-content;
+  z-index: 40;
+}
+
+.metric-value--info:hover::after,
+.metric-value--info:focus-visible::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  visibility: visible;
+}
+
+.metric-value--info:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+#reporting,
+#priority-watch-panel,
+#priority-watch-table,
+#epss-history,
+#kev-watch {
+  scroll-margin-top: 86px;
+}
+
 main {
   min-height: 100vh;
 }
@@ -523,7 +610,15 @@ main {
   font-weight: 650;
 }
 
-.indicator-cell__value {
+.indicator-cell__value-link {
+  align-items: baseline;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid currentColor;
+  color: var(--accent-dark);
+  cursor: pointer;
+  display: inline-flex;
   font-family: var(--font-geist-sans), "Helvetica Neue", sans-serif;
   font-feature-settings: "pnum" 1, "kern" 1;
   font-size: clamp(32px, 3vw, 45px);
@@ -532,7 +627,19 @@ main {
   letter-spacing: -0.025em;
   line-height: 1;
   margin-top: 28px;
+  padding: 0 0 3px;
   white-space: nowrap;
+}
+
+.indicator-cell__value-link b {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 14px;
+  font-weight: 500;
+  margin-left: 9px;
+}
+
+.indicator-cell__value-link:hover {
+  color: var(--accent);
 }
 
 .indicator-cell p {
@@ -593,44 +700,13 @@ main {
   box-shadow: inset 0 4px 0 var(--accent);
 }
 
-.indicator-cell__drilldown {
-  align-items: center;
-  appearance: none;
-  background: transparent;
-  border: 0;
-  border-top: 1px solid var(--rule);
-  color: var(--accent-dark);
-  cursor: pointer;
-  display: flex;
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 11px;
-  font-weight: 650;
-  justify-content: space-between;
-  letter-spacing: 0.04em;
-  margin-top: 14px;
-  min-height: 44px;
-  padding: 8px 0 0;
-  text-align: left;
-  text-transform: uppercase;
-  width: 100%;
-}
-
-.indicator-cell__drilldown:hover {
-  color: var(--accent);
-}
-
-.indicator-cell__drilldown:focus-visible,
+.indicator-cell__value-link:focus-visible,
 .indicator-drilldown button:focus-visible,
 .indicator-drilldown a:focus-visible,
 .indicator-drilldown input:focus-visible,
 .indicator-drilldown select:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
-}
-
-.indicator-cell__drilldown b {
-  font-size: 16px;
-  font-weight: 500;
 }
 
 .indicator-drilldown {
@@ -1742,7 +1818,7 @@ main {
   background: linear-gradient(90deg, var(--accent) 0 var(--bar), var(--accent-wash) var(--bar) 100%);
 }
 
-.comparison-bar span {
+.comparison-bar > span {
   background: rgba(255, 255, 255, 0.9);
   color: var(--ink);
   font-family: var(--font-geist-mono), monospace;
