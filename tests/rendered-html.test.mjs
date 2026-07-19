@@ -54,6 +54,11 @@ test("static export renders the VulnSignal intelligence dashboard", async () => 
   assert.match(html, /project-defined threshold/);
   assert.match(html, /current, not historical/i);
   assert.match(html, /FIRST EPSS/i);
+  assert.match(html, /Informational use only/);
+  assert.match(html, /not legal, compliance, security, risk-management or remediation advice/i);
+  assert.match(html, /provided “as is”/i);
+  assert.match(html, /This product uses the NVD API but is not endorsed or certified by the NVD/);
+  assert.match(html, /href="#disclaimer"/);
   assert.match(html, /chart-point--event/);
   assert.match(html, /≥ 28/);
   assert.match(html, /Counts from different programmes remain separate/);
@@ -63,6 +68,20 @@ test("static export renders the VulnSignal intelligence dashboard", async () => 
   assert.doesNotMatch(html, /Before and after ChatGPT|Every signal|recommended GitHub repository/i);
   assert.doesNotMatch(html, /T2K \/ P50|T2K \/ P75/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton|Starter Project/i);
+});
+
+test("project disclaimer and security policy avoid service commitments", async () => {
+  const [readme, security] = await Promise.all([
+    readFile(new URL("../README.md", import.meta.url), "utf8"),
+    readFile(new URL("../SECURITY.md", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(readme, /## Disclaimer/);
+  assert.match(readme, /No service level, response time, uninterrupted refresh schedule or continuing availability is promised/);
+  assert.match(readme, /MIT Licence/);
+  assert.match(security, /Reports are reviewed when time permits, and I may not reply to every report/);
+  assert.match(security, /does not promise an acknowledgement, response, remediation or disclosure timeline/);
+  assert.doesNotMatch(security, /acknowledge a report within seven days/i);
 });
 
 test("project metadata and generated dataset are repo-ready", async () => {
