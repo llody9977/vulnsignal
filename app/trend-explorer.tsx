@@ -364,8 +364,10 @@ function DrilldownFacts({
       {items.map((item) => (
         <div key={item.label}>
           <dt>{item.label}</dt>
-          <dd>{item.value}</dd>
-          {item.detail ? <small>{item.detail}</small> : null}
+          <dd>
+            {item.value}
+            {item.detail ? <small>{item.detail}</small> : null}
+          </dd>
         </div>
       ))}
     </dl>
@@ -390,7 +392,9 @@ function DrilldownTable({
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={row.key}>{row.cells.map((cell, index) => <td key={`${row.key}-${index}`}>{cell}</td>)}</tr>
+            <tr key={row.key}>{row.cells.map((cell, index) => index === 0
+              ? <th scope="row" key={`${row.key}-${index}`}>{cell}</th>
+              : <td key={`${row.key}-${index}`}>{cell}</td>)}</tr>
           ))}
         </tbody>
       </table>
@@ -404,7 +408,7 @@ function probabilityLabel(value: number) {
 }
 
 function percentileLabel(value: number) {
-  return `P${(value * 100).toFixed(1)}`;
+  return `EPSS percentile ${(value * 100).toFixed(1)}%`;
 }
 
 function IndicatorDrilldown({

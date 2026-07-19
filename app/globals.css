@@ -813,7 +813,7 @@ main {
   width: 1px;
 }
 
-.indicator-drilldown__table th {
+.indicator-drilldown__table thead th {
   background: var(--paper);
   color: var(--muted);
   font-family: var(--font-geist-mono), monospace;
@@ -833,20 +833,23 @@ main {
   vertical-align: top;
 }
 
-.indicator-drilldown__table th:first-child,
-.indicator-drilldown__table td:first-child {
+.indicator-drilldown__table tbody th {
   background: var(--panel);
+  font-weight: 650;
   left: 0;
   position: sticky;
+  text-align: left;
   z-index: 1;
 }
 
-.indicator-drilldown__table th:first-child {
+.indicator-drilldown__table thead th:first-child {
   background: var(--paper);
+  left: 0;
+  position: sticky;
   z-index: 3;
 }
 
-.indicator-drilldown__table td > a {
+.indicator-drilldown__table tbody th > a {
   color: var(--accent-dark);
   font-family: var(--font-geist-mono), monospace;
   font-weight: 700;

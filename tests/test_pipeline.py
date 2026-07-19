@@ -989,6 +989,13 @@ class PipelineUnitTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "priority-watch item is invalid"):
             validate(invalid_row_payload)
 
+        with mock.patch(
+            "scripts.sync_vulnerability_data.MAX_PRIORITY_WATCH_ITEMS",
+            len(base["priorityWatch"]["items"]) - 1,
+        ):
+            with self.assertRaisesRegex(ValueError, "publication safety limit"):
+                validate(base)
+
     def test_cwe_mover_and_source_name_validation(self):
         payload = self.dashboard_payload()
         payload["topCwes"][0]["name"] = ""
