@@ -1,2 +1,6 @@
 # Repository stewardship and review responsibility
 * @llody9977
+
+# Dependency-only updates rely on CI and do not need an automatic owner review request.
+/package.json
+/package-lock.json
