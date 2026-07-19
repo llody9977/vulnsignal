@@ -323,7 +323,19 @@ function MetricCell({
       <div className="indicator-cell__label">
         <strong>{label}</strong>
       </div>
-      <div className="indicator-cell__value">{value}</div>
+      <button
+        className="indicator-cell__value-link"
+        id={`indicator-trigger-${metric}`}
+        type="button"
+        aria-label={`${active ? "Close" : "Open"} ${label} details: ${value}`}
+        aria-haspopup="dialog"
+        aria-expanded={active}
+        aria-controls="indicator-drilldown"
+        onClick={(event) => onDrilldown(event.currentTarget)}
+      >
+        <span>{value}</span>
+        <b aria-hidden="true">↗</b>
+      </button>
       <p>{detail}</p>
       <div className={`indicator-cell__comparison indicator-cell__comparison--${comparison.tone}`}>
         <span aria-hidden="true">{symbol}</span>
@@ -332,19 +344,6 @@ function MetricCell({
           {comparison.baseline ? <small>{comparison.baseline}</small> : null}
         </div>
       </div>
-      <button
-        className="indicator-cell__drilldown"
-        id={`indicator-trigger-${metric}`}
-        type="button"
-        aria-label={`${active ? "Close" : "View"} ${label} breakdown`}
-        aria-haspopup="dialog"
-        aria-expanded={active}
-        aria-controls="indicator-drilldown"
-        onClick={(event) => onDrilldown(event.currentTarget)}
-      >
-        <span>{active ? "Details open" : "View breakdown"}</span>
-        <b aria-hidden="true">↗</b>
-      </button>
     </article>
   );
 }
@@ -1463,7 +1462,7 @@ export function TrendExplorer({
         }}
       >
         <div className="indicator-drilldown__bar">
-          <span>Indicator breakdown</span>
+          <span>Metric details</span>
           <button type="button" onClick={closeDrilldown}>Close details <b aria-hidden="true">×</b></button>
         </div>
         <div className="indicator-drilldown__body">
