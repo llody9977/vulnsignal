@@ -815,12 +815,68 @@ class PipelineUnitTests(unittest.TestCase):
             )
         self.assertEqual(payload["priorityWatch"]["total"], 2)
         self.assertEqual(
+            payload["priorityWatch"]["itemsCompleteness"], "all_candidates"
+        )
+        self.assertEqual(
+            len(payload["priorityWatch"]["items"]),
+            payload["priorityWatch"]["total"],
+        )
+        self.assertEqual(
             [item["cveId"] for item in payload["priorityWatch"]["items"]],
             ["CVE-2026-1001", "CVE-2026-1000"],
         )
         self.assertEqual(
             payload["priorityWatch"]["items"][0]["epssPercentile"], 0.99
         )
+
+    def test_priority_watch_publishes_every_candidate(self):
+        snapshot_time = dt.datetime(2026, 7, 18, 12, tzinfo=dt.timezone.utc)
+        records = {
+            f"CVE-2026-{1000 + index}": Vulnerability(
+                f"CVE-2026-{1000 + index}",
+                dt.date(2026, 7, 1),
+                "HIGH",
+                8.0,
+                "3.1",
+                index % 2 == 0,
+                (),
+                0.9 - index / 100,
+                0.99 - index / 1000,
+            )
+            for index in range(25)
+        }
+        with tempfile.NamedTemporaryFile() as temp_epss:
+            payload = aggregate(
+                records,
+                {
+                    "count": 1,
+                    "dateReleased": "2026-07-18T00:00:00Z",
+                    "vulnerabilities": [
+                        {
+                            "cveID": "CVE-2000-9999",
+                            "dateAdded": "2020-01-01",
+                            "dueDate": "2020-01-22",
+                        }
+                    ],
+                },
+                [],
+                {"records": [], "programReports": []},
+                {"cve_records": [], "headline": {}},
+                snapshot_time,
+                2020,
+                [],
+                pathlib.Path(temp_epss.name),
+                EpssFeed({}, "v2026.06.15", snapshot_time, 25),
+            )
+
+        watch = payload["priorityWatch"]
+        self.assertEqual(watch["itemsCompleteness"], "all_candidates")
+        self.assertEqual(watch["total"], 25)
+        self.assertEqual(len(watch["items"]), 25)
+        self.assertEqual(watch["criticalHigh"], 25)
+        self.assertEqual(watch["publicExploitReferences"], 13)
+        self.assertEqual(watch["items"][0]["cveId"], "CVE-2026-1000")
+        self.assertEqual(watch["items"][-1]["cveId"], "CVE-2026-1024")
 
     def test_kev_entries_before_nvd_publication_count_as_zero_day(self):
         records = [
@@ -895,6 +951,43 @@ class PipelineUnitTests(unittest.TestCase):
         percentile_payload["priorityWatch"]["items"][0]["epssPercentile"] = 1.1
         with self.assertRaisesRegex(ValueError, "priority-watch item is invalid"):
             validate(percentile_payload)
+
+    def test_priority_watch_validation_requires_complete_exact_details(self):
+        base = self.dashboard_payload()
+
+        incomplete_payload = copy.deepcopy(base)
+        incomplete_payload["priorityWatch"]["items"].pop()
+        with self.assertRaisesRegex(ValueError, "does not reconcile with its total"):
+            validate(incomplete_payload)
+
+        completeness_payload = copy.deepcopy(base)
+        completeness_payload["priorityWatch"]["itemsCompleteness"] = "top_candidates"
+        with self.assertRaisesRegex(ValueError, "item completeness is invalid"):
+            validate(completeness_payload)
+
+        summary_payload = copy.deepcopy(base)
+        summary_payload["priorityWatch"]["criticalHigh"] -= 1
+        with self.assertRaisesRegex(ValueError, "summaries do not reconcile"):
+            validate(summary_payload)
+
+        exploit_summary_payload = copy.deepcopy(base)
+        exploit_summary_payload["priorityWatch"]["publicExploitReferences"] += 1
+        with self.assertRaisesRegex(ValueError, "summaries do not reconcile"):
+            validate(exploit_summary_payload)
+
+        duplicate_payload = copy.deepcopy(base)
+        duplicate_payload["priorityWatch"]["items"][1] = copy.deepcopy(
+            duplicate_payload["priorityWatch"]["items"][0]
+        )
+        with self.assertRaisesRegex(ValueError, "priority-watch item is invalid"):
+            validate(duplicate_payload)
+
+        invalid_row_payload = copy.deepcopy(base)
+        invalid_row_payload["priorityWatch"]["items"][0][
+            "publicExploitReference"
+        ] = "yes"
+        with self.assertRaisesRegex(ValueError, "priority-watch item is invalid"):
+            validate(invalid_row_payload)
 
     def test_cwe_mover_and_source_name_validation(self):
         payload = self.dashboard_payload()
