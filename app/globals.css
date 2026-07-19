@@ -81,7 +81,6 @@ summary:focus-visible {
 
 .metric-value--link {
   align-items: baseline;
-  border-bottom: 1px solid currentColor;
   color: var(--accent-dark);
   display: inline-flex;
   gap: 7px;
@@ -108,7 +107,6 @@ summary:focus-visible {
 }
 
 .metric-value--info {
-  border-bottom: 1px dotted var(--rule-strong);
   cursor: help;
   display: inline-block;
   position: relative;
@@ -615,7 +613,6 @@ main {
   appearance: none;
   background: transparent;
   border: 0;
-  border-bottom: 1px solid currentColor;
   color: var(--accent-dark);
   cursor: pointer;
   display: inline-flex;
