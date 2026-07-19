@@ -46,6 +46,14 @@ CVE, NVD and KEV do not reliably record how a vulnerability was discovered. The 
 
 The optional `--as-of` value is a report cutoff, not a complete historical archive. It excludes later NVD publications and KEV events, while source freshness, NVD severity, CWE, exploit-reference and current EPSS fields still reflect the downloaded source snapshots. The dataset build time remains the actual time when the report was generated.
 
+## Disclaimer
+
+VulnSignal is a personal, experimental project provided for general information only. It is not legal, compliance, security, risk-management or remediation advice, and it should not be used as the sole basis for operational decisions. Important findings should be checked against the linked original sources, vendor guidance and the user's own environment.
+
+Data and derived metrics may be incomplete, delayed, revised or incorrect. The project is provided “as is”, without guarantees of accuracy, completeness, timeliness, availability or fitness for a particular purpose. Use it at your own risk. No service level, response time, uninterrupted refresh schedule or continuing availability is promised. Source names and trademarks belong to their respective owners; their inclusion does not imply affiliation, endorsement or certification.
+
+The software is released under the [MIT Licence](LICENSE), which contains the applicable warranty and liability terms.
+
 ## Data sources and freshness
 
 VulnSignal downloads directly from official and first-party public sources. Downloaded source archives are cached for validation and repeatable processing; the aggregate generated from them is committed as `data/dashboard.json`.
@@ -64,7 +72,7 @@ The page distinguishes the dashboard build time from upstream source dates. For 
 
 Every NVD yearly feed is checked against the SHA-256 value in its official META file. The pipeline calculates content fingerprints for the CVE List delta, CISA KEV, FIRST EPSS, Anthropic payload and curated LLM register. A fingerprint identifies the exact input used; it is not independent proof that an upstream source is complete or free from later revisions.
 
-This product uses data from NVD but is not endorsed or certified by NVD.
+This product uses the NVD API but is not endorsed or certified by the NVD.
 
 ## How to interpret the metrics
 
