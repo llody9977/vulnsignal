@@ -64,6 +64,10 @@ test("static export renders the VulnSignal intelligence dashboard", async () => 
   assert.match(html, /Informational use only/);
   assert.match(html, /not legal, compliance, security, risk-management or remediation advice/i);
   assert.match(html, /provided “as is”/i);
+  assert.match(html, /Apache License 2\.0/);
+  assert.match(html, /© 2026/);
+  assert.match(html, /llody9977/);
+  assert.match(html, />ATTRIBUTION ↗</);
   assert.match(html, /This product uses the NVD API but is not endorsed or certified by the NVD/);
   assert.match(html, /href="#disclaimer"/);
   assert.match(html, /chart-point--event/);
@@ -77,15 +81,24 @@ test("static export renders the VulnSignal intelligence dashboard", async () => 
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton|Starter Project/i);
 });
 
-test("project disclaimer and security policy avoid service commitments", async () => {
-  const [readme, security] = await Promise.all([
+test("project disclaimer, attribution, and security policy are documented", async () => {
+  const [readme, security, license, notice, authors] = await Promise.all([
     readFile(new URL("../README.md", import.meta.url), "utf8"),
     readFile(new URL("../SECURITY.md", import.meta.url), "utf8"),
+    readFile(new URL("../LICENSE", import.meta.url), "utf8"),
+    readFile(new URL("../NOTICE", import.meta.url), "utf8"),
+    readFile(new URL("../AUTHORS.md", import.meta.url), "utf8"),
   ]);
 
   assert.match(readme, /## Disclaimer/);
   assert.match(readme, /No service level, response time, uninterrupted refresh schedule or continuing availability is promised/);
-  assert.match(readme, /MIT Licence/);
+  assert.match(readme, /## Licence and attribution/);
+  assert.match(readme, /Apache License 2\.0/);
+  assert.match(license, /Apache License/);
+  assert.match(license, /Version 2\.0, January 2004/);
+  assert.match(notice, /Copyright 2026 llody9977/);
+  assert.match(authors, /OpenAI Codex has assisted/);
+  assert.doesNotMatch(readme, /MIT Licence/);
   assert.match(security, /Reports are reviewed when time permits, and I may not reply to every report/);
   assert.match(security, /does not promise an acknowledgement, response, remediation or disclosure timeline/);
   assert.doesNotMatch(security, /acknowledge a report within seven days/i);
@@ -103,6 +116,8 @@ test("project metadata and generated dataset are repo-ready", async () => {
 
   assert.equal(packageJson.name, "vulnsignal");
   assert.equal(packageJson.version, "1.0.0");
+  assert.equal(packageJson.license, "Apache-2.0");
+  assert.match(packageJson.author, /llody9977/);
   assert.ok(packageJson.scripts["data:sync"]);
   assert.ok(packageJson.scripts["build:pages"]);
   assert.equal(dataset.schemaVersion, 1);

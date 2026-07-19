@@ -967,7 +967,7 @@ export default function Home() {
             </div>
             <div>
               <p>VulnSignal is a personal, experimental project. It is not legal, compliance, security, risk-management or remediation advice, and it should not be the sole basis for operational decisions. Verify important findings against the linked original sources, vendor guidance and your own environment.</p>
-              <p>Data and derived metrics may be incomplete, delayed, revised or incorrect. The project is provided “as is”, without guarantees of accuracy, completeness, timeliness, availability or fitness for a particular purpose. Use it at your own risk. Source names and trademarks belong to their respective owners; inclusion does not imply affiliation, endorsement or certification. Software use remains subject to the <a href="https://github.com/llody9977/vulnsignal/blob/main/LICENSE">MIT Licence</a>.</p>
+              <p>Data and derived metrics may be incomplete, delayed, revised or incorrect. The project is provided “as is”, without guarantees of accuracy, completeness, timeliness, availability or fitness for a particular purpose. Use it at your own risk. Source names and trademarks belong to their respective owners; inclusion does not imply affiliation, endorsement or certification. Software use remains subject to the <a href="https://github.com/llody9977/vulnsignal/blob/main/LICENSE">Apache License 2.0</a>.</p>
               <p className="project-disclaimer__nvd">{dashboard.coverage.notice}</p>
             </div>
           </aside>
@@ -975,8 +975,8 @@ export default function Home() {
       </div>
 
       <footer>
-        <div><strong>VulnSignal</strong><span>Daily vulnerability trends from public sources.</span></div>
-        <div><a href="#disclaimer">DISCLAIMER</a><a href="https://github.com/llody9977/vulnsignal">VIEW SOURCE ON GITHUB ↗</a><a href="#top">TOP ↑</a></div>
+        <div><strong>VulnSignal</strong><span>© 2026 <a href="https://github.com/llody9977">llody9977</a> · Apache-2.0</span></div>
+        <div><a href="#disclaimer">DISCLAIMER</a><a href="https://github.com/llody9977/vulnsignal/blob/main/NOTICE">ATTRIBUTION ↗</a><a href="https://github.com/llody9977/vulnsignal">VIEW SOURCE ON GITHUB ↗</a><a href="#top">TOP ↑</a></div>
       </footer>
     </main>
   );

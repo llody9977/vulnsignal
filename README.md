@@ -52,7 +52,13 @@ VulnSignal is a personal, experimental project provided for general information 
 
 Data and derived metrics may be incomplete, delayed, revised or incorrect. The project is provided “as is”, without guarantees of accuracy, completeness, timeliness, availability or fitness for a particular purpose. Use it at your own risk. No service level, response time, uninterrupted refresh schedule or continuing availability is promised. Source names and trademarks belong to their respective owners; their inclusion does not imply affiliation, endorsement or certification.
 
-The software is released under the [MIT Licence](LICENSE), which contains the applicable warranty and liability terms.
+The software is released under the [Apache License 2.0](LICENSE), which contains the applicable warranty and liability terms.
+
+## Licence and attribution
+
+VulnSignal is free to use, modify and redistribute under the Apache License 2.0. Redistributions and derivative works must comply with the licence, retain applicable copyright and attribution notices, state significant changes, and include the attribution from [NOTICE](NOTICE) in a permitted readable form.
+
+Copyright 2026 [llody9977](https://github.com/llody9977). See [AUTHORS.md](AUTHORS.md) for the project authorship and AI-assistance disclosure. The use of OpenAI Codex as a development assistant does not change the attribution and licence requirements for this repository.
 
 ## Data sources and freshness
 
@@ -172,4 +178,4 @@ tests/                              Application and pipeline tests
 
 GitHub Pages is the only public deployment target. This keeps the hosting path and dependency surface small for a personal project.
 
-I maintain VulnSignal as a personal project, so changes may not follow a fixed support timetable. Issues and focused pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) before changing metric definitions or source handling, and [SECURITY.md](SECURITY.md) for private vulnerability reporting. VulnSignal is released under the [MIT Licence](LICENSE).
+I maintain VulnSignal as a personal project, so changes may not follow a fixed support timetable. Issues and focused pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) before changing metric definitions or source handling, and [SECURITY.md](SECURITY.md) for private vulnerability reporting. VulnSignal is released under the [Apache License 2.0](LICENSE); redistribution must preserve the attribution in [NOTICE](NOTICE).

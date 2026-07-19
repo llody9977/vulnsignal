@@ -2,6 +2,8 @@
   "name": "vulnsignal",
   "version": "1.0.0",
   "private": true,
+  "license": "Apache-2.0",
+  "author": "llody9977 (https://github.com/llody9977)",
   "description": "Daily dashboard for CVE publications, CVSS severity, CISA KEV, exploit references, current EPSS signals and documented LLM disclosures",
   "engines": {
     "node": ">=22.23.1 <23"
