@@ -410,7 +410,7 @@ function probability(value: number) {
 }
 
 function percentileLabel(value: number) {
-  return `${(value * 100).toFixed(1)}th percentile`;
+  return `EPSS percentile ${(value * 100).toFixed(1)}%`;
 }
 
 function ageLabel(published: string, asOf: string) {
@@ -499,13 +499,13 @@ function PriorityWatchPanel({ watch }: { watch?: PriorityWatch }) {
             <div><span>Exploit reference</span><strong>{number(watch.publicExploitReferences)}</strong></div>
           </div>
           <p className="priority-watch__note">
-            Published {dateLabel(watch.window.start, true)}–{dateLabel(watch.window.end, true)}. EPSS ≥ 0.1 is a project-defined current-score threshold. Not appearing in CISA KEV does not prove that exploitation has not occurred.
+            Published {dateLabel(watch.window.start, true)}–{dateLabel(watch.window.end, true)}. EPSS ≥ 0.1 is a project-defined current-score threshold. Not appearing in CISA KEV does not prove that exploitation has not occurred. “Yes” under exploit reference means NVD has at least one reference tagged <code>Exploit</code>; “No” means that tag is absent in this snapshot.
           </p>
           {visibleItems.length ? (
             <div className="priority-table-wrap">
               <table className="priority-table">
                 <caption>Highest EPSS probabilities among CVEs published in the 90-day priority-watch window and not listed in CISA KEV</caption>
-                <thead><tr><th>Vulnerability</th><th>Published</th><th>Severity</th><th>EPSS probability</th><th>Signals</th></tr></thead>
+                <thead><tr><th>Vulnerability</th><th>Published</th><th>Severity</th><th>EPSS probability</th><th>Exploit reference</th></tr></thead>
                 <tbody>
                   {visibleItems.map((item) => (
                     <tr key={item.cveId}>
@@ -513,7 +513,10 @@ function PriorityWatchPanel({ watch }: { watch?: PriorityWatch }) {
                       <td data-label="Published"><strong>{dateLabel(item.published, true)}</strong><span>{ageLabel(item.published, watch.window.scoreDate)}</span></td>
                       <td data-label="Severity"><span className={`severity-badge severity-badge--${item.severity.toLowerCase()}`}>{item.severity === "UNKNOWN" ? "Unscored" : `${item.severity}${item.score === null ? "" : ` ${item.score}`}`}</span>{item.cvssVersion ? <small>CVSS {item.cvssVersion}</small> : null}</td>
                       <td data-label="EPSS probability"><strong>{probability(item.epss)}</strong><span>{percentileLabel(item.epssPercentile)}</span></td>
-                      <td data-label="Signals"><span className="signal">Not in KEV</span>{item.publicExploitReference ? <span className="signal signal--active">Exploit reference</span> : null}</td>
+                      <td data-label="Exploit reference">
+                        <span className={`signal${item.publicExploitReference ? " signal--active" : ""}`}>{item.publicExploitReference ? "Yes" : "No"}</span>
+                        <small>{item.publicExploitReference ? "NVD-tagged exploit reference" : "No NVD exploit tag in this snapshot"}</small>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
