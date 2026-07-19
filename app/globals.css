@@ -2067,15 +2067,53 @@ a.signal:hover { opacity: 0.75; text-decoration: none; }
 }
 
 .source-strip span,
-.source-strip a,
-.source-strip em {
+.source-strip a {
   font-family: var(--font-geist-mono), monospace;
   font-size: 10px;
 }
 
 .source-strip span { color: #aab5c4; letter-spacing: 0.08em; }
 .source-strip a { color: var(--accent-on-dark); }
-.source-strip em { color: #c3ccd8; font-style: normal; flex-basis: 100%; margin-top: 4px; text-align: left; }
+
+.project-disclaimer {
+  border: 1px solid #34323a;
+  display: grid;
+  gap: 32px;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(220px, 0.72fr) minmax(0, 1.5fr);
+  padding: 24px 25px;
+  scroll-margin-top: 76px;
+}
+
+.project-disclaimer span {
+  color: var(--accent-on-dark);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+
+.project-disclaimer h3 {
+  font-size: 22px;
+  font-weight: 540;
+  margin: 16px 0 0;
+}
+
+.project-disclaimer p {
+  color: #c3ccd8;
+  font-size: 13px;
+  line-height: 1.65;
+  margin: 0;
+}
+
+.project-disclaimer p + p { margin-top: 12px; }
+.project-disclaimer a { color: var(--accent-on-dark); }
+.project-disclaimer .project-disclaimer__nvd {
+  border-left: 3px solid var(--accent);
+  color: var(--panel);
+  font-weight: 650;
+  margin-top: 18px;
+  padding-left: 12px;
+}
 
 footer {
   align-items: center;
@@ -2108,8 +2146,8 @@ footer a { color: var(--accent-on-dark); }
   .source-snapshot > div { grid-template-columns: 1fr 1fr; }
   .context-grid,
   .methodology { grid-template-columns: 1fr; }
+  .project-disclaimer { grid-template-columns: 1fr; }
   .source-strip { grid-column: 1; }
-  .source-strip em { flex-basis: 100%; margin-left: 0; text-align: left; }
   .filter-rail { position: static; }
   .chart-stage { height: 290px; }
   .indicator-grid { grid-template-columns: repeat(2, 1fr); }

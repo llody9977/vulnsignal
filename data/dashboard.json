@@ -236,7 +236,7 @@
     "latestCompleteMonth": "2026-06",
     "recordCount": 238268,
     "publicationDateSemantics": "NVD published timestamp",
-    "notice": "This product uses data from the NVD API and feeds but is not endorsed or certified by the NVD."
+    "notice": "This product uses the NVD API but is not endorsed or certified by the NVD."
   },
   "sources": {
     "cve": {
