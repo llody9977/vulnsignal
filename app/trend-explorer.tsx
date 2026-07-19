@@ -1,6 +1,14 @@
 "use client";
 
-import { Fragment, useMemo, useState, type CSSProperties } from "react";
+import {
+  Fragment,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import {
   availableYears,
   comparisonYearOptions,
@@ -9,6 +17,7 @@ import {
   llmEvidenceForMonth,
   matchedYearPoints,
   monthsForYear,
+  percentage,
   rollingMonths,
   severityShare,
   summarizePeriod,
@@ -59,12 +68,40 @@ type MatrixRow = {
   valueFormat?: "count" | "percent";
 };
 
-type PriorityKpi = {
+type IndicatorKey =
+  | "criticalHigh"
+  | "published"
+  | "kevAdded"
+  | "publicExploitReferences"
+  | "severityCoverage"
+  | "priorityWatch";
+
+type PriorityWatchItem = {
+  cveId: string;
+  published: string;
+  severity: string;
+  score: number | null;
+  cvssVersion: string | null;
+  epss: number;
+  epssPercentile: number;
+  publicExploitReference: boolean;
+  url: string;
+};
+
+type PriorityWatchDetail = {
+  window: {
+    start: string;
+    end: string;
+    days: number;
+    scoreDate: string;
+    threshold: number;
+    thresholdSemantics: string;
+  };
   total: number;
   criticalHigh: number;
-  start: string;
-  end: string;
-  scoreDate?: string | null;
+  publicExploitReferences: number;
+  itemsCompleteness?: "all_candidates";
+  items: PriorityWatchItem[];
 };
 
 const metricOptions: Array<{ key: MetricKey; label: string }> = [
@@ -258,15 +295,21 @@ function exploitShareDetail(
 }
 
 function MetricCell({
+  metric,
   label,
   value,
   detail,
   comparison,
+  active,
+  onDrilldown,
 }: {
+  metric: IndicatorKey;
   label: string;
   value: string;
   detail: string;
   comparison: ComparisonDisplay;
+  active: boolean;
+  onDrilldown: (trigger: HTMLButtonElement) => void;
 }) {
   const symbol = comparison.tone === "up" || comparison.tone === "new"
     ? "↑"
@@ -276,7 +319,7 @@ function MetricCell({
         ? "→"
         : "—";
   return (
-    <article className="indicator-cell">
+    <article className={`indicator-cell${active ? " indicator-cell--active" : ""}`}>
       <div className="indicator-cell__label">
         <strong>{label}</strong>
       </div>
@@ -289,7 +332,317 @@ function MetricCell({
           {comparison.baseline ? <small>{comparison.baseline}</small> : null}
         </div>
       </div>
+      <button
+        className="indicator-cell__drilldown"
+        id={`indicator-trigger-${metric}`}
+        type="button"
+        aria-label={`${active ? "Close" : "View"} ${label} breakdown`}
+        aria-haspopup="dialog"
+        aria-expanded={active}
+        aria-controls="indicator-drilldown"
+        onClick={(event) => onDrilldown(event.currentTarget)}
+      >
+        <span>{active ? "Details open" : "View breakdown"}</span>
+        <b aria-hidden="true">↗</b>
+      </button>
     </article>
+  );
+}
+
+type DrilldownRow = {
+  key: string;
+  cells: ReactNode[];
+};
+
+function DrilldownFacts({
+  items,
+}: {
+  items: Array<{ label: string; value: string; detail?: string }>;
+}) {
+  return (
+    <dl className="indicator-drilldown__facts">
+      {items.map((item) => (
+        <div key={item.label}>
+          <dt>{item.label}</dt>
+          <dd>
+            {item.value}
+            {item.detail ? <small>{item.detail}</small> : null}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+function DrilldownTable({
+  caption,
+  headers,
+  rows,
+}: {
+  caption: string;
+  headers: string[];
+  rows: DrilldownRow[];
+}) {
+  return (
+    <div className="indicator-drilldown__table-wrap">
+      <table className="indicator-drilldown__table">
+        <caption>{caption}</caption>
+        <thead>
+          <tr>{headers.map((header) => <th scope="col" key={header}>{header}</th>)}</tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.key}>{row.cells.map((cell, index) => index === 0
+              ? <th scope="row" key={`${row.key}-${index}`}>{cell}</th>
+              : <td key={`${row.key}-${index}`}>{cell}</td>)}</tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function probabilityLabel(value: number) {
+  const result = value * 100;
+  return `${result < 1 ? result.toFixed(2) : result.toFixed(1)}%`;
+}
+
+function percentileLabel(value: number) {
+  return `EPSS percentile ${(value * 100).toFixed(1)}%`;
+}
+
+function IndicatorDrilldown({
+  metric,
+  periodTitle,
+  points,
+  summary,
+  baseline,
+  baselineLabel,
+  hasBaseline,
+  priorityWatch,
+  onRequestClose,
+}: {
+  metric: IndicatorKey;
+  periodTitle: string;
+  points: MonthPoint[];
+  summary: ReturnType<typeof summarizePeriod>;
+  baseline: ReturnType<typeof summarizePeriod>;
+  baselineLabel: string;
+  hasBaseline: boolean;
+  priorityWatch?: PriorityWatchDetail | null;
+  onRequestClose: () => void;
+}) {
+  const [priorityQuery, setPriorityQuery] = useState("");
+  const [prioritySeverity, setPrioritySeverity] = useState("ALL");
+  const peakPublished = points.reduce<MonthPoint | null>(
+    (peak, point) => (!peak || point.published > peak.published ? point : peak),
+    null,
+  );
+  const lowestPublished = points.reduce<MonthPoint | null>(
+    (lowest, point) => (!lowest || point.published < lowest.published ? point : lowest),
+    null,
+  );
+  const peakKev = points.reduce<MonthPoint | null>(
+    (peak, point) => (!peak || point.kevAdded > peak.kevAdded ? point : peak),
+    null,
+  );
+  const priorityItems = priorityWatch?.items ?? [];
+  const normalizedQuery = priorityQuery.trim().toUpperCase();
+  const filteredPriority = priorityItems.filter((item) =>
+    (!normalizedQuery || item.cveId.includes(normalizedQuery))
+    && (prioritySeverity === "ALL" || item.severity === prioritySeverity),
+  );
+
+  if (metric === "criticalHigh") {
+    return (
+      <>
+        <div className="indicator-drilldown__intro">
+          <p className="eyebrow">Severity composition / {periodTitle}</p>
+          <h2 id="indicator-drilldown-title">Critical + high share</h2>
+          <p><strong>{number(summary.criticalHigh)} ÷ {number(summary.scored)} scored CVEs = {percent(summary.criticalHighShare)}</strong>. The primary selected CVSS assessment is used; scores are not maximised.</p>
+        </div>
+        <DrilldownFacts items={[
+          { label: "Critical", value: number(summary.critical) },
+          { label: "High", value: number(summary.high) },
+          { label: "Scored denominator", value: number(summary.scored), detail: `${number(summary.unknown)} unscored excluded` },
+          { label: hasBaseline ? baselineLabel : "Baseline", value: hasBaseline ? percent(baseline.criticalHighShare) : "Not available" },
+        ]} />
+        <p className="indicator-drilldown__note">The severity chart’s Share view divides each category by all published CVEs. On that denominator, Critical + High is {percent(percentage(summary.criticalHigh, summary.published))}; this KPI excludes unscored records and is therefore {percent(summary.criticalHighShare)}.</p>
+        <DrilldownTable
+          caption="Critical and high severity breakdown by publication month"
+          headers={["Month", "Critical", "High", "Scored", "Critical + High share"]}
+          rows={points.map((point) => {
+            const scored = point.published - point.unknown;
+            return {
+              key: point.month,
+              cells: [<strong key="month">{monthLabel(point.month, true)}</strong>, number(point.critical), number(point.high), number(scored), percent(percentage(point.critical + point.high, scored))],
+            };
+          })}
+        />
+      </>
+    );
+  }
+
+  if (metric === "published") {
+    return (
+      <>
+        <div className="indicator-drilldown__intro">
+          <p className="eyebrow">Publication volume / {periodTitle}</p>
+          <h2 id="indicator-drilldown-title">CVEs published</h2>
+          <p>This counts active NVD records by publication month. It measures reporting volume, not vulnerability incidence or organisational risk.</p>
+        </div>
+        <DrilldownFacts items={[
+          { label: "Period total", value: number(summary.published) },
+          { label: "Monthly average", value: summary.monthlyAverage.toFixed(1), detail: `${number(points.length)} complete ${points.length === 1 ? "month" : "months"}` },
+          { label: "Highest month", value: peakPublished ? number(peakPublished.published) : "—", detail: peakPublished ? monthLabel(peakPublished.month) : undefined },
+          { label: "Lowest month", value: lowestPublished ? number(lowestPublished.published) : "—", detail: lowestPublished ? monthLabel(lowestPublished.month) : undefined },
+        ]} />
+        <DrilldownTable
+          caption="CVE publication volume by month"
+          headers={["Month", "Published CVEs", "Share of selected period"]}
+          rows={points.map((point) => ({
+            key: point.month,
+            cells: [<strong key="month">{monthLabel(point.month, true)}</strong>, number(point.published), percent(percentage(point.published, summary.published))],
+          }))}
+        />
+      </>
+    );
+  }
+
+  if (metric === "kevAdded") {
+    return (
+      <>
+        <div className="indicator-drilldown__intro">
+          <p className="eyebrow">Confirmed exploitation / {periodTitle}</p>
+          <h2 id="indicator-drilldown-title">CISA KEV additions</h2>
+          <p>Rows are grouped by CISA’s <code>dateAdded</code>. A KEV listing confirms known exploitation; it does not say when exploitation first began.</p>
+        </div>
+        <DrilldownFacts items={[
+          { label: "Period total", value: number(summary.kevAdded) },
+          { label: "Monthly average", value: (summary.kevAdded / Math.max(points.length, 1)).toFixed(1) },
+          { label: "Highest month", value: peakKev ? number(peakKev.kevAdded) : "—", detail: peakKev ? monthLabel(peakKev.month) : undefined },
+          { label: hasBaseline ? baselineLabel : "Baseline", value: hasBaseline ? number(baseline.kevAdded) : "Not available" },
+        ]} />
+        <a className="indicator-drilldown__jump" href="#kev-watch" onClick={onRequestClose}>View recently added KEV records ↘</a>
+        <DrilldownTable
+          caption="CISA KEV additions by month"
+          headers={["Month", "KEV additions", "Share of selected period"]}
+          rows={points.map((point) => ({
+            key: point.month,
+            cells: [<strong key="month">{monthLabel(point.month, true)}</strong>, number(point.kevAdded), percent(percentage(point.kevAdded, summary.kevAdded))],
+          }))}
+        />
+      </>
+    );
+  }
+
+  if (metric === "publicExploitReferences") {
+    return (
+      <>
+        <div className="indicator-drilldown__intro">
+          <p className="eyebrow">Public reference signal / {periodTitle}</p>
+          <h2 id="indicator-drilldown-title">CVEs with exploit references</h2>
+          <p>An NVD reference tagged “Exploit” points to public material. It does not prove that the material works or that the CVE is being exploited.</p>
+        </div>
+        <DrilldownFacts items={[
+          { label: "Raw selected count", value: number(summary.publicExploitReferences) },
+          { label: "Mature-cohort count", value: number(summary.publicExploitMatureReferences), detail: `${number(summary.publicExploitMaturePublished)} published CVEs in denominator` },
+          { label: "Mature-cohort share", value: percent(summary.publicExploitShare) },
+          { label: "Months still enriching", value: number(summary.publicExploitEnrichingMonths), detail: `${number(summary.publicExploitMatureMonths)} mature months` },
+        ]} />
+        <p className="indicator-drilldown__note">Recent records gain exploit tags as NVD enrichment continues. Raw counts stay visible, but shares and comparisons exclude enriching months rather than presenting the lag as a security trend.</p>
+        <DrilldownTable
+          caption="Exploit-reference signals and enrichment status by month"
+          headers={["Month", "Exploit-reference CVEs", "Share of publications", "Cohort status"]}
+          rows={points.map((point) => ({
+            key: point.month,
+            cells: [
+              <strong key="month">{monthLabel(point.month, true)}</strong>,
+              number(point.publicExploitReferences),
+              point.enriching ? "Not calculated" : percent(percentage(point.publicExploitReferences, point.published)),
+              <span className={`cohort-status cohort-status--${point.enriching ? "enriching" : "mature"}`} key="status">{point.enriching ? "Still enriching" : "Mature"}</span>,
+            ],
+          }))}
+        />
+      </>
+    );
+  }
+
+  if (metric === "severityCoverage") {
+    return (
+      <>
+        <div className="indicator-drilldown__intro">
+          <p className="eyebrow">Scoring coverage / {periodTitle}</p>
+          <h2 id="indicator-drilldown-title">CVEs with severity scores</h2>
+          <p><strong>{number(summary.scored)} ÷ {number(summary.published)} published CVEs = {percent(summary.severityCoverage)}</strong>. A CVSS score of 0.0 is scored as “None”; only records without a selected score are unscored.</p>
+        </div>
+        <DrilldownFacts items={[
+          { label: "Scored CVEs", value: number(summary.scored) },
+          { label: "Unscored CVEs", value: number(summary.unknown) },
+          { label: "Coverage", value: percent(summary.severityCoverage) },
+          { label: hasBaseline ? baselineLabel : "Baseline", value: hasBaseline ? percent(baseline.severityCoverage) : "Not available" },
+        ]} />
+        <DrilldownTable
+          caption="CVSS severity coverage by publication month"
+          headers={["Month", "Published", "Scored", "Unscored", "Coverage"]}
+          rows={points.map((point) => {
+            const scored = point.published - point.unknown;
+            return {
+              key: point.month,
+              cells: [<strong key="month">{monthLabel(point.month, true)}</strong>, number(point.published), number(scored), number(point.unknown), percent(percentage(scored, point.published))],
+            };
+          })}
+        />
+      </>
+    );
+  }
+
+  const severityOptions = ["ALL", "CRITICAL", "HIGH", "MEDIUM", "LOW", "NONE", "UNKNOWN"];
+  return (
+    <>
+      <div className="indicator-drilldown__intro">
+        <p className="eyebrow">Current snapshot / independent of report filters</p>
+        <h2 id="indicator-drilldown-title">90-day priority candidates</h2>
+        <p>Current EPSS ≥ {priorityWatch?.window.threshold ?? 0.1}, published in the previous {priorityWatch?.window.days ?? 90} days and absent from the downloaded CISA KEV catalogue. This is a review queue, not proof of exploitability or a complete patch order.</p>
+      </div>
+      <DrilldownFacts items={[
+        { label: "Candidates", value: number(priorityWatch?.total ?? 0), detail: priorityWatch ? `${shortDateLabel(priorityWatch.window.start)}–${shortDateLabel(priorityWatch.window.end)}` : undefined },
+        { label: "Critical or high", value: number(priorityWatch?.criticalHigh ?? 0), detail: percent(percentage(priorityWatch?.criticalHigh ?? 0, priorityWatch?.total ?? 0)) },
+        { label: "Exploit reference", value: number(priorityWatch?.publicExploitReferences ?? 0), detail: percent(percentage(priorityWatch?.publicExploitReferences ?? 0, priorityWatch?.total ?? 0)) },
+        { label: "EPSS score date", value: scoreDateLabel(priorityWatch?.window.scoreDate) },
+      ]} />
+      <p className="indicator-drilldown__note">EPSS is a probability estimate and can change daily. The ≥ {priorityWatch?.window.threshold ?? 0.1} threshold is defined by this project, not an official severity band. Absence from KEV does not prove that exploitation has not occurred.</p>
+      <div className="indicator-drilldown__filters" aria-label="Priority candidate filters">
+        <label>
+          <span>Find CVE</span>
+          <input type="search" value={priorityQuery} onChange={(event) => setPriorityQuery(event.target.value)} placeholder="CVE-2026-…" />
+        </label>
+        <label>
+          <span>Severity</span>
+          <select value={prioritySeverity} onChange={(event) => setPrioritySeverity(event.target.value)}>
+            {severityOptions.map((severity) => <option key={severity} value={severity}>{severity === "ALL" ? "All severities" : severity === "UNKNOWN" ? "Unscored" : severity}</option>)}
+          </select>
+        </label>
+        <p><strong>{number(filteredPriority.length)}</strong> of {number(priorityItems.length)} detailed candidates</p>
+      </div>
+      {filteredPriority.length ? (
+        <DrilldownTable
+          caption="Current 90-day priority candidates sorted by EPSS probability"
+          headers={["CVE", "Published", "Severity", "EPSS", "Signals"]}
+          rows={filteredPriority.map((item) => ({
+            key: item.cveId,
+            cells: [
+              <a href={item.url} key="cve">{item.cveId}</a>,
+              shortDateLabel(item.published),
+              <span key="severity"><span className={`severity-badge severity-badge--${item.severity.toLowerCase()}`}>{item.severity === "UNKNOWN" ? "Unscored" : `${item.severity}${item.score === null ? "" : ` ${item.score}`}`}</span>{item.cvssVersion ? <small>CVSS {item.cvssVersion}</small> : null}</span>,
+              <span key="epss"><strong>{probabilityLabel(item.epss)}</strong><small>{percentileLabel(item.epssPercentile)}</small></span>,
+              <span key="signals"><small>Not in KEV</small>{item.publicExploitReference ? <small>Exploit reference</small> : null}</span>,
+            ],
+          }))}
+        />
+      ) : <p className="indicator-drilldown__empty">No candidates match these filters.</p>}
+      {priorityWatch?.itemsCompleteness !== "all_candidates" ? <p className="indicator-drilldown__note">The snapshot does not state that every candidate detail row is retained.</p> : null}
+    </>
   );
 }
 
@@ -626,13 +979,13 @@ export function TrendExplorer({
   latestCompleteMonth,
   events,
   epssScoreDate,
-  priorityKpi,
+  priorityWatch,
 }: {
   monthly: MonthPoint[];
   latestCompleteMonth: string;
   events: LlmEvidenceEvent[];
   epssScoreDate?: string | null;
-  priorityKpi?: PriorityKpi | null;
+  priorityWatch?: PriorityWatchDetail | null;
 }) {
   const complete = useMemo(
     () => completeMonths(monthly, latestCompleteMonth),
@@ -655,6 +1008,16 @@ export function TrendExplorer({
   const [compareMetric, setCompareMetric] = useState<MetricKey>("published");
   const [hiddenSeries, setHiddenSeries] = useState<string[]>([]);
   const [activeIndex, setActiveIndex] = useState(11);
+  const [activeIndicator, setActiveIndicator] = useState<IndicatorKey | null>(null);
+  const drilldownDialogRef = useRef<HTMLDialogElement>(null);
+  const drilldownTriggerRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    const dialog = drilldownDialogRef.current;
+    if (!activeIndicator || !dialog || dialog.open) return;
+    dialog.showModal();
+    requestAnimationFrame(() => dialog.querySelector<HTMLButtonElement>("button")?.focus());
+  }, [activeIndicator]);
 
   const matched = matchedYearPoints(
     monthly,
@@ -854,6 +1217,9 @@ export function TrendExplorer({
     : viewMode === "month"
       ? `${monthLabel(selectedMonth)} report`
       : `${periodLabel(matched.first, compareFirst)} vs ${periodLabel(matched.second, compareSecond)}`;
+  const drilldownPeriodTitle = viewMode === "compare"
+    ? `${periodLabel(matched.second, compareSecond)} comparison value`
+    : periodTitle;
   const periodDetail = viewMode === "month"
     ? "Indicators use the selected month; the plot keeps 12 complete months of context."
     : viewMode === "compare"
@@ -864,6 +1230,28 @@ export function TrendExplorer({
     setHiddenSeries((current) =>
       current.includes(key) ? current.filter((item) => item !== key) : [...current, key],
     );
+  };
+
+  const openDrilldown = (
+    metric: IndicatorKey,
+    trigger: HTMLButtonElement,
+  ) => {
+    drilldownTriggerRef.current = trigger;
+    setActiveIndicator(metric);
+  };
+
+  const closeDrilldown = () => {
+    drilldownDialogRef.current?.close();
+  };
+
+  const closeDrilldownForNavigation = () => {
+    drilldownTriggerRef.current = null;
+    closeDrilldown();
+  };
+
+  const handleDrilldownClosed = () => {
+    setActiveIndicator(null);
+    requestAnimationFrame(() => drilldownTriggerRef.current?.focus());
   };
 
   const compareRows = viewMode === "compare"
@@ -991,24 +1379,34 @@ export function TrendExplorer({
 
       <div className="indicator-grid">
         <MetricCell
+          metric="criticalHigh"
           label="Critical + high share"
           value={percent(summary.criticalHighShare)}
           detail={`${number(summary.criticalHigh)} critical or high CVEs among scored records`}
           comparison={pointComparison(summary.criticalHighShare, baseline.criticalHighShare, baselineLabel, hasBaseline)}
+          active={activeIndicator === "criticalHigh"}
+          onDrilldown={(trigger) => openDrilldown("criticalHigh", trigger)}
         />
         <MetricCell
+          metric="published"
           label="CVEs published"
           value={number(summary.published)}
           detail={`${compact(summary.monthlyAverage)} average per complete month`}
           comparison={relativeComparison(summary.published, baseline.published, baselineLabel, hasBaseline)}
+          active={activeIndicator === "published"}
+          onDrilldown={(trigger) => openDrilldown("published", trigger)}
         />
         <MetricCell
+          metric="kevAdded"
           label="KEV additions"
           value={number(summary.kevAdded)}
           detail={`${(summary.kevAdded / Math.max(summaryPoints.length, 1)).toFixed(1)} average per month`}
           comparison={relativeComparison(summary.kevAdded, baseline.kevAdded, baselineLabel, hasBaseline)}
+          active={activeIndicator === "kevAdded"}
+          onDrilldown={(trigger) => openDrilldown("kevAdded", trigger)}
         />
         <MetricCell
+          metric="publicExploitReferences"
           label="CVEs with exploit references"
           value={number(summary.publicExploitReferences)}
           detail={exploitShareDetail(summary)}
@@ -1020,28 +1418,70 @@ export function TrendExplorer({
             baselineLabel,
             hasBaseline,
           )}
+          active={activeIndicator === "publicExploitReferences"}
+          onDrilldown={(trigger) => openDrilldown("publicExploitReferences", trigger)}
         />
         <MetricCell
+          metric="severityCoverage"
           label="CVEs with severity scores"
           value={percent(summary.severityCoverage)}
           detail={`${number(summary.unknown)} records remain unscored`}
           comparison={pointComparison(summary.severityCoverage, baseline.severityCoverage, baselineLabel, hasBaseline)}
+          active={activeIndicator === "severityCoverage"}
+          onDrilldown={(trigger) => openDrilldown("severityCoverage", trigger)}
         />
         <MetricCell
+          metric="priorityWatch"
           label="90-day priority candidates"
-          value={priorityKpi ? number(priorityKpi.total) : "—"}
-          detail={priorityKpi
-            ? `${number(priorityKpi.criticalHigh)} are critical or high; published ${shortDateLabel(priorityKpi.start)}–${shortDateLabel(priorityKpi.end)}`
+          value={priorityWatch ? number(priorityWatch.total) : "—"}
+          detail={priorityWatch
+            ? `${number(priorityWatch.criticalHigh)} are critical or high; published ${shortDateLabel(priorityWatch.window.start)}–${shortDateLabel(priorityWatch.window.end)}`
             : "Current watchlist data is not available"}
           comparison={{
             tone: "unavailable",
             label: "Current watchlist — not a period trend",
-            baseline: priorityKpi
-              ? `EPSS snapshot: ${scoreDateLabel(priorityKpi.scoreDate)}`
+            baseline: priorityWatch
+              ? `EPSS snapshot: ${scoreDateLabel(priorityWatch.window.scoreDate)}`
               : undefined,
           }}
+          active={activeIndicator === "priorityWatch"}
+          onDrilldown={(trigger) => openDrilldown("priorityWatch", trigger)}
         />
       </div>
+
+      <dialog
+        className="indicator-drilldown"
+        id="indicator-drilldown"
+        ref={drilldownDialogRef}
+        aria-labelledby="indicator-drilldown-title"
+        onClose={handleDrilldownClosed}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") {
+            event.preventDefault();
+            closeDrilldown();
+          }
+        }}
+      >
+        <div className="indicator-drilldown__bar">
+          <span>Indicator breakdown</span>
+          <button type="button" onClick={closeDrilldown}>Close details <b aria-hidden="true">×</b></button>
+        </div>
+        <div className="indicator-drilldown__body">
+          {activeIndicator ? (
+            <IndicatorDrilldown
+              metric={activeIndicator}
+              periodTitle={drilldownPeriodTitle}
+              points={summaryPoints}
+              summary={summary}
+              baseline={baseline}
+              baselineLabel={baselineLabel}
+              hasBaseline={hasBaseline}
+              priorityWatch={priorityWatch}
+              onRequestClose={closeDrilldownForNavigation}
+            />
+          ) : null}
+        </div>
+      </dialog>
 
       <article className="unified-panel">
         <div className="unified-panel__heading">

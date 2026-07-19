@@ -62,6 +62,7 @@ type PriorityWatch = {
   total: number;
   criticalHigh: number;
   publicExploitReferences: number;
+  itemsCompleteness: "all_candidates";
   items: PriorityWatchItem[];
 };
 
@@ -517,7 +518,7 @@ function PriorityWatchPanel({ watch }: { watch?: PriorityWatch }) {
                   ))}
                 </tbody>
               </table>
-              {watch.items.length > visibleItems.length ? <p className="table-note">Showing the {number(visibleItems.length)} highest EPSS probabilities from {number(watch.total)} candidates; the snapshot retains the top {number(watch.items.length)} detailed rows.</p> : null}
+              {watch.items.length > visibleItems.length ? <p className="table-note">Showing the {number(visibleItems.length)} highest EPSS probabilities here. Use the “90-day priority candidates” tile breakdown to search all {number(watch.items.length)} detailed candidate rows retained in this snapshot.</p> : null}
             </div>
           ) : <p className="panel-empty">No qualifying CVEs were found in this snapshot.</p>}
         </>
@@ -607,13 +608,6 @@ export default function Home() {
   const epssScoreDate = dashboard.sources.epss?.scoreDate
     ?? dashboard.risk.epssCohortWindow?.scoreDate
     ?? null;
-  const priorityKpi = dashboard.priorityWatch ? {
-    total: dashboard.priorityWatch.total,
-    criticalHigh: dashboard.priorityWatch.criticalHigh,
-    start: dashboard.priorityWatch.window.start,
-    end: dashboard.priorityWatch.window.end,
-    scoreDate: dashboard.priorityWatch.window.scoreDate,
-  } : null;
   const sourceUpdates = [
     { label: "CVE List", qualifier: "Updated", value: dashboard.sources.cve.latestFetch, url: dashboard.sources.cve.url },
     { label: "NVD", qualifier: "Updated", value: dashboard.sources.nvd.latestSourceUpdate, url: dashboard.sources.nvd.url },
@@ -687,7 +681,7 @@ export default function Home() {
           latestCompleteMonth={dashboard.coverage.latestCompleteMonth}
           events={dashboard.llmDiscovery.events ?? []}
           epssScoreDate={epssScoreDate}
-          priorityKpi={priorityKpi}
+          priorityWatch={dashboard.priorityWatch}
         />
 
         <section className="section" id="context">

@@ -1,16 +1,16 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-18T14:13:18Z",
+  "generatedAt": "2026-07-19T01:42:35Z",
   "snapshot": {
-    "id": "VS-20260718-1413Z",
-    "generatedAt": "2026-07-18T14:13:18Z",
+    "id": "VS-20260719-0142Z",
+    "generatedAt": "2026-07-19T01:42:35Z",
     "inputCount": 43,
-    "inputFingerprintSha256": "f2dcb7e267ac277333219b104cdad722421f6bec391de62bad279bfb3a4ba216",
+    "inputFingerprintSha256": "c2929bdf79bf18334186cff4e227ac91dbc21ccdf8c914d7a2a4e9d58f105cc7",
     "inputs": [
       {
         "id": "cve-list-delta",
         "kind": "downloaded_snapshot",
-        "sha256": "af6dba44378c482b2213d5c9288b982e366f3f0ee97b3861089689c5fc496d68"
+        "sha256": "3b6ae877b111a7205d95ac0a27eb05d8bde7a81a955f5a022e76d25b1ad7c75e"
       },
       {
         "id": "nvd-2002",
@@ -232,7 +232,7 @@
   },
   "coverage": {
     "start": "2019-01-01",
-    "asOf": "2026-07-18",
+    "asOf": "2026-07-19",
     "latestCompleteMonth": "2026-06",
     "recordCount": 238268,
     "publicationDateSemantics": "NVD published timestamp",
@@ -242,11 +242,11 @@
     "cve": {
       "name": "CVE Program · CVE List V5",
       "url": "https://github.com/CVEProject/cvelistV5",
-      "contentFingerprintSha256": "af6dba44378c482b2213d5c9288b982e366f3f0ee97b3861089689c5fc496d68",
-      "latestFetch": "2026-07-18T14:06:40.502000Z",
-      "changedRecords24h": 1016,
-      "newRecords24h": 234,
-      "updatedRecords24h": 858
+      "contentFingerprintSha256": "3b6ae877b111a7205d95ac0a27eb05d8bde7a81a955f5a022e76d25b1ad7c75e",
+      "latestFetch": "2026-07-19T01:30:52.790000Z",
+      "changedRecords24h": 184,
+      "newRecords24h": 86,
+      "updatedRecords24h": 100
     },
     "nvd": {
       "name": "NIST NVD · CVE JSON 2.0 feeds",
@@ -625,17 +625,18 @@
     "oldKevShare": 21.2
   },
   "priorityWatch": {
+    "itemsCompleteness": "all_candidates",
     "window": {
-      "start": "2026-04-20",
-      "end": "2026-07-18",
+      "start": "2026-04-21",
+      "end": "2026-07-19",
       "days": 90,
       "scoreDate": "2026-07-18T12:03:17Z",
       "threshold": 0.1,
       "thresholdSemantics": "project_defined_current_score_cutoff"
     },
-    "total": 41,
-    "criticalHigh": 39,
-    "publicExploitReferences": 9,
+    "total": 39,
+    "criticalHigh": 37,
+    "publicExploitReferences": 8,
     "items": [
       {
         "cveId": "CVE-2026-43284",
@@ -713,17 +714,6 @@
         "epssPercentile": 0.98667,
         "publicExploitReference": false,
         "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-23918"
-      },
-      {
-        "cveId": "CVE-2026-33626",
-        "published": "2026-04-20",
-        "severity": "HIGH",
-        "score": 7.5,
-        "cvssVersion": "3.1",
-        "epss": 0.4525,
-        "epssPercentile": 0.9865,
-        "publicExploitReference": true,
-        "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-33626"
       },
       {
         "cveId": "CVE-2026-8037",
@@ -856,6 +846,226 @@
         "epssPercentile": 0.97342,
         "publicExploitReference": false,
         "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-47291"
+      },
+      {
+        "cveId": "CVE-2026-50522",
+        "published": "2026-07-14",
+        "severity": "CRITICAL",
+        "score": 9.8,
+        "cvssVersion": "3.1",
+        "epss": 0.20346,
+        "epssPercentile": 0.97196,
+        "publicExploitReference": false,
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-50522"
+      },
+      {
+        "cveId": "CVE-2026-47992",
+        "published": "2026-07-14",
+        "severity": "HIGH",
+        "score": 7.2,
+        "cvssVersion": "3.1",
+        "epss": 0.19924,
+        "epssPercentile": 0.97138,
+        "publicExploitReference": false,
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-47992"
+      },
+      {
+        "cveId": "CVE-2026-23734",
+        "published": "2026-05-20",
+        "severity": "CRITICAL",
+        "score": 9.3,
+        "cvssVersion": "4.0",
+        "epss": 0.19538,
+        "epssPercentile": 0.97074,
+        "publicExploitReference": false,
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-23734"
+      },
+      {
+        "cveId": "CVE-2026-47996",
+        "published": "2026-07-14",
+        "severity": "MEDIUM",
+        "score": 6.8,
+        "cvssVersion": "3.1",
+        "epss": 0.18028,
+        "epssPercentile": 0.96867,
+        "publicExploitReference": false,
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-47996"
+      },
+      {
+        "cveId": "CVE-2026-48356",
+        "published": "2026-07-14",
+        "severity": "CRITICAL",
+        "score": 9.6,
+        "cvssVersion": "3.1",
+        "epss": 0.17903,
+        "epssPercentile": 0.96845,
+        "publicExploitReference": false,
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-48356"
+      },
+      {
+        "cveId": "CVE-2026-7864",
+        "published": "2026-05-08",
+        "severity": "MEDIUM",
+        "score": 6.9,
+        "cvssVersion": "4.0",
+        "epss": 0.17015,
+        "epssPercentile": 0.96728,
+        "publicExploitReference": false,
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-7864"
+      },
+      {
+        "cveId": "CVE-2026-34650",
+        "published": "2026-05-12",
+        "severity": "HIGH",
+        "score": 7.5,
+        "cvssVersion": "3.1",
+        "epss": 0.15933,
+        "epssPercentile": 0.96533,
+        "publicExploitReference": false,
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-34650"
+      },
+      {
+        "cveId": "CVE-2026-44127",
+        "published": "2026-05-08",
+        "severity": "HIGH",
+        "score": 8.8,
+        "cvssVersion": "4.0",
+        "epss": 0.15653,
+        "epssPercentile": 0.96483,
+        "publicExploitReference": false,
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-44127"
+      },
+      {
+        "cveId": "CVE-2026-25874",
+        "published": "2026-04-23",
+        "severity": "CRITICAL",
+        "score": 9.8,
+        "cvssVersion": "3.1",
+        "epss": 0.15547,
+        "epssPercentile": 0.96456,
+        "publicExploitReference": true,
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-25874"
+      },
+      {
+        "cveId": "CVE-2026-45657",
+        "published": "2026-06-09",
+        "severity": "CRITICAL",
+        "score": 9.8,
+        "cvssVersion": "3.1",
+        "epss": 0.15478,
+        "epssPercentile": 0.96433,
+        "publicExploitReference": false,
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-45657"
+      },
+      {
+        "cveId": "CVE-2026-53435",
+        "published": "2026-06-10",
+        "severity": "HIGH",
+        "score": 8.8,
+        "cvssVersion": "3.1",
+        "epss": 0.14907,
+        "epssPercentile": 0.96326,
+        "publicExploitReference": false,
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-53435"
+      },
+      {
+        "cveId": "CVE-2026-8181",
+        "published": "2026-05-14",
+        "severity": "CRITICAL",
+        "score": 9.8,
+        "cvssVersion": "3.1",
+        "epss": 0.14608,
+        "epssPercentile": 0.96265,
+        "publicExploitReference": false,
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-8181"
+      },
+      {
+        "cveId": "CVE-2026-34649",
+        "published": "2026-05-12",
+        "severity": "HIGH",
+        "score": 7.5,
+        "cvssVersion": "3.1",
+        "epss": 0.14383,
+        "epssPercentile": 0.96218,
+        "publicExploitReference": false,
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-34649"
+      },
+      {
+        "cveId": "CVE-2026-41268",
+        "published": "2026-04-23",
+        "severity": "CRITICAL",
+        "score": 9.8,
+        "cvssVersion": "3.1",
+        "epss": 0.13789,
+        "epssPercentile": 0.96097,
+        "publicExploitReference": true,
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41268"
+      },
+      {
+        "cveId": "CVE-2026-36356",
+        "published": "2026-05-05",
+        "severity": "CRITICAL",
+        "score": 9.1,
+        "cvssVersion": "3.1",
+        "epss": 0.13549,
+        "epssPercentile": 0.96033,
+        "publicExploitReference": false,
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-36356"
+      },
+      {
+        "cveId": "CVE-2026-4480",
+        "published": "2026-05-26",
+        "severity": "CRITICAL",
+        "score": 9.0,
+        "cvssVersion": "3.1",
+        "epss": 0.12797,
+        "epssPercentile": 0.95847,
+        "publicExploitReference": false,
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-4480"
+      },
+      {
+        "cveId": "CVE-2026-45829",
+        "published": "2026-05-18",
+        "severity": "CRITICAL",
+        "score": 10.0,
+        "cvssVersion": "4.0",
+        "epss": 0.12387,
+        "epssPercentile": 0.95753,
+        "publicExploitReference": false,
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-45829"
+      },
+      {
+        "cveId": "CVE-2026-48332",
+        "published": "2026-07-14",
+        "severity": "HIGH",
+        "score": 7.7,
+        "cvssVersion": "3.1",
+        "epss": 0.11938,
+        "epssPercentile": 0.95655,
+        "publicExploitReference": false,
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-48332"
+      },
+      {
+        "cveId": "CVE-2026-49975",
+        "published": "2026-06-08",
+        "severity": "HIGH",
+        "score": 7.5,
+        "cvssVersion": "3.1",
+        "epss": 0.11471,
+        "epssPercentile": 0.95534,
+        "publicExploitReference": true,
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-49975"
+      },
+      {
+        "cveId": "CVE-2026-40372",
+        "published": "2026-04-21",
+        "severity": "CRITICAL",
+        "score": 9.1,
+        "cvssVersion": "3.1",
+        "epss": 0.11205,
+        "epssPercentile": 0.95473,
+        "publicExploitReference": false,
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-40372"
       }
     ]
   },
@@ -1036,14 +1246,14 @@
     ]
   },
   "changeDigest": {
-    "generatedAt": "2026-07-18T14:13:18Z",
+    "generatedAt": "2026-07-19T01:42:35Z",
     "cve": {
       "period": "last_24_hours",
-      "start": "2026-07-17T14:13:18Z",
-      "end": "2026-07-18T14:13:18Z",
-      "newRecords": 234,
-      "updatedRecords": 858,
-      "distinctChanged": 1016
+      "start": "2026-07-18T01:42:35Z",
+      "end": "2026-07-19T01:42:35Z",
+      "newRecords": 86,
+      "updatedRecords": 100,
+      "distinctChanged": 184
     },
     "kev": {
       "period": "latest_catalog_date",
@@ -1060,7 +1270,7 @@
     },
     "priority": {
       "period": "current_snapshot",
-      "count": 41
+      "count": 39
     }
   },
   "llmDiscovery": {
@@ -1216,12 +1426,12 @@
       "severityCoverage": 98.9,
       "criticalHigh": 69408,
       "criticalHighShare": 50.6,
-      "publicExploitReferences": 22633,
-      "publicExploitCohort": 105180,
+      "publicExploitReferences": 22681,
+      "publicExploitCohort": 105417,
       "publicExploitShare": 21.5,
       "observedKev": 537,
       "observedKevShare": 0.4,
-      "matureCohort": 121640,
+      "matureCohort": 121804,
       "kevWithin90Days": 391,
       "kevWithin90DayRate": 0.3,
       "kevTimingSample": 493,

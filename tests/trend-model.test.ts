@@ -185,6 +185,32 @@ test("severity shares use all published CVEs and reconcile to 100%", () => {
   assert.equal(severityShare({ ...point, published: 0 }, "critical"), null);
 });
 
+test("critical and high KPI uses scored CVEs while chart shares use all publications", () => {
+  const point: MonthPoint = {
+    month: "2026-06",
+    published: 100,
+    critical: 5,
+    high: 20,
+    medium: 40,
+    low: 10,
+    none: 5,
+    unknown: 20,
+    severityCoverage: 80,
+    publicExploitReferences: 0,
+    kevAdded: 0,
+    partial: false,
+    enriching: true,
+    epssHigh: 0,
+  };
+  const summary = summarizePeriod([point], []);
+
+  assert.equal(summary.criticalHigh, 25);
+  assert.equal(summary.scored, 80);
+  assert.equal(summary.criticalHighShare, 31.3);
+  assert.equal(severityShare(point, "critical"), 5);
+  assert.equal(severityShare(point, "high"), 20);
+});
+
 test("legend availability keeps zero values and omits all-null series", () => {
   assert.equal(hasRecordedValue([null, 0, null]), true);
   assert.equal(hasRecordedValue([null, null]), false);

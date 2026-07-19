@@ -30,6 +30,10 @@ test("static export renders the VulnSignal intelligence dashboard", async () => 
   assert.match(html, /75th percentile time to KEV/);
   assert.match(html, /KEV deadlines within 7 days/);
   assert.match(html, /90-day priority candidates/);
+  assert.equal((html.match(/View breakdown/g) ?? []).length, 6);
+  assert.equal((html.match(/aria-haspopup="dialog"/g) ?? []).length, 6);
+  assert.match(html, /id="indicator-drilldown"/);
+  assert.match(html, /aria-labelledby="indicator-drilldown-title"/);
   assert.match(html, /Elevated EPSS CVEs not in CISA KEV/);
   assert.match(html, /EPSS threshold history/);
   assert.match(html, /current scores are not applied backwards/i);
@@ -98,8 +102,8 @@ test("project metadata and generated dataset are repo-ready", async () => {
   assert.ok(dataset.sources.llmRegistry.programmeSources.some((source) => source.publisher === "OpenAI"));
   assert.equal(dataset.priorityWatch.window.days, 90);
   assert.equal(dataset.priorityWatch.window.threshold, dataset.sources.epss.projectThreshold);
-  assert.ok(dataset.priorityWatch.total >= dataset.priorityWatch.items.length);
-  assert.ok(dataset.priorityWatch.items.length <= 20);
+  assert.equal(dataset.priorityWatch.itemsCompleteness, "all_candidates");
+  assert.equal(dataset.priorityWatch.items.length, dataset.priorityWatch.total);
   assert.ok(dataset.priorityWatch.items.every((item) => item.epss >= dataset.priorityWatch.window.threshold));
   assert.ok(dataset.epssHistory.points.length >= 1);
   assert.equal(dataset.epssHistory.threshold, dataset.sources.epss.projectThreshold);
