@@ -494,7 +494,7 @@ function WhatChanged({
           <p>{number(digest.cve.newRecords)} newly published and {number(digest.cve.updatedRecords)} updated in 24 hours; categories can overlap. This is feed activity, not vulnerability incidence.</p>
         </article>
         <article>
-          <span>Confirmed exploitation · latest catalog date</span>
+          <span>Confirmed exploitation · CISA KEV</span>
           <strong><MetricValue href="#kev-watch" tooltip="Jump to the recently added CISA KEV records">{number(digest.kev.additions)} KEV additions</MetricValue></strong>
           <p>{digest.kev.date ? `Added by CISA on ${dateLabel(digest.kev.date, true)}.` : "No dated KEV additions in this refresh."}</p>
         </article>
