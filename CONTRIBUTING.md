@@ -78,5 +78,6 @@ never be presented as evidence that a vulnerability was not LLM-assisted.
 - No credentials, private vulnerability information, or downloaded source
   archives are included.
 
-By contributing, you agree that your contribution is licensed under the MIT
-License in this repository.
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in this project is licensed under the Apache License 2.0, in line
+with Section 5 of the licence in this repository.
