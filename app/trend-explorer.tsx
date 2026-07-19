@@ -628,7 +628,7 @@ function IndicatorDrilldown({
       {filteredPriority.length ? (
         <DrilldownTable
           caption="Current 90-day priority candidates sorted by EPSS probability"
-          headers={["CVE", "Published", "Severity", "EPSS", "Signals"]}
+          headers={["CVE", "Published", "Severity", "EPSS", "Exploit reference"]}
           rows={filteredPriority.map((item) => ({
             key: item.cveId,
             cells: [
@@ -636,7 +636,7 @@ function IndicatorDrilldown({
               shortDateLabel(item.published),
               <span key="severity"><span className={`severity-badge severity-badge--${item.severity.toLowerCase()}`}>{item.severity === "UNKNOWN" ? "Unscored" : `${item.severity}${item.score === null ? "" : ` ${item.score}`}`}</span>{item.cvssVersion ? <small>CVSS {item.cvssVersion}</small> : null}</span>,
               <span key="epss"><strong>{probabilityLabel(item.epss)}</strong><small>{percentileLabel(item.epssPercentile)}</small></span>,
-              <span key="signals"><small>Not in KEV</small>{item.publicExploitReference ? <small>Exploit reference</small> : null}</span>,
+              <span key="exploit-reference"><strong>{item.publicExploitReference ? "Yes" : "No"}</strong><small>{item.publicExploitReference ? "NVD-tagged exploit reference" : "No NVD exploit tag in this snapshot"}</small></span>,
             ],
           }))}
         />
