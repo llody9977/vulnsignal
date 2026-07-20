@@ -92,7 +92,7 @@ This product uses the NVD API but is not endorsed or certified by the NVD.
 | Current EPSS ≥ 0.1 | A project-defined threshold applied to the current FIRST EPSS snapshot. Monthly and 36-month groups use each CVE's NVD publication month, so they are not historical EPSS scores as they stood in those months. |
 | Priority watch | NVD-published CVEs from the latest 90 days with current EPSS ≥ 0.1 and no CISA KEV listing in the downloaded catalogue. Every qualifying row is retained for the tile drill-down. It is a focused review queue, not proof of exploitability or a complete patch order. |
 | Historical EPSS | Counts from official historical EPSS snapshots sampled at month end, plus the current score date. Model versions are shown because scores on different model versions are not strictly like-for-like. |
-| Accelerated KEV deadline | The share of KEV additions whose CISA due date is no more than seven days after `dateAdded`, compared with the previous 12-month window. |
+| Accelerated KEV deadline | The share of KEV additions whose CISA due date is no more than seven days after `dateAdded`, compared with the previous 12-month window. The denominator is the additions that carry a usable due date on or after `dateAdded`, and it is shown alongside the share. |
 | What changed | Source-specific activity with an explicit clock: CVE List records in the previous 24 hours, additions on the latest KEV catalogue date, and EPSS threshold crossings between sampled official score files. These are update signals, not incident counts. |
 | Common CWE classes | Each CVE contributes once to every distinct valid CWE assigned in NVD. The dashboard compares shares of published CVEs, because raw counts are affected by changes in total publication volume. |
 | Earlier versus recent | Two adjacent 36-month publication periods ending at the latest complete month. This compares publication, severity, matured exploit-reference and current-snapshot EPSS signals; it does not measure an LLM discovery rate. |
@@ -106,6 +106,7 @@ flowchart LR
   NVD["NVD JSON 2.0 feeds"] --> Sync
   KEV["CISA KEV JSON"] --> Sync
   EPSS["FIRST EPSS current and historical CSV"] --> Sync
+  CWE["MITRE CWE REST API"] --> Sync
   Evidence["Curated LLM evidence"] --> Sync
   Anthropic["Anthropic CVD payload"] --> Sync
   Sync --> Dataset["data/dashboard.json"]
@@ -173,7 +174,7 @@ data/llm-discovery-evidence.json    Curated evidence register
 data/llm-discovery-evidence.schema.json  Register contract
 scripts/sync_vulnerability_data.py  Source ingestion and aggregation
 tests/                              Application and pipeline tests
-.github/workflows/                  Daily refresh and GitHub Pages deployment
+.github/workflows/                  CI, CodeQL, daily refresh and GitHub Pages deployment
 ```
 
 GitHub Pages is the only public deployment target. This keeps the hosting path and dependency surface small for a personal project.
