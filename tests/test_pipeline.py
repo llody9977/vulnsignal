@@ -4,6 +4,7 @@ import gzip
 import hashlib
 import json
 import pathlib
+import re
 import tempfile
 import unittest
 from unittest import mock
@@ -727,6 +728,46 @@ class PipelineUnitTests(unittest.TestCase):
         self.assertEqual(payload["coverage"]["latestCompleteMonth"], "2025-11")
         self.assertEqual(payload["coverage"]["recordCount"], 0)
         self.assertEqual(sum(month["published"] for month in payload["monthly"]), 0)
+
+    def test_refresh_schedule_is_reported_in_utc(self):
+        build_time = dt.datetime(2026, 7, 18, 12, tzinfo=dt.timezone.utc)
+        with tempfile.NamedTemporaryFile() as temp_epss:
+            payload = aggregate(
+                {},
+                {
+                    "count": 1,
+                    "dateReleased": "2026-07-16T17:00:00Z",
+                    "vulnerabilities": [
+                        {
+                            "cveID": "CVE-2025-1000",
+                            "dateAdded": "2025-11-01",
+                            "dueDate": "2025-11-22",
+                        }
+                    ],
+                },
+                [],
+                {"records": [], "programReports": []},
+                {"cve_records": [], "headline": {}},
+                build_time,
+                2019,
+                [],
+                pathlib.Path(temp_epss.name),
+                EpssFeed({}, "v2026.06.15", build_time - dt.timedelta(hours=12), 0),
+            )
+
+        workflow = (
+            pathlib.Path(__file__).resolve().parents[1]
+            / ".github"
+            / "workflows"
+            / "data-refresh.yml"
+        ).read_text()
+        cron = re.search(r"-\s+cron:\s+['\"]([^'\"]+)['\"]", workflow)
+        assert cron is not None
+        minute, hour = cron.group(1).split()[:2]
+        self.assertEqual(
+            payload["project"]["refreshSchedule"],
+            f"Daily at {int(hour):02d}:{int(minute):02d} UTC",
+        )
 
     def test_priority_watch_filters_recent_non_kev_and_sorts_by_epss(self):
         snapshot_time = dt.datetime(2026, 7, 18, 12, tzinfo=dt.timezone.utc)
