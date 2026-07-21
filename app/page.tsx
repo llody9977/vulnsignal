@@ -1,3 +1,6 @@
+"use client";
+
+import React, { useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import rawDashboard from "@/data/dashboard.json";
 import { TrendExplorer } from "./trend-explorer";
@@ -313,6 +316,65 @@ type DashboardData = {
     cvssVersion: string | null;
     publicExploitReference: boolean | null;
   }[];
+  weaknessAnalysis?: {
+    period: string;
+    start: string;
+    end: string;
+    totalRecords: number;
+    specificCount: number;
+    noinfoCount: number;
+    otherCount: number;
+    noneCount: number;
+  };
+  cvssEpssHeatmap?: {
+    total: number;
+    grid: {
+      [key: string]: {
+        count: number;
+        kevCount: number;
+        exploitRefCount: number;
+      }[];
+    };
+  };
+  signalOverlap?: {
+    sets: {
+      cvssHigh: boolean;
+      epssHigh: boolean;
+      exploitRef: boolean;
+      cisaKev: boolean;
+      ransomware: boolean;
+    };
+    count: number;
+  }[];
+  kevLagHeatmap?: {
+    grid: {
+      [year: string]: {
+        [bucket: string]: number;
+      };
+    };
+    cohortTotals: {
+      [year: string]: number;
+    };
+  };
+  enrichmentCompleteness?: {
+    month: string;
+    total: number;
+    cvssPercent: number;
+    cwePercent: number;
+    exploitRefPercent: number;
+    epssPercent: number;
+  }[];
+  cweHeatmap?: {
+    quarters: string[];
+    quarterTotals: {
+      [quarter: string]: number;
+    };
+    grid: {
+      [cwe: string]: {
+        [quarter: string]: number;
+      };
+    };
+  };
 };
 
 const dashboard = rawDashboard as DashboardData;
@@ -546,7 +608,18 @@ function PriorityWatchPanel({ watch }: { watch?: PriorityWatch }) {
                       <td data-label="Severity"><span className={`severity-badge severity-badge--${item.severity.toLowerCase()}`}>{item.severity === "UNKNOWN" ? "Unscored" : `${item.severity}${item.score === null ? "" : ` ${item.score}`}`}</span>{item.cvssVersion ? <small>CVSS {item.cvssVersion}</small> : null}</td>
                       <td data-label="EPSS probability"><strong>{probability(item.epss)}</strong><span>{percentileLabel(item.epssPercentile)}</span></td>
                       <td data-label="Exploit reference">
-                        <span className={`signal${item.publicExploitReference ? " signal--active" : ""}`}>{item.publicExploitReference ? "Yes" : "No"}</span>
+                        {item.publicExploitReference ? (
+                          <a
+                            href={`https://nvd.nist.gov/vuln/detail/${item.cveId}#vulnHyperlinksSection`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="signal signal--active"
+                          >
+                            Yes
+                          </a>
+                        ) : (
+                          <span className="signal">No</span>
+                        )}
                         <small>{item.publicExploitReference ? "NVD-tagged exploit reference" : "No NVD exploit tag in this snapshot"}</small>
                       </td>
                     </tr>
@@ -615,6 +688,471 @@ function EpssHistoryPanel({ history }: { history?: EpssHistory }) {
     </article>
   );
 }
+
+
+function CvssEpssHeatmapPanel({ data }: { data?: DashboardData["cvssEpssHeatmap"] }) {
+  const [metric, setMetric] = useState<"count" | "kevCount" | "exploitRefCount">("count");
+  if (!data) return null;
+
+  const rows = ["CRITICAL", "HIGH", "MEDIUM", "LOW", "NONE", "UNKNOWN"];
+  const cols = ["<1%", "1–5%", "5–10%", "10–30%", "30–70%", "≥70%"];
+  const colKeys = [0, 1, 2, 3, 4, 5];
+
+  let maxValue = 1;
+  rows.forEach((r) => {
+    data.grid[r]?.forEach((cell) => {
+      const v = cell[metric];
+      if (v > maxValue) maxValue = v;
+    });
+  });
+
+  const getIntensity = (val: number) => {
+    if (val === 0) return 0;
+    return 0.1 + (val / maxValue) * 0.9;
+  };
+
+  const getBgColor = (intensity: number) => {
+    if (intensity === 0) return "var(--rule-strong)";
+    if (metric === "count") {
+      return `rgba(239, 68, 68, ${intensity})`; // Red
+    } else if (metric === "kevCount") {
+      return `rgba(249, 115, 22, ${intensity})`; // Orange
+    } else {
+      return `rgba(14, 165, 233, ${intensity})`; // Blue
+    }
+  };
+
+  return (
+    <article className="flat-panel heatmap-panel" id="cvss-epss-heatmap">
+      <div className="panel-heading">
+        <div>
+          <p className="eyebrow">Visual correlation / 6x6 Distribution</p>
+          <h3>CVSS × EPSS distribution</h3>
+        </div>
+        <div className="metric-select-tabs">
+          <button className={metric === "count" ? "active" : ""} onClick={() => setMetric("count")}>CVEs</button>
+          <button className={metric === "kevCount" ? "active" : ""} onClick={() => setMetric("kevCount")}>KEVs</button>
+          <button className={metric === "exploitRefCount" ? "active" : ""} onClick={() => setMetric("exploitRefCount")}>Exploit Refs</button>
+        </div>
+      </div>
+      <p className="panel-desc">
+        Distribution of {number(data.total)} active NVD records across CVSS base severities and EPSS probability bands.
+      </p>
+      
+      <div className="heatmap-container">
+        <div className="heatmap-grid" style={{ display: "grid", gridTemplateColumns: "110px repeat(6, minmax(60px, 1fr))", gap: "2px" }}>
+          <div className="heatmap-label heatmap-label--corner">CVSS \ EPSS</div>
+          {cols.map((col) => (
+            <div key={col} className="heatmap-col-header">{col}</div>
+          ))}
+
+          {rows.map((row) => {
+            const cells = data.grid[row] || [];
+            return (
+              <React.Fragment key={row}>
+                <div className="heatmap-row-header">{row}</div>
+                {colKeys.map((colIdx) => {
+                  const cell = cells[colIdx] || { count: 0, kevCount: 0, exploitRefCount: 0 };
+                  const val = cell[metric];
+                  const intensity = getIntensity(val);
+                  return (
+                    <div
+                      key={colIdx}
+                      className="heatmap-cell"
+                      style={{
+                        background: getBgColor(intensity),
+                        color: intensity > 0.5 ? "#fff" : "var(--fg)",
+                      }}
+                      title={`${row} severity & EPSS ${cols[colIdx]}: ${number(cell.count)} CVEs, ${number(cell.kevCount)} KEVs, ${number(cell.exploitRefCount)} Exploit Refs`}
+                    >
+                      <span>{number(val)}</span>
+                    </div>
+                  );
+                })}
+              </React.Fragment>
+            );
+          })}
+        </div>
+      </div>
+      <p className="panel-note">
+        Note: CVSS base severity reflects the preferred source score under VulnSignal preference hierarchy and may use different versions (v2, v3, v4). EPSS scores represent current active probabilities.
+      </p>
+    </article>
+  );
+}
+
+
+function SignalOverlapPanel({ data }: { data?: DashboardData["signalOverlap"] }) {
+  const [sortBy, setSortBy] = useState<"count" | "signals">("count");
+  if (!data) return null;
+
+  const getActiveSignalsCount = (sets: { cvssHigh: boolean; epssHigh: boolean; exploitRef: boolean; cisaKev: boolean; ransomware: boolean }) => {
+    return (sets.cvssHigh ? 1 : 0) + (sets.epssHigh ? 1 : 0) + (sets.exploitRef ? 1 : 0) + (sets.cisaKev ? 1 : 0) + (sets.ransomware ? 1 : 0);
+  };
+
+  const sortedData = [...data].sort((a, b) => {
+    if (sortBy === "count") {
+      return b.count - a.count;
+    } else {
+      const sigA = getActiveSignalsCount(a.sets);
+      const sigB = getActiveSignalsCount(b.sets);
+      if (sigB !== sigA) return sigB - sigA;
+      return b.count - a.count;
+    }
+  });
+
+  const maxCount = Math.max(...data.map(d => d.count), 1);
+
+  return (
+    <article className="flat-panel overlap-panel" id="signal-overlap">
+      <div className="panel-heading">
+        <div>
+          <p className="eyebrow">Intersection matrix / UpSet style</p>
+          <h3>Signal overlap intersections</h3>
+        </div>
+        <div className="metric-select-tabs">
+          <button className={sortBy === "count" ? "active" : ""} onClick={() => setSortBy("count")}>Sort by Count</button>
+          <button className={sortBy === "signals" ? "active" : ""} onClick={() => setSortBy("signals")}>Sort by Signal Count</button>
+        </div>
+      </div>
+      <p className="panel-desc">
+        Co-occurrence of key risk signals: CVSS High/Critical, EPSS ≥ 10%, public Exploit Ref tag, CISA KEV listing, and confirmed Ransomware use.
+      </p>
+
+      <div className="overlap-matrix-container">
+        <table className="overlap-table">
+          <thead>
+            <tr>
+              <th className="signal-header">CVSS High</th>
+              <th className="signal-header">EPSS ≥ 10%</th>
+              <th className="signal-header">Exploit Ref</th>
+              <th className="signal-header">CISA KEV</th>
+              <th className="signal-header">Ransomware</th>
+              <th className="bar-header">Intersection Size</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sortedData.map((row, idx) => {
+              const activeCount = getActiveSignalsCount(row.sets);
+              return (
+                <tr key={idx} className={activeCount >= 3 ? "high-priority-row" : ""}>
+                  <td className="circle-cell"><span className={`circle ${row.sets.cvssHigh ? "active cvss" : ""}`} /></td>
+                  <td className="circle-cell"><span className={`circle ${row.sets.epssHigh ? "active epss" : ""}`} /></td>
+                  <td className="circle-cell"><span className={`circle ${row.sets.exploitRef ? "active exploit" : ""}`} /></td>
+                  <td className="circle-cell"><span className={`circle ${row.sets.cisaKev ? "active kev" : ""}`} /></td>
+                  <td className="circle-cell"><span className={`circle ${row.sets.ransomware ? "active ransomware" : ""}`} /></td>
+                  <td className="bar-cell">
+                    <div className="overlap-bar-wrapper">
+                      <div className="overlap-bar" style={{ width: `${(row.count / maxCount) * 100}%` }} />
+                      <strong className="overlap-count">{number(row.count)}</strong>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </article>
+  );
+}
+
+
+function KevLagHeatmapPanel({ data }: { data?: DashboardData["kevLagHeatmap"] }) {
+  const [viewMode, setViewMode] = useState<"count" | "percent">("count");
+  if (!data) return null;
+
+  const years = Object.keys(data.grid).sort((a, b) => {
+    if (a === "Older") return 1;
+    if (b === "Older") return -1;
+    return b.localeCompare(a);
+  });
+
+  const buckets = [
+    { key: "pre_pub", label: "Pre-pub" },
+    { key: "same_day", label: "Same day" },
+    { key: "1_7_days", label: "1–7d" },
+    { key: "8_30_days", label: "8–30d" },
+    { key: "31_90_days", label: "31–90d" },
+    { key: "91_365_days", label: "91–365d" },
+    { key: "over_365_days", label: ">365d" },
+  ];
+
+  let maxVal = 1;
+  years.forEach((y) => {
+    const total = data.cohortTotals[y] || 1;
+    buckets.forEach((b) => {
+      const val = data.grid[y][b.key] || 0;
+      if (viewMode === "count") {
+        if (val > maxVal) maxVal = val;
+      } else {
+        const pct = (val / total) * 100;
+        if (pct > maxVal) maxVal = pct;
+      }
+    });
+  });
+
+  const getBgColor = (val: number, total: number) => {
+    if (val === 0) return "var(--rule-strong)";
+    const ratio = viewMode === "count" ? val / maxVal : ((val / total) * 100) / maxVal;
+    const intensity = 0.1 + ratio * 0.9;
+    return `rgba(239, 68, 68, ${intensity})`;
+  };
+
+  return (
+    <article className="flat-panel heatmap-panel" id="kev-lag-heatmap">
+      <div className="panel-heading">
+        <div>
+          <p className="eyebrow">Time lag / CVE pub year vs KEV dateAdded</p>
+          <h3>CISA KEV addition lag</h3>
+        </div>
+        <div className="metric-select-tabs">
+          <button className={viewMode === "count" ? "active" : ""} onClick={() => setViewMode("count")}>Counts</button>
+          <button className={viewMode === "percent" ? "active" : ""} onClick={() => setViewMode("percent")}>% of Year</button>
+        </div>
+      </div>
+      <p className="panel-desc">
+        Time delta between NVD publication and CISA KEV addition, grouped by CVE publication year. Pre-publication indicates KEV listing preceded NVD metadata publication.
+      </p>
+
+      <div className="heatmap-container">
+        <div className="heatmap-grid" style={{ display: "grid", gridTemplateColumns: "110px repeat(7, minmax(60px, 1fr))", gap: "2px" }}>
+          <div className="heatmap-label heatmap-label--corner">CVE Year</div>
+          {buckets.map((b) => (
+            <div key={b.key} className="heatmap-col-header">{b.label}</div>
+          ))}
+
+          {years.map((y) => {
+            const total = data.cohortTotals[y] || 0;
+            return (
+              <React.Fragment key={y}>
+                <div className="heatmap-row-header">{y} <small style={{ display: "block", fontSize: "10px", color: "var(--muted)" }}>(n={number(total)})</small></div>
+                {buckets.map((b) => {
+                  const val = data.grid[y][b.key] || 0;
+                  const pct = total > 0 ? (val / total) * 100 : 0;
+                  return (
+                    <div
+                      key={b.key}
+                      className="heatmap-cell"
+                      style={{
+                        background: getBgColor(val, total),
+                        color: (viewMode === "count" ? val / maxVal : pct / maxVal) > 0.5 ? "#fff" : "var(--fg)",
+                      }}
+                      title={`${y} cohort: ${number(val)} CVEs (${pct.toFixed(1)}%) added in {b.label} range`}
+                    >
+                      <span>{viewMode === "count" ? number(val) : `${pct.toFixed(0)}%`}</span>
+                    </div>
+                  );
+                })}
+              </React.Fragment>
+            );
+          })}
+        </div>
+      </div>
+    </article>
+  );
+}
+
+
+function EnrichmentCompletenessPanel({ data }: { data?: DashboardData["enrichmentCompleteness"] }) {
+  if (!data) return null;
+
+  return (
+    <article className="flat-panel completeness-panel" id="enrichment-completeness">
+      <div className="panel-heading">
+        <div>
+          <p className="eyebrow">Quality signals / Trailing 36 months</p>
+          <h3>Enrichment completeness trends</h3>
+        </div>
+      </div>
+      <p className="panel-desc">
+        Percentage of published CVE records having a primary CVSS score, specific CWE classification, public Exploit Reference tag, and EPSS score at the time of snapshot.
+      </p>
+
+      <div className="completeness-table-container">
+        <table className="completeness-table">
+          <thead>
+            <tr>
+              <th className="month-header">Month</th>
+              <th className="num-header">CVEs</th>
+              <th className="num-header">CVSS Score</th>
+              <th className="num-header">CWE Code</th>
+              <th className="num-header">Exploit Tag</th>
+              <th className="num-header">EPSS Scored</th>
+            </tr>
+          </thead>
+          <tbody>
+            {[...data].reverse().map((row) => (
+              <tr key={row.month}>
+                <td className="month-cell">{row.month}</td>
+                <td className="num-cell">{number(row.total)}</td>
+                <td className="num-cell pct-cell">
+                  <div className="pct-bar-wrapper" title={`${row.cvssPercent}%`}>
+                    <div className="pct-bar cvss" style={{ width: `${row.cvssPercent}%` }} />
+                    <span>{row.cvssPercent}%</span>
+                  </div>
+                </td>
+                <td className="num-cell pct-cell">
+                  <div className="pct-bar-wrapper" title={`${row.cwePercent}%`}>
+                    <div className="pct-bar cwe" style={{ width: `${row.cwePercent}%` }} />
+                    <span>{row.cwePercent}%</span>
+                  </div>
+                </td>
+                <td className="num-cell pct-cell">
+                  <div className="pct-bar-wrapper" title={`${row.exploitRefPercent}%`}>
+                    <div className="pct-bar exploit" style={{ width: `${row.exploitRefPercent}%` }} />
+                    <span>{row.exploitRefPercent}%</span>
+                  </div>
+                </td>
+                <td className="num-cell pct-cell">
+                  <div className="pct-bar-wrapper" title={`${row.epssPercent}%`}>
+                    <div className="pct-bar epss" style={{ width: `${row.epssPercent}%` }} />
+                    <span>{row.epssPercent}%</span>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="panel-note">
+        Note: Exploit tags and CVSS completeness naturally decline for very recent months due to CNA analysis lag.
+      </p>
+    </article>
+  );
+}
+
+
+function CweHeatmapPanel({ data, topCwes }: { data?: DashboardData["cweHeatmap"], topCwes: CweRow[] }) {
+  if (!data) return null;
+
+  const quarters = data.quarters;
+  const cweIds = Object.keys(data.grid);
+
+  let maxVal = 1;
+  cweIds.forEach((cwe) => {
+    quarters.forEach((q) => {
+      const val = data.grid[cwe][q] || 0;
+      if (val > maxVal) maxVal = val;
+    });
+  });
+
+  const getBgColor = (val: number) => {
+    if (val === 0) return "var(--rule-strong)";
+    const intensity = 0.1 + (val / maxVal) * 0.9;
+    return `rgba(139, 92, 246, ${intensity})`;
+  };
+
+  return (
+    <article className="flat-panel heatmap-panel" id="cwe-heatmap">
+      <div className="panel-heading">
+        <div>
+          <p className="eyebrow">Weakness distribution / Top 6 CWEs by Quarter</p>
+          <h3>CWE quarterly distribution</h3>
+        </div>
+      </div>
+      <p className="panel-desc">
+        Vulnerability counts for the current top 6 CWE classes over the last 8 quarters.
+      </p>
+
+      <div className="heatmap-container">
+        <div className="heatmap-grid" style={{ display: "grid", gridTemplateColumns: "110px repeat(8, minmax(50px, 1fr))", gap: "2px" }}>
+          <div className="heatmap-label heatmap-label--corner">CWE ID</div>
+          {quarters.map((q) => (
+            <div key={q} className="heatmap-col-header">{q}</div>
+          ))}
+
+          {cweIds.map((cwe) => {
+            return (
+              <React.Fragment key={cwe}>
+                <div className="heatmap-row-header" title={topCwes.find(t => t.cwe === cwe)?.name}>{cwe}</div>
+                {quarters.map((q) => {
+                  const val = data.grid[cwe][q] || 0;
+                  const total = data.quarterTotals[q] || 1;
+                  const pct = (val / total) * 100;
+                  return (
+                    <div
+                      key={q}
+                      className="heatmap-cell"
+                      style={{
+                        background: getBgColor(val),
+                        color: (val / maxVal) > 0.5 ? "#fff" : "var(--fg)",
+                      }}
+                      title={`${cwe}: ${number(val)} CVEs (${pct.toFixed(1)}% of quarter's publications)`}
+                    >
+                      <span>{number(val)}</span>
+                    </div>
+                  );
+                })}
+              </React.Fragment>
+            );
+          })}
+        </div>
+      </div>
+    </article>
+  );
+}
+
+
+function WeaknessAnalysisPanel({ data }: { data?: DashboardData["weaknessAnalysis"] }) {
+  if (!data) return null;
+
+  const total = data.totalRecords;
+  const specificPct = total > 0 ? (data.specificCount / total) * 100 : 0;
+  const noinfoPct = total > 0 ? (data.noinfoCount / total) * 100 : 0;
+  const otherPct = total > 0 ? (data.otherCount / total) * 100 : 0;
+  const nonePct = total > 0 ? (data.noneCount / total) * 100 : 0;
+
+  return (
+    <article className="flat-panel weakness-breakdown-panel" id="weakness-completeness">
+      <div className="panel-heading">
+        <div>
+          <p className="eyebrow">Weakness quality classification / T12M</p>
+          <h3>CWE classification completeness</h3>
+        </div>
+        <span>{number(total)} records</span>
+      </div>
+      <p className="panel-desc">
+        Breakdown of weakness classification statuses for CVEs published in the trailing 12 months.
+      </p>
+
+      <div className="breakdown-bars">
+        <div className="breakdown-bar-item">
+          <div className="bar-info">
+            <span>Specific CWE code assigned</span>
+            <strong>{number(data.specificCount)} ({specificPct.toFixed(1)}%)</strong>
+          </div>
+          <div className="bar-bg"><div className="bar-fill specific" style={{ width: `${specificPct}%` }} /></div>
+        </div>
+        
+        <div className="breakdown-bar-item">
+          <div className="bar-info">
+            <span>No information provided (NVD-CWE-noinfo)</span>
+            <strong>{number(data.noinfoCount)} ({noinfoPct.toFixed(1)}%)</strong>
+          </div>
+          <div className="bar-bg"><div className="bar-fill noinfo" style={{ width: `${noinfoPct}%` }} /></div>
+        </div>
+
+        <div className="breakdown-bar-item">
+          <div className="bar-info">
+            <span>Other non-specific weakness code (NVD-CWE-Other)</span>
+            <strong>{number(data.otherCount)} ({otherPct.toFixed(1)}%)</strong>
+          </div>
+          <div className="bar-bg"><div className="bar-fill other" style={{ width: `${otherPct}%` }} /></div>
+        </div>
+
+        <div className="breakdown-bar-item">
+          <div className="bar-info">
+            <span>No weakness data recorded</span>
+            <strong>{number(data.noneCount)} ({nonePct.toFixed(1)}%)</strong>
+          </div>
+          <div className="bar-bg"><div className="bar-fill none" style={{ width: `${nonePct}%` }} /></div>
+        </div>
+      </div>
+    </article>
+  );
+}
+
 
 export default function Home() {
   const maxCwe = Math.max(
@@ -732,6 +1270,16 @@ export default function Home() {
           <div className="priority-history-grid">
             <PriorityWatchPanel watch={dashboard.priorityWatch} />
             <EpssHistoryPanel history={dashboard.epssHistory} />
+          </div>
+
+          <div className="visualizations-grid" style={{ marginTop: "24px" }}>
+            <CvssEpssHeatmapPanel data={dashboard.cvssEpssHeatmap} />
+            <SignalOverlapPanel data={dashboard.signalOverlap} />
+          </div>
+
+          <div className="visualizations-grid" style={{ marginTop: "24px" }}>
+            <KevLagHeatmapPanel data={dashboard.kevLagHeatmap} />
+            <EnrichmentCompletenessPanel data={dashboard.enrichmentCompleteness} />
           </div>
 
           <div className="operational-matrix">
@@ -883,7 +1431,15 @@ export default function Home() {
                 );
               })}
             </div>
+            <p className="panel-note" style={{ marginTop: "16px", fontStyle: "italic", borderTop: "1px solid var(--rule-strong)", paddingTop: "12px" }}>
+              Warning: CWE shares can total &gt;100% since a single CVE can carry multiple weakness codes.
+            </p>
           </article>
+
+          <div className="visualizations-grid" style={{ marginTop: "24px" }}>
+            <CweHeatmapPanel data={dashboard.cweHeatmap} topCwes={dashboard.topCwes} />
+            <WeaknessAnalysisPanel data={dashboard.weaknessAnalysis} />
+          </div>
         </section>
 
         <section className="section" id="kev-watch">

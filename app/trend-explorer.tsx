@@ -635,7 +635,20 @@ function IndicatorDrilldown({
               shortDateLabel(item.published),
               <span key="severity"><span className={`severity-badge severity-badge--${item.severity.toLowerCase()}`}>{item.severity === "UNKNOWN" ? "Unscored" : `${item.severity}${item.score === null ? "" : ` ${item.score}`}`}</span>{item.cvssVersion ? <small>CVSS {item.cvssVersion}</small> : null}</span>,
               <span key="epss"><strong>{probabilityLabel(item.epss)}</strong><small>{percentileLabel(item.epssPercentile)}</small></span>,
-              <span key="exploit-reference"><strong>{item.publicExploitReference ? "Yes" : "No"}</strong><small>{item.publicExploitReference ? "NVD-tagged exploit reference" : "No NVD exploit tag in this snapshot"}</small></span>,
+              <span key="exploit-reference">
+                {item.publicExploitReference ? (
+                  <a
+                    href={`https://nvd.nist.gov/vuln/detail/${item.cveId}#vulnHyperlinksSection`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <strong>Yes</strong>
+                  </a>
+                ) : (
+                  <strong>No</strong>
+                )}
+                <small>{item.publicExploitReference ? "NVD-tagged exploit reference" : "No NVD exploit tag in this snapshot"}</small>
+              </span>,
             ],
           }))}
         />
