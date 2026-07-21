@@ -41,7 +41,7 @@ test("static export renders the VulnSignal intelligence dashboard", async () => 
   assert.match(html, /href="#priority-watch-table"/);
   assert.match(html, /id="indicator-drilldown"/);
   assert.match(html, /aria-labelledby="indicator-drilldown-title"/);
-  assert.match(html, /Elevated EPSS CVEs not in CISA KEV/);
+  assert.match(html, /VulnSignal screening threshold CVEs not in CISA KEV/);
   assert.match(html, /Exploit reference<\/th>/);
   assert.match(html, /NVD-tagged exploit reference/);
   assert.match(html, /No NVD exploit tag in this snapshot/);
@@ -53,7 +53,7 @@ test("static export renders the VulnSignal intelligence dashboard", async () => 
   assert.match(html, /CVE List V5/i);
   assert.match(html, /NVD JSON 2\.0/);
   assert.match(html, /CISA/);
-  assert.match(html, /Reported minimum, not a total/);
+  assert.match(html, /Reported LLM-assisted disclosure events/);
   assert.match(html, /LLM disclosure events/);
   assert.match(html, /does not mean zero LLM-assisted discoveries/);
   assert.match(html, /recent records are still being enriched/);
@@ -68,7 +68,7 @@ test("static export renders the VulnSignal intelligence dashboard", async () => 
   assert.match(html, /© 2026/);
   assert.match(html, /llody9977/);
   assert.match(html, />ATTRIBUTION ↗</);
-  assert.match(html, /This product uses the NVD API but is not endorsed or certified by the NVD/);
+  assert.match(html, /This product uses NVD data feeds and is not endorsed or certified by the NVD/);
   assert.match(html, /href="#disclaimer"/);
   assert.match(html, /chart-point--event/);
   assert.match(html, /≥ 28/);

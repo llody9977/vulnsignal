@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import rawDashboard from "@/data/dashboard.json";
 import { TrendExplorer } from "./trend-explorer";
+import { FreshnessBanner } from "./freshness-banner";
 import type { LlmEvidenceEvent, MonthPoint } from "./trend-model";
 
 type WindowMetrics = {
@@ -104,6 +105,7 @@ type ComparisonWindow = {
   publishedCves?: number;
   matureCves?: number;
   sample?: number;
+  prePublicationKev?: number;
   medianDays?: number | null;
   p75Days?: number | null;
 };
@@ -505,8 +507,8 @@ function WhatChanged({
         </article>
         <article>
           <span>Current priority watch · current snapshot</span>
-          <strong><MetricValue href="#priority-watch-panel" tooltip="Jump to the elevated EPSS candidate table">{number(digest.priority.count)} candidates</MetricValue></strong>
-          <p>Current EPSS ≥ 0.1, published in 90 days and not listed in CISA KEV.</p>
+          <strong><MetricValue href="#priority-watch-panel" tooltip="Jump to the VulnSignal screening threshold candidate table">{number(digest.priority.count)} candidates</MetricValue></strong>
+          <p>Current EPSS ≥ 0.1, published in 90 days and not listed in CISA KEV. This is a screening list, not a recommended remediation queue or patch priority list.</p>
         </article>
       </div>
     </section>
@@ -518,7 +520,7 @@ function PriorityWatchPanel({ watch }: { watch?: PriorityWatch }) {
   return (
     <article className="flat-panel priority-watch" id="priority-watch-panel">
       <div className="panel-heading">
-        <div><p className="eyebrow">Priority watch / 90 days</p><h3>Elevated EPSS CVEs not in CISA KEV</h3></div>
+        <div><p className="eyebrow">Priority watch / 90 days</p><h3>VulnSignal screening threshold CVEs not in CISA KEV</h3></div>
         <span>{watch ? `EPSS scores ${timestampLabel(watch.window.scoreDate)}` : "Awaiting EPSS history"}</span>
       </div>
       {watch ? (
@@ -529,7 +531,7 @@ function PriorityWatchPanel({ watch }: { watch?: PriorityWatch }) {
             <div><span>Exploit reference</span><strong><MetricValue href="#priority-watch-table" tooltip="Jump to candidate exploit-reference details">{number(watch.publicExploitReferences)}</MetricValue></strong></div>
           </div>
           <p className="priority-watch__note">
-            Published {dateLabel(watch.window.start, true)}–{dateLabel(watch.window.end, true)}. EPSS ≥ 0.1 is a project-defined current-score threshold. Not appearing in CISA KEV does not prove that exploitation has not occurred. “Yes” under exploit reference means NVD has at least one reference tagged <code>Exploit</code>; “No” means that tag is absent in this snapshot.
+            Published {dateLabel(watch.window.start, true)}–{dateLabel(watch.window.end, true)}. EPSS ≥ 0.1 is a project-defined current-score threshold. Not appearing in CISA KEV does not prove that exploitation has not occurred. This list is a screening tool, not a recommended remediation queue or patch priority list. “Yes” under exploit reference means NVD has at least one reference tagged <code>Exploit</code>; “No” means that tag is absent in this snapshot.
           </p>
           {visibleItems.length ? (
             <div className="priority-table-wrap" id="priority-watch-table">
@@ -655,6 +657,7 @@ export default function Home() {
 
   return (
     <main>
+      <FreshnessBanner generatedAt={dashboard.generatedAt} />
       <header className="topbar">
         <a className="brand" href="#top" aria-label="VulnSignal home">
           <span className="brand__mark" aria-hidden="true">
@@ -688,7 +691,7 @@ export default function Home() {
             <div><span>Snapshot built</span><strong><MetricValue tooltip="UTC time when this validated dashboard snapshot was generated">{timestampLabel(dashboard.generatedAt)}</MetricValue></strong></div>
             <div><span>Latest complete month</span><strong><MetricValue href="#reporting" tooltip="Jump to the interactive monthly and yearly report">{dateLabel(dashboard.coverage.latestCompleteMonth)}</MetricValue></strong></div>
             <div><span>CVE records covered</span><strong><MetricValue href={dashboard.sources.nvd.url} tooltip="Open the official NVD source used for CVE trend records">{number(dashboard.coverage.recordCount)}</MetricValue></strong></div>
-            <div><span>Refresh schedule</span><strong><MetricValue tooltip="Scheduled refresh cadence for the GitHub data pipeline">{dashboard.project.refreshSchedule || "Daily"}</MetricValue></strong></div>
+            <div><span>Refresh schedule</span><strong><MetricValue tooltip="Normally refreshed daily. The displayed snapshot may be up to 72 hours old if an upstream source or validation step fails.">{dashboard.project.refreshSchedule || "Daily"}</MetricValue></strong></div>
           </div>
           <div className="source-snapshot" aria-label="Source dates included in this snapshot">
             <strong>Source data included</strong>
@@ -735,14 +738,14 @@ export default function Home() {
             <article>
               <span>Median time to enter KEV</span>
               <small>{kevTimingPeriod}</small>
-              <strong><MetricValue tooltip={`Median across ${number(timingComparison?.current.sample ?? dashboard.risk.kevTimingSample)} KEV-matched CVEs in the stated period`}>{(timingComparison?.current.medianDays ?? dashboard.risk.medianDaysToKev) === null ? "—" : `${number(timingComparison?.current.medianDays ?? dashboard.risk.medianDaysToKev ?? 0)} days`}</MetricValue></strong>
+              <strong><MetricValue tooltip={`Median across ${number(timingComparison?.current.sample ?? dashboard.risk.kevTimingSample)} KEV-matched CVEs in the stated period (using signed difference; negative values indicate CISA KEV listing predates NVD publication)`}>{(timingComparison?.current.medianDays ?? dashboard.risk.medianDaysToKev) === null ? "—" : `${number(timingComparison?.current.medianDays ?? dashboard.risk.medianDaysToKev ?? 0)} days`}</MetricValue></strong>
               <DeltaTag value={timingComparison?.medianDaysChange} unit="days" />
-              <p>Half of {number(timingComparison?.current.sample ?? dashboard.risk.kevTimingSample)} KEV-matched CVEs were listed within this time. Already-listed records count as zero days.</p>
+              <p>Half of {number(timingComparison?.current.sample ?? dashboard.risk.kevTimingSample)} KEV-matched CVEs were listed within this time. There are {number(timingComparison?.current.prePublicationKev ?? dashboard.risk.prePublicationKev)} cases where the KEV listing predated NVD publication.</p>
             </article>
             <article>
               <span>75th percentile time to KEV</span>
               <small>{kevTimingPeriod}</small>
-              <strong><MetricValue tooltip={`75th percentile across ${number(timingComparison?.current.sample ?? dashboard.risk.kevTimingSample)} KEV-matched CVEs in the stated period`}>{(timingComparison?.current.p75Days ?? dashboard.risk.p75DaysToKev) === null ? "—" : `${number(timingComparison?.current.p75Days ?? dashboard.risk.p75DaysToKev ?? 0)} days`}</MetricValue></strong>
+              <strong><MetricValue tooltip={`75th percentile across ${number(timingComparison?.current.sample ?? dashboard.risk.kevTimingSample)} KEV-matched CVEs in the stated period (using signed difference; negative values indicate CISA KEV listing predates NVD publication)`}>{(timingComparison?.current.p75Days ?? dashboard.risk.p75DaysToKev) === null ? "—" : `${number(timingComparison?.current.p75Days ?? dashboard.risk.p75DaysToKev ?? 0)} days`}</MetricValue></strong>
               <DeltaTag value={timingComparison?.p75DaysChange} unit="days" />
               <p>75% of the same {number(timingComparison?.current.sample ?? dashboard.risk.kevTimingSample)} matched CVEs entered KEV within this time after NVD publication.</p>
             </article>
@@ -782,7 +785,7 @@ export default function Home() {
             <article>
               <span>EPSS ≥ 0.1 not in CISA KEV</span>
               <small>{epssCohortPeriod} · scores {timestampLabel(epssScoreDate)}</small>
-              <strong><MetricValue href="#priority-watch-panel" tooltip="Jump to the elevated EPSS candidates not listed in CISA KEV">{percent(dashboard.risk.highEpssNotInKevShare)}</MetricValue></strong>
+              <strong><MetricValue href="#priority-watch-panel" tooltip="Jump to the VulnSignal screening threshold candidates not listed in CISA KEV">{percent(dashboard.risk.highEpssNotInKevShare)}</MetricValue></strong>
               <p>{number(dashboard.risk.highEpssNotInKevCount)} of {number(dashboard.risk.highEpss)} CVEs meeting this project-defined threshold are not in CISA KEV. Scores are current, not historical.</p>
             </article>
           </div>
@@ -807,7 +810,7 @@ export default function Home() {
 
             <article className="flat-panel evidence-card">
               <div className="panel-heading">
-                <div><p className="eyebrow">LLM disclosure evidence</p><h3>Reported minimum, not a total</h3></div>
+                <div><p className="eyebrow">LLM disclosure evidence</p><h3>Reported LLM-assisted disclosure events</h3></div>
               </div>
               <div className="evidence-score">
                 <strong><MetricValue href={headlineLlmSource} tooltip={headlineLlmSource ? "Open the first-party programme report supporting this value" : "No single linked programme report is available for this value"}>{dashboard.llmDiscovery.value === null ? "—" : `≥ ${number(dashboard.llmDiscovery.value)}`}</MetricValue></strong>
@@ -967,7 +970,7 @@ export default function Home() {
             </div>
             <div>
               <p>VulnSignal is a personal, experimental project. It is not legal, compliance, security, risk-management or remediation advice, and it should not be the sole basis for operational decisions. Verify important findings against the linked original sources, vendor guidance and your own environment.</p>
-              <p>Data and derived metrics may be incomplete, delayed, revised or incorrect. The project is provided “as is”, without guarantees of accuracy, completeness, timeliness, availability or fitness for a particular purpose. Use it at your own risk. Source names and trademarks belong to their respective owners; inclusion does not imply affiliation, endorsement or certification. Software use remains subject to the <a href="https://github.com/llody9977/vulnsignal/blob/main/LICENSE">Apache License 2.0</a>.</p>
+              <p>Data and derived metrics may be incomplete, delayed, revised or incorrect. SHA-256 fingerprints establish which bytes were processed for traceability and reproducibility, but do not prove independent authenticity or correctness of upstream publisher data. The project is provided “as is”, without guarantees of accuracy, completeness, timeliness, availability or fitness for a particular purpose. Use it at your own risk. Source names and trademarks belong to their respective owners; inclusion does not imply affiliation, endorsement or certification. Software use remains subject to the <a href="https://github.com/llody9977/vulnsignal/blob/main/LICENSE">Apache License 2.0</a>.</p>
               <p className="project-disclaimer__nvd">{dashboard.coverage.notice}</p>
             </div>
           </aside>

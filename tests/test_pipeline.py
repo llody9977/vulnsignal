@@ -919,7 +919,7 @@ class PipelineUnitTests(unittest.TestCase):
         self.assertEqual(watch["items"][0]["cveId"], "CVE-2026-1000")
         self.assertEqual(watch["items"][-1]["cveId"], "CVE-2026-1024")
 
-    def test_kev_entries_before_nvd_publication_count_as_zero_day(self):
+    def test_kev_entries_before_nvd_publication_retain_signed_difference(self):
         records = [
             Vulnerability(
                 "CVE-2024-9",
@@ -942,7 +942,7 @@ class PipelineUnitTests(unittest.TestCase):
         self.assertEqual(metrics["prePublicationKev"], 1)
         self.assertEqual(metrics["kevWithin90Days"], 1)
         self.assertEqual(metrics["kevWithin90DayRate"], 100.0)
-        self.assertEqual(metrics["medianDaysToKev"], 0.0)
+        self.assertEqual(metrics["medianDaysToKev"], -12.0)
 
     def test_comparison_uses_two_adjacent_rolling_36_month_windows(self):
         earlier_start, earlier_end, recent_start, recent_end = rolling_comparison_windows(

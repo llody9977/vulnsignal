@@ -2353,3 +2353,34 @@ footer a { color: var(--accent-on-dark); }
   *, *::before, *::after { transition-duration: 0.01ms !important; }
   .indicator-drilldown[open] { animation: none; }
 }
+
+.freshness-banner {
+  background-color: var(--amber);
+  color: var(--panel);
+  font-family: var(--font-geist-sans), "Helvetica Neue", sans-serif;
+  font-size: 13px;
+  line-height: 1.4;
+  padding: 10px max(24px, calc((100vw - 1440px) / 2));
+  z-index: 40;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.freshness-banner__content {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 1500px;
+  width: 100%;
+}
+
+.freshness-banner__icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.freshness-banner strong {
+  font-weight: 600;
+}
+

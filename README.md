@@ -78,7 +78,7 @@ The page distinguishes the dashboard build time from upstream source dates. For 
 
 Every NVD yearly feed is checked against the SHA-256 value in its official META file. The pipeline calculates content fingerprints for the CVE List delta, CISA KEV, FIRST EPSS, Anthropic payload and curated LLM register. A fingerprint identifies the exact input used; it is not independent proof that an upstream source is complete or free from later revisions.
 
-This product uses the NVD API but is not endorsed or certified by the NVD.
+This product uses NVD data feeds and is not endorsed or certified by the NVD.
 
 ## How to interpret the metrics
 
@@ -88,9 +88,9 @@ This product uses the NVD API but is not endorsed or certified by the NVD.
 | Severity | Primary assessments are preferred over secondary assessments. Within that class, versions are checked in order: CVSS v4.0, v3.1, v3.0, then v2. Scores are not maximised. CVSS `NONE` (0.0) is kept separate from records without a score. |
 | Public exploit reference | The NVD record has a reference tagged `Exploit`. Raw recent counts remain visible and marked as enriching; comparisons are withheld when either selected period lacks mature data. |
 | KEV | CISA has placed the CVE in its Known Exploited Vulnerabilities catalogue. This confirms known exploitation and is distinct from an NVD exploit-tagged reference. |
-| Time to KEV | Median and 75th-percentile days from NVD publication to CISA listing, calculated for KEV-matched records in the displayed mature cohort. Listings that predate NVD publication count as zero days and remain visible as source-timing exceptions. |
+| Time to KEV | Median and 75th-percentile days from NVD publication to CISA listing, calculated for KEV-matched records in the displayed mature cohort. Calculations retain the signed difference (listings that predate NVD publication retain negative values). |
 | Current EPSS ≥ 0.1 | A project-defined threshold applied to the current FIRST EPSS snapshot. Monthly and 36-month groups use each CVE's NVD publication month, so they are not historical EPSS scores as they stood in those months. |
-| Priority watch | NVD-published CVEs from the latest 90 days with current EPSS ≥ 0.1 and no CISA KEV listing in the downloaded catalogue. Every qualifying row is retained for the tile drill-down. It is a focused review queue, not proof of exploitability or a complete patch order. |
+| Priority watch | NVD-published CVEs from the latest 90 days with current EPSS ≥ 0.1 and no CISA KEV listing in the downloaded catalogue. Every qualifying row is retained for the tile drill-down. It is a focused screening list, not a recommended remediation queue or patch priority list, and not proof of exploitability or a complete patch order. |
 | Historical EPSS | Counts from official historical EPSS snapshots sampled at month end, plus the current score date. Model versions are shown because scores on different model versions are not strictly like-for-like. |
 | Accelerated KEV deadline | The share of KEV additions whose CISA due date is no more than seven days after `dateAdded`, compared with the previous 12-month window. The denominator is the additions that carry a usable due date on or after `dateAdded`, and it is shown alongside the share. |
 | What changed | Source-specific activity with an explicit clock: CVE List records in the previous 24 hours, additions on the latest KEV catalogue date, and EPSS threshold crossings between sampled official score files. These are update signals, not incident counts. |
