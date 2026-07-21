@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-21T12:46:01Z",
+  "generatedAt": "2026-07-21T12:50:04Z",
   "snapshot": {
-    "id": "VS-20260721-1246Z",
-    "generatedAt": "2026-07-21T12:46:01Z",
+    "id": "VS-20260721-1250Z",
+    "generatedAt": "2026-07-21T12:50:04Z",
     "inputCount": 43,
     "inputFingerprintSha256": "512565e23900f3727e500e369b2885433b4df03d30ca1eff2cf1e71b8ded22d2",
     "inputs": [
@@ -1238,11 +1238,11 @@
     ]
   },
   "changeDigest": {
-    "generatedAt": "2026-07-21T12:46:01Z",
+    "generatedAt": "2026-07-21T12:50:04Z",
     "cve": {
       "period": "last_24_hours",
-      "start": "2026-07-20T12:46:01Z",
-      "end": "2026-07-21T12:46:01Z",
+      "start": "2026-07-20T12:50:04Z",
+      "end": "2026-07-21T12:50:04Z",
       "newRecords": 323,
       "updatedRecords": 1418,
       "distinctChanged": 1741
