@@ -1172,6 +1172,138 @@ class PipelineUnitTests(unittest.TestCase):
         self.assertEqual(sum(r["count"] for r in ransomware_entries), 1)
         self.assertEqual(sum(r["count"] for r in non_ransomware_entries), 3)
 
+    def test_heatmap_unscored_epss_only_in_column_zero(self):
+        from scripts.sync_vulnerability_data import build_cvss_epss_heatmap, Vulnerability
+        import datetime as dt
+
+        records = [
+            Vulnerability("CVE-2026-1000", dt.date(2026, 1, 1), "HIGH", 8.0, "3.1", False, (), None),
+            Vulnerability("CVE-2026-1001", dt.date(2026, 1, 1), "HIGH", 8.0, "3.1", False, (), 0.005),
+            Vulnerability("CVE-2026-1002", dt.date(2026, 1, 1), "HIGH", 8.0, "3.1", False, (), 0.85),
+        ]
+        res = build_cvss_epss_heatmap(records, set())
+        grid = res["grid"]
+        
+        self.assertEqual(grid["HIGH"][0]["count"], 1)
+        self.assertEqual(grid["HIGH"][1]["count"], 1)
+        self.assertEqual(grid["HIGH"][6]["count"], 1)
+        for i in (2, 3, 4, 5):
+            self.assertEqual(grid["HIGH"][i]["count"], 0)
+
+    def test_heatmap_invariants(self):
+        from scripts.sync_vulnerability_data import build_cvss_epss_heatmap, Vulnerability
+        import datetime as dt
+
+        records = [
+            Vulnerability("CVE-2026-1000", dt.date(2026, 1, 1), "HIGH", 8.0, "3.1", False, (), None),
+            Vulnerability("CVE-2026-1001", dt.date(2026, 1, 1), "HIGH", 8.0, "3.1", False, (), 0.005),
+            Vulnerability("CVE-2026-1002", dt.date(2026, 1, 1), "LOW", 3.0, "3.1", False, (), 0.85),
+        ]
+        res = build_cvss_epss_heatmap(records, set())
+        
+        total_cells_count = 0
+        for row in res["grid"].values():
+            self.assertEqual(len(row), 7)
+            total_cells_count += sum(c["count"] for c in row)
+        self.assertEqual(total_cells_count, res["total"])
+        self.assertEqual(total_cells_count, len(records))
+
+    def test_overlap_invariants(self):
+        from scripts.sync_vulnerability_data import build_signal_overlap, Vulnerability
+        import datetime as dt
+
+        records = [
+            Vulnerability("CVE-2026-1000", dt.date(2026, 1, 1), "HIGH", 8.0, "3.1", False, (), None),
+            Vulnerability("CVE-2026-1001", dt.date(2026, 1, 1), "HIGH", 8.0, "3.1", False, (), 0.005),
+            Vulnerability("CVE-2026-1002", dt.date(2026, 1, 1), "LOW", 3.0, "3.1", False, (), 0.85),
+        ]
+        res = build_signal_overlap(records, {})
+        
+        seen_sets = []
+        for item in res:
+            self.assertNotIn(item["sets"], seen_sets)
+            seen_sets.append(item["sets"])
+            
+        total_overlap_count = sum(item["count"] for item in res)
+        self.assertEqual(total_overlap_count, len(records))
+
+    def test_kev_lag_invariants(self):
+        from scripts.sync_vulnerability_data import build_kev_lag_heatmap, Vulnerability
+        import datetime as dt
+
+        records = [
+            Vulnerability("CVE-2026-1000", dt.date(2026, 1, 1), "HIGH", 8.0, "3.1", False, (), 0.2),
+            Vulnerability("CVE-2026-1001", dt.date(2026, 6, 1), "HIGH", 8.0, "3.1", False, (), 0.2),
+            Vulnerability("CVE-2026-1002", dt.date(2025, 1, 1), "HIGH", 8.0, "3.1", False, (), 0.2),
+        ]
+        kev_by_id = {
+            "CVE-2026-1000": {"cveID": "CVE-2026-1000", "dateAdded": "2026-01-05"},
+            "CVE-2026-1001": {"cveID": "CVE-2026-1001", "dateAdded": "2026-06-01"},
+            "CVE-2026-1002": {"cveID": "CVE-2026-1002", "dateAdded": "2025-02-15"},
+        }
+        as_of = dt.date(2026, 7, 1)
+        res = build_kev_lag_heatmap(records, kev_by_id, as_of)
+        
+        grid = res["grid"]
+        cohort_totals = res["cohortTotals"]
+        for year, buckets in grid.items():
+            self.assertEqual(sum(buckets.values()), cohort_totals.get(year, 0))
+
+    def test_completeness_percentages_range(self):
+        from scripts.sync_vulnerability_data import build_enrichment_completeness, Vulnerability
+        import datetime as dt
+
+        records = [
+            Vulnerability("CVE-2026-1000", dt.date(2026, 1, 1), "HIGH", 8.0, "3.1", False, (), 0.2),
+            Vulnerability("CVE-2026-1001", dt.date(2026, 1, 1), "UNKNOWN", None, None, False, (), None),
+        ]
+        res = build_enrichment_completeness(records)
+        for row in res:
+            self.assertTrue(0 <= row["cvssPercent"] <= 100)
+            self.assertTrue(0 <= row["cwePercent"] <= 100)
+            self.assertTrue(0 <= row["exploitRefPercent"] <= 100)
+            self.assertTrue(0 <= row["epssPercent"] <= 100)
+
+    def test_production_dashboard_invariants(self):
+        import json
+        import pathlib
+        path = pathlib.Path(__file__).parent.parent / "data" / "dashboard.json"
+        if not path.exists():
+            return
+        with open(path, "r", encoding="utf-8") as f:
+            payload = json.load(f)
+
+        # 1. Heatmap cell counts sum to the cohort total.
+        heatmap = payload.get("cvssEpssHeatmap", {})
+        grid = heatmap.get("grid", {})
+        total_cells_count = 0
+        for row in grid.values():
+            self.assertEqual(len(row), 7)
+            total_cells_count += sum(c["count"] for c in row)
+        self.assertEqual(total_cells_count, heatmap.get("total"))
+
+        # 2. Every overlap record appears in exactly one intersection.
+        overlap = payload.get("signalOverlap", [])
+        seen_sets = []
+        for item in overlap:
+            self.assertNotIn(item["sets"], seen_sets)
+            seen_sets.append(item["sets"])
+
+        # 3. KEV lag buckets sum to each publication-year cohort total.
+        kev_lag = payload.get("kevLagHeatmap", {})
+        grid_lag = kev_lag.get("grid", {})
+        cohort_totals = kev_lag.get("cohortTotals", {})
+        for year, buckets in grid_lag.items():
+            self.assertEqual(sum(buckets.values()), cohort_totals.get(year, 0))
+
+        # 4. Completeness percentages remain between 0 and 100.
+        completeness = payload.get("enrichmentCompleteness", [])
+        for row in completeness:
+            self.assertTrue(0 <= row["cvssPercent"] <= 100)
+            self.assertTrue(0 <= row["cwePercent"] <= 100)
+            self.assertTrue(0 <= row["exploitRefPercent"] <= 100)
+            self.assertTrue(0 <= row["epssPercent"] <= 100)
+
 
 if __name__ == "__main__":
     unittest.main()

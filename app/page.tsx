@@ -781,7 +781,13 @@ function CvssEpssHeatmapPanel({
                         background: getBgColor(intensity),
                         color: intensity > 0.5 ? "#fff" : "var(--fg)",
                       }}
-                      title={`${row} severity, EPSS ${cols[colIdx]}: ${number(val)} records in metric selection`}
+                      title={`${row} severity, EPSS ${cols[colIdx]}: ${
+                        metric === "count"
+                          ? `${number(val)} CVEs`
+                          : metric === "kevCount"
+                            ? `${number(val)} CISA KEV-listed CVEs`
+                            : `${number(val)} CVEs with an NVD exploit-tagged reference`
+                      }`}
                     >
                       <span>{number(val)}</span>
                     </div>
@@ -797,7 +803,13 @@ function CvssEpssHeatmapPanel({
 }
 
 
-function SignalOverlapPanel({ data }: { data?: DashboardData["signalOverlap"] }) {
+function SignalOverlapPanel({
+  data,
+  cvssEpssHeatmap,
+}: {
+  data?: DashboardData["signalOverlap"];
+  cvssEpssHeatmap?: DashboardData["cvssEpssHeatmap"];
+}) {
   const [sortBy, setSortBy] = useState<"count" | "signals">("count");
   if (!data) return null;
 
@@ -818,6 +830,13 @@ function SignalOverlapPanel({ data }: { data?: DashboardData["signalOverlap"] })
 
   const maxCount = Math.max(...data.map(d => d.count), 1);
 
+  let unscoredEpssCount = 0;
+  if (cvssEpssHeatmap?.grid) {
+    Object.values(cvssEpssHeatmap.grid).forEach((cells) => {
+      unscoredEpssCount += cells[0]?.count ?? 0;
+    });
+  }
+
   return (
     <article className="flat-panel overlap-panel" id="signal-overlap">
       <div className="panel-heading">
@@ -835,6 +854,7 @@ function SignalOverlapPanel({ data }: { data?: DashboardData["signalOverlap"] })
       </p>
       <p className="panel-note" style={{ marginTop: "-8px", marginBottom: "8px" }}>
         Note: Each CVE appears in exactly one intersection row (intersections are mutually exclusive). An active dot means the CVE satisfies that signal; an inactive dot means it does not. An inactive EPSS signal includes both scores below 10% and records without a current EPSS score.
+        {unscoredEpssCount > 0 ? ` ${number(unscoredEpssCount)} records in this cohort do not have a current EPSS score.` : ""}
       </p>
 
       <div className="overlap-matrix-container">
@@ -984,7 +1004,7 @@ function EnrichmentCompletenessPanel({ data }: { data?: DashboardData["enrichmen
         </div>
       </div>
       <p className="panel-desc">
-        Availability metrics (CVSS, CWE, and EPSS coverage) track how completely records are enriched over time. The observed security signal (NVD exploit-reference share) tracks the prevalence of exploit-tagged references. Recent periods naturally have lower availability as CNA analysis is ongoing.
+        Availability metrics (CVSS, CWE, and EPSS coverage) track how completely records are enriched over time. The observed security signal (NVD exploit-reference share) tracks the prevalence of exploit-tagged references. Recent periods naturally have lower availability as source records and downstream enrichment continue to mature.
       </p>
 
       <div className="completeness-table-container">
@@ -1328,8 +1348,8 @@ export default function Home() {
           </div>
 
           <div className="visualizations-grid" style={{ marginTop: "24px" }}>
-            <CvssEpssHeatmapPanel data={dashboard.cvssEpssHeatmap} />
-            <SignalOverlapPanel data={dashboard.signalOverlap} />
+            <CvssEpssHeatmapPanel data={dashboard.cvssEpssHeatmap} coverage={dashboard.coverage} epss={dashboard.sources.epss} />
+            <SignalOverlapPanel data={dashboard.signalOverlap} cvssEpssHeatmap={dashboard.cvssEpssHeatmap} />
           </div>
 
           <div className="visualizations-grid" style={{ marginTop: "24px" }}>
