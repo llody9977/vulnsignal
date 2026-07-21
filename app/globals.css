@@ -1671,7 +1671,7 @@ main {
 
 .priority-watch__summary > div { border-right: 1px solid var(--rule); padding: 13px 14px; }
 .priority-watch__summary > div:last-child { border-right: 0; }
-.priority-watch__summary span { color: var(--muted); display: block; font-size: 10px; text-transform: uppercase; }
+.priority-watch__summary > div > span { color: var(--muted); display: block; font-size: 10px; text-transform: uppercase; }
 .priority-watch__summary strong { display: block; font-size: 42px; letter-spacing: -0.03em; margin-top: 5px; }
 
 .priority-watch__note,
