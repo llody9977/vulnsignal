@@ -1,16 +1,16 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-21T12:50:04Z",
+  "generatedAt": "2026-07-21T13:38:58Z",
   "snapshot": {
-    "id": "VS-20260721-1250Z",
-    "generatedAt": "2026-07-21T12:50:04Z",
+    "id": "VS-20260721-1338Z",
+    "generatedAt": "2026-07-21T13:38:58Z",
     "inputCount": 43,
-    "inputFingerprintSha256": "512565e23900f3727e500e369b2885433b4df03d30ca1eff2cf1e71b8ded22d2",
+    "inputFingerprintSha256": "b18fc8b7cb27d11ddc3e7903c69b23a1f10ddbe33dbd19b17da049f7d99df04a",
     "inputs": [
       {
         "id": "cve-list-delta",
         "kind": "downloaded_snapshot",
-        "sha256": "15d4d72c87f444e204b3dc68f2d99c4d68658e3ebb1e13eb062a089c660d71ad"
+        "sha256": "137018b0f7dfb9f37e61b49b2f70b4e6d4f99f60ab2d6abc1e07c0bd9df139db"
       },
       {
         "id": "nvd-2002",
@@ -150,7 +150,7 @@
       {
         "id": "epss-scores",
         "kind": "downloaded_snapshot",
-        "sha256": "45049dff48398eecd5ded28d282119f506e64010c0e3630b8f060ff63571eb8c"
+        "sha256": "12b87c4321f506d39f42698e4fdb13be452df240121fe78fed8a2ea036fd31fb"
       },
       {
         "id": "epss-history-2025-07-31",
@@ -242,10 +242,10 @@
     "cve": {
       "name": "CVE Program · CVE List V5",
       "url": "https://github.com/CVEProject/cvelistV5",
-      "contentFingerprintSha256": "15d4d72c87f444e204b3dc68f2d99c4d68658e3ebb1e13eb062a089c660d71ad",
-      "latestFetch": "2026-07-21T12:42:56.445000Z",
-      "changedRecords24h": 1741,
-      "newRecords24h": 323,
+      "contentFingerprintSha256": "137018b0f7dfb9f37e61b49b2f70b4e6d4f99f60ab2d6abc1e07c0bd9df139db",
+      "latestFetch": "2026-07-21T13:12:02.640000Z",
+      "changedRecords24h": 1737,
+      "newRecords24h": 319,
       "updatedRecords24h": 1418
     },
     "nvd": {
@@ -455,15 +455,15 @@
       "url": "https://www.first.org/epss/",
       "feedUrl": "https://epss.empiricalsecurity.com/epss_scores-current.csv.gz",
       "modelVersion": "v2026.06.15",
-      "scoreDate": "2026-07-20T12:03:12Z",
-      "recordCount": 349944,
-      "matchedCveCount": 349944,
+      "scoreDate": "2026-07-21T12:03:42Z",
+      "recordCount": 350223,
+      "matchedCveCount": 350210,
       "nvdRecordCount": 350210,
-      "coveragePercent": 99.9,
+      "coveragePercent": 100.0,
       "projectThreshold": 0.1,
-      "thresholdPercentile": 0.95095,
+      "thresholdPercentile": 0.95098,
       "thresholdSemantics": "project_defined_current_score_cutoff",
-      "contentFingerprintSha256": "45049dff48398eecd5ded28d282119f506e64010c0e3630b8f060ff63571eb8c",
+      "contentFingerprintSha256": "12b87c4321f506d39f42698e4fdb13be452df240121fe78fed8a2ea036fd31fb",
       "historyUrl": "https://www.first.org/epss/data_stats.html",
       "historicalRepositoryUrl": "https://github.com/empiricalsec/epss_scores",
       "historicalSampleCount": 13
@@ -525,8 +525,8 @@
       "end": "2026-03-31",
       "publishedCves": 51367,
       "scoredCves": 51367,
-      "highEpssCves": 572,
-      "scoreDate": "2026-07-20T12:03:12Z",
+      "highEpssCves": 573,
+      "scoreDate": "2026-07-21T12:03:42Z",
       "threshold": 0.1
     },
     "kevAdditionsWindow": {
@@ -615,9 +615,9 @@
     "prePublicationKev": 7,
     "medianDaysToKev": 6.0,
     "p75DaysToKev": 45.0,
-    "highEpss": 572,
-    "highEpssNotInKevCount": 464,
-    "highEpssNotInKevShare": 81.1,
+    "highEpss": 573,
+    "highEpssNotInKevCount": 465,
+    "highEpssNotInKevShare": 81.2,
     "ransomwareKevShare": 9.7,
     "ransomwareKevCount": 25,
     "medianKevDueWindow": 21.0,
@@ -633,12 +633,12 @@
       "start": "2026-04-23",
       "end": "2026-07-21",
       "days": 90,
-      "scoreDate": "2026-07-20T12:03:12Z",
+      "scoreDate": "2026-07-21T12:03:42Z",
       "threshold": 0.1,
       "thresholdSemantics": "project_defined_current_score_cutoff"
     },
-    "total": 38,
-    "criticalHigh": 36,
+    "total": 39,
+    "criticalHigh": 37,
     "publicExploitReferences": 8,
     "items": [
       {
@@ -670,7 +670,7 @@
         "score": 9.8,
         "cvssVersion": "3.1",
         "epss": 0.72253,
-        "epssPercentile": 0.99373,
+        "epssPercentile": 0.99374,
         "publicExploitReference": false,
         "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41089"
       },
@@ -681,7 +681,7 @@
         "score": 9.2,
         "cvssVersion": "4.0",
         "epss": 0.61469,
-        "epssPercentile": 0.99073,
+        "epssPercentile": 0.99074,
         "publicExploitReference": true,
         "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-42945"
       },
@@ -714,7 +714,7 @@
         "score": 8.8,
         "cvssVersion": "3.1",
         "epss": 0.4581,
-        "epssPercentile": 0.98671,
+        "epssPercentile": 0.98672,
         "publicExploitReference": false,
         "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-23918"
       },
@@ -725,7 +725,7 @@
         "score": 9.8,
         "cvssVersion": "3.1",
         "epss": 0.4343,
-        "epssPercentile": 0.986,
+        "epssPercentile": 0.98601,
         "publicExploitReference": true,
         "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-8037"
       },
@@ -736,7 +736,7 @@
         "score": 8.2,
         "cvssVersion": "3.0",
         "epss": 0.40738,
-        "epssPercentile": 0.98503,
+        "epssPercentile": 0.98504,
         "publicExploitReference": false,
         "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27771"
       },
@@ -747,7 +747,7 @@
         "score": 8.6,
         "cvssVersion": "3.1",
         "epss": 0.38872,
-        "epssPercentile": 0.9843,
+        "epssPercentile": 0.98431,
         "publicExploitReference": false,
         "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-44578"
       },
@@ -758,7 +758,7 @@
         "score": 9.8,
         "cvssVersion": "3.1",
         "epss": 0.36512,
-        "epssPercentile": 0.98326,
+        "epssPercentile": 0.98327,
         "publicExploitReference": false,
         "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-3844"
       },
@@ -780,7 +780,7 @@
         "score": 7.3,
         "cvssVersion": "3.1",
         "epss": 0.26799,
-        "epssPercentile": 0.97814,
+        "epssPercentile": 0.97816,
         "publicExploitReference": true,
         "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-44338"
       },
@@ -791,7 +791,7 @@
         "score": 7.5,
         "cvssVersion": "3.1",
         "epss": 0.24681,
-        "epssPercentile": 0.97655,
+        "epssPercentile": 0.97657,
         "publicExploitReference": false,
         "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-34474"
       },
@@ -802,7 +802,7 @@
         "score": 9.2,
         "cvssVersion": "4.0",
         "epss": 0.24469,
-        "epssPercentile": 0.97636,
+        "epssPercentile": 0.97638,
         "publicExploitReference": false,
         "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-0826"
       },
@@ -813,7 +813,7 @@
         "score": 9.8,
         "cvssVersion": "3.1",
         "epss": 0.22876,
-        "epssPercentile": 0.97488,
+        "epssPercentile": 0.97489,
         "publicExploitReference": false,
         "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-45434"
       },
@@ -824,7 +824,7 @@
         "score": 7.5,
         "cvssVersion": "3.1",
         "epss": 0.2255,
-        "epssPercentile": 0.97458,
+        "epssPercentile": 0.97459,
         "publicExploitReference": false,
         "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-34648"
       },
@@ -835,7 +835,7 @@
         "score": 9.2,
         "cvssVersion": "4.0",
         "epss": 0.22189,
-        "epssPercentile": 0.97416,
+        "epssPercentile": 0.97417,
         "publicExploitReference": false,
         "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27760"
       },
@@ -846,7 +846,7 @@
         "score": 9.8,
         "cvssVersion": "3.1",
         "epss": 0.21506,
-        "epssPercentile": 0.97348,
+        "epssPercentile": 0.9735,
         "publicExploitReference": false,
         "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-47291"
       },
@@ -857,7 +857,7 @@
         "score": 9.8,
         "cvssVersion": "3.1",
         "epss": 0.20346,
-        "epssPercentile": 0.97202,
+        "epssPercentile": 0.97203,
         "publicExploitReference": false,
         "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-50522"
       },
@@ -868,7 +868,7 @@
         "score": 7.2,
         "cvssVersion": "3.1",
         "epss": 0.19924,
-        "epssPercentile": 0.97144,
+        "epssPercentile": 0.97147,
         "publicExploitReference": false,
         "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-47992"
       },
@@ -879,9 +879,20 @@
         "score": 9.3,
         "cvssVersion": "4.0",
         "epss": 0.19538,
-        "epssPercentile": 0.9708,
+        "epssPercentile": 0.97084,
         "publicExploitReference": false,
         "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-23734"
+      },
+      {
+        "cveId": "CVE-2026-8732",
+        "published": "2026-05-29",
+        "severity": "CRITICAL",
+        "score": 9.8,
+        "cvssVersion": "3.1",
+        "epss": 0.19272,
+        "epssPercentile": 0.97039,
+        "publicExploitReference": false,
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-8732"
       },
       {
         "cveId": "CVE-2026-47996",
@@ -890,7 +901,7 @@
         "score": 6.8,
         "cvssVersion": "3.1",
         "epss": 0.18028,
-        "epssPercentile": 0.96873,
+        "epssPercentile": 0.96875,
         "publicExploitReference": false,
         "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-47996"
       },
@@ -901,7 +912,7 @@
         "score": 9.6,
         "cvssVersion": "3.1",
         "epss": 0.17903,
-        "epssPercentile": 0.96851,
+        "epssPercentile": 0.96854,
         "publicExploitReference": false,
         "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-48356"
       },
@@ -912,7 +923,7 @@
         "score": 6.9,
         "cvssVersion": "4.0",
         "epss": 0.17015,
-        "epssPercentile": 0.96734,
+        "epssPercentile": 0.96737,
         "publicExploitReference": false,
         "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-7864"
       },
@@ -923,7 +934,7 @@
         "score": 7.5,
         "cvssVersion": "3.1",
         "epss": 0.15933,
-        "epssPercentile": 0.96539,
+        "epssPercentile": 0.9654,
         "publicExploitReference": false,
         "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-34650"
       },
@@ -934,7 +945,7 @@
         "score": 8.8,
         "cvssVersion": "4.0",
         "epss": 0.15653,
-        "epssPercentile": 0.96489,
+        "epssPercentile": 0.96491,
         "publicExploitReference": false,
         "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-44127"
       },
@@ -945,7 +956,7 @@
         "score": 9.8,
         "cvssVersion": "3.1",
         "epss": 0.15547,
-        "epssPercentile": 0.96462,
+        "epssPercentile": 0.96463,
         "publicExploitReference": true,
         "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-25874"
       },
@@ -956,7 +967,7 @@
         "score": 9.8,
         "cvssVersion": "3.1",
         "epss": 0.15478,
-        "epssPercentile": 0.9644,
+        "epssPercentile": 0.96441,
         "publicExploitReference": false,
         "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-45657"
       },
@@ -967,7 +978,7 @@
         "score": 8.8,
         "cvssVersion": "3.1",
         "epss": 0.14907,
-        "epssPercentile": 0.96331,
+        "epssPercentile": 0.96333,
         "publicExploitReference": false,
         "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-53435"
       },
@@ -978,7 +989,7 @@
         "score": 9.8,
         "cvssVersion": "3.1",
         "epss": 0.14608,
-        "epssPercentile": 0.9627,
+        "epssPercentile": 0.96273,
         "publicExploitReference": false,
         "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-8181"
       },
@@ -989,7 +1000,7 @@
         "score": 7.5,
         "cvssVersion": "3.1",
         "epss": 0.14383,
-        "epssPercentile": 0.96224,
+        "epssPercentile": 0.96226,
         "publicExploitReference": false,
         "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-34649"
       },
@@ -1000,7 +1011,7 @@
         "score": 9.8,
         "cvssVersion": "3.1",
         "epss": 0.13789,
-        "epssPercentile": 0.96102,
+        "epssPercentile": 0.96105,
         "publicExploitReference": true,
         "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41268"
       },
@@ -1011,7 +1022,7 @@
         "score": 9.1,
         "cvssVersion": "3.1",
         "epss": 0.13549,
-        "epssPercentile": 0.9604,
+        "epssPercentile": 0.96043,
         "publicExploitReference": false,
         "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-36356"
       },
@@ -1022,7 +1033,7 @@
         "score": 9.0,
         "cvssVersion": "3.1",
         "epss": 0.12797,
-        "epssPercentile": 0.95853,
+        "epssPercentile": 0.95857,
         "publicExploitReference": false,
         "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-4480"
       },
@@ -1033,7 +1044,7 @@
         "score": 10.0,
         "cvssVersion": "4.0",
         "epss": 0.12387,
-        "epssPercentile": 0.95759,
+        "epssPercentile": 0.95762,
         "publicExploitReference": false,
         "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-45829"
       },
@@ -1044,7 +1055,7 @@
         "score": 7.7,
         "cvssVersion": "3.1",
         "epss": 0.11938,
-        "epssPercentile": 0.95661,
+        "epssPercentile": 0.95664,
         "publicExploitReference": false,
         "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-48332"
       },
@@ -1055,7 +1066,7 @@
         "score": 7.5,
         "cvssVersion": "3.1",
         "epss": 0.11471,
-        "epssPercentile": 0.95541,
+        "epssPercentile": 0.95544,
         "publicExploitReference": true,
         "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-49975"
       }
@@ -1223,29 +1234,29 @@
         "sha256": "20865c065791998521aab3cc480fcb5b07c2826a569da5bd95dba4bafeeae1c4"
       },
       {
-        "date": "2026-07-20",
+        "date": "2026-07-21",
         "modelVersion": "v2026.06.15",
-        "recordCount": 349944,
-        "highCount": 17169,
-        "notInKevCount": 15930,
-        "enteredHigh": 71,
+        "recordCount": 350223,
+        "highCount": 17172,
+        "notInKevCount": 15933,
+        "enteredHigh": 74,
         "exitedHigh": 35,
         "comparableToPrevious": true,
         "sampleKind": "current",
         "sourceUrl": "https://epss.empiricalsecurity.com/epss_scores-current.csv.gz",
-        "sha256": "45049dff48398eecd5ded28d282119f506e64010c0e3630b8f060ff63571eb8c"
+        "sha256": "12b87c4321f506d39f42698e4fdb13be452df240121fe78fed8a2ea036fd31fb"
       }
     ]
   },
   "changeDigest": {
-    "generatedAt": "2026-07-21T12:50:04Z",
+    "generatedAt": "2026-07-21T13:38:58Z",
     "cve": {
       "period": "last_24_hours",
-      "start": "2026-07-20T12:50:04Z",
-      "end": "2026-07-21T12:50:04Z",
-      "newRecords": 323,
+      "start": "2026-07-20T13:38:58Z",
+      "end": "2026-07-21T13:38:58Z",
+      "newRecords": 319,
       "updatedRecords": 1418,
-      "distinctChanged": 1741
+      "distinctChanged": 1737
     },
     "kev": {
       "period": "latest_catalog_date",
@@ -1255,14 +1266,14 @@
     "epss": {
       "period": "since_previous_sample",
       "from": "2026-06-30",
-      "to": "2026-07-20",
-      "enteredHigh": 71,
+      "to": "2026-07-21",
+      "enteredHigh": 74,
       "exitedHigh": 35,
       "comparable": true
     },
     "priority": {
       "period": "current_snapshot",
-      "count": 38
+      "count": 39
     }
   },
   "llmDiscovery": {
@@ -1396,9 +1407,9 @@
       "medianDaysToKev": 180.0,
       "p75DaysToKev": 392.0,
       "epssScored": 67858,
-      "epssHigh": 2848,
+      "epssHigh": 2849,
       "epssHighShare": 4.2,
-      "highEpssNotInKevCount": 2485,
+      "highEpssNotInKevCount": 2486,
       "highEpssNotInKevShare": 87.3,
       "ransomwareKevShare": 23.3,
       "ransomwareKevCount": 224,
@@ -1431,10 +1442,10 @@
       "medianDaysToKev": 7.0,
       "p75DaysToKev": 59.0,
       "epssScored": 138688,
-      "epssHigh": 2210,
+      "epssHigh": 2212,
       "epssHighShare": 1.6,
-      "highEpssNotInKevCount": 1855,
-      "highEpssNotInKevShare": 83.9,
+      "highEpssNotInKevCount": 1857,
+      "highEpssNotInKevShare": 84.0,
       "ransomwareKevShare": 15.7,
       "ransomwareKevCount": 105,
       "medianKevDueWindow": 21.0,
@@ -1614,7 +1625,7 @@
       "partial": false,
       "enriching": false,
       "epssScored": 4034,
-      "epssHigh": 55
+      "epssHigh": 56
     },
     {
       "month": "2025-05",
@@ -1835,7 +1846,7 @@
       "partial": false,
       "enriching": true,
       "epssScored": 6938,
-      "epssHigh": 31
+      "epssHigh": 32
     },
     {
       "month": "2026-06",
@@ -2551,7 +2562,7 @@
       "partial": false,
       "enriching": false,
       "epssScored": 2021,
-      "epssHigh": 116
+      "epssHigh": 117
     },
     {
       "month": "2022-06",
@@ -3146,7 +3157,7 @@
       "partial": false,
       "enriching": false,
       "epssScored": 4034,
-      "epssHigh": 55
+      "epssHigh": 56
     },
     {
       "month": "2025-05",
@@ -3367,7 +3378,7 @@
       "partial": false,
       "enriching": true,
       "epssScored": 6938,
-      "epssHigh": 31
+      "epssHigh": 32
     },
     {
       "month": "2026-06",
@@ -3400,7 +3411,7 @@
       "kevAdded": 17,
       "partial": true,
       "enriching": true,
-      "epssScored": 5190,
+      "epssScored": 5456,
       "epssHigh": 6
     }
   ],
@@ -3723,27 +3734,27 @@
     "grid": {
       "CRITICAL": [
         {
-          "count": 25,
+          "count": 0,
           "kevCount": 0,
           "exploitRefCount": 0
         },
         {
-          "count": 17769,
+          "count": 17785,
           "kevCount": 1,
-          "exploitRefCount": 6121
+          "exploitRefCount": 6118
         },
         {
-          "count": 15638,
+          "count": 15645,
           "kevCount": 37,
-          "exploitRefCount": 6318
+          "exploitRefCount": 6319
         },
         {
-          "count": 2002,
+          "count": 2003,
           "kevCount": 19,
-          "exploitRefCount": 723
+          "exploitRefCount": 725
         },
         {
-          "count": 1637,
+          "count": 1638,
           "kevCount": 59,
           "exploitRefCount": 852
         },
@@ -3760,56 +3771,56 @@
       ],
       "HIGH": [
         {
-          "count": 92,
+          "count": 0,
           "kevCount": 0,
           "exploitRefCount": 0
         },
         {
-          "count": 71608,
+          "count": 71693,
           "kevCount": 26,
-          "exploitRefCount": 13550
+          "exploitRefCount": 13547
         },
         {
-          "count": 49414,
+          "count": 49422,
           "kevCount": 149,
-          "exploitRefCount": 14596
+          "exploitRefCount": 14600
         },
         {
-          "count": 7504,
+          "count": 7501,
           "kevCount": 84,
-          "exploitRefCount": 2300
+          "exploitRefCount": 2297
         },
         {
-          "count": 5945,
+          "count": 5948,
           "kevCount": 153,
-          "exploitRefCount": 1714
+          "exploitRefCount": 1716
         },
         {
-          "count": 2616,
-          "kevCount": 171,
-          "exploitRefCount": 950
+          "count": 2614,
+          "kevCount": 170,
+          "exploitRefCount": 949
         },
         {
-          "count": 1131,
-          "kevCount": 289,
-          "exploitRefCount": 532
+          "count": 1132,
+          "kevCount": 290,
+          "exploitRefCount": 533
         }
       ],
       "MEDIUM": [
         {
-          "count": 109,
+          "count": 0,
           "kevCount": 0,
           "exploitRefCount": 0
         },
         {
-          "count": 105006,
+          "count": 105113,
           "kevCount": 17,
-          "exploitRefCount": 20371
+          "exploitRefCount": 20369
         },
         {
-          "count": 45655,
+          "count": 45657,
           "kevCount": 52,
-          "exploitRefCount": 13236
+          "exploitRefCount": 13238
         },
         {
           "count": 3674,
@@ -3817,29 +3828,29 @@
           "exploitRefCount": 1533
         },
         {
-          "count": 2518,
+          "count": 2517,
           "kevCount": 46,
-          "exploitRefCount": 938
+          "exploitRefCount": 937
         },
         {
           "count": 956,
           "kevCount": 34,
-          "exploitRefCount": 349
+          "exploitRefCount": 350
         },
         {
-          "count": 392,
+          "count": 393,
           "kevCount": 44,
           "exploitRefCount": 141
         }
       ],
       "LOW": [
         {
-          "count": 4,
+          "count": 0,
           "kevCount": 0,
           "exploitRefCount": 0
         },
         {
-          "count": 10147,
+          "count": 10151,
           "kevCount": 0,
           "exploitRefCount": 1115
         },
@@ -3908,12 +3919,12 @@
       ],
       "UNKNOWN": [
         {
-          "count": 36,
+          "count": 0,
           "kevCount": 0,
           "exploitRefCount": 0
         },
         {
-          "count": 1731,
+          "count": 1767,
           "kevCount": 0,
           "exploitRefCount": 0
         },
@@ -3954,7 +3965,7 @@
         "cisaKev": false,
         "ransomware": false
       },
-      "count": 7552
+      "count": 7553
     },
     {
       "sets": {
@@ -3964,7 +3975,7 @@
         "cisaKev": false,
         "ransomware": false
       },
-      "count": 120171
+      "count": 120170
     },
     {
       "sets": {
@@ -3994,7 +4005,7 @@
         "cisaKev": false,
         "ransomware": false
       },
-      "count": 43565
+      "count": 43563
     },
     {
       "sets": {
@@ -4024,7 +4035,7 @@
         "cisaKev": false,
         "ransomware": false
       },
-      "count": 4509
+      "count": 4511
     },
     {
       "sets": {
@@ -4570,7 +4581,7 @@
       "cvssPercent": 95.7,
       "cwePercent": 89.0,
       "exploitRefPercent": 3.7,
-      "epssPercent": 95.1
+      "epssPercent": 100.0
     }
   ],
   "cweHeatmap": {
