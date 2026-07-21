@@ -1288,6 +1288,10 @@ class PipelineUnitTests(unittest.TestCase):
         for item in overlap:
             self.assertNotIn(item["sets"], seen_sets)
             seen_sets.append(item["sets"])
+        self.assertEqual(
+            sum(item["count"] for item in overlap),
+            heatmap.get("total"),
+        )
 
         # 3. KEV lag buckets sum to each publication-year cohort total.
         kev_lag = payload.get("kevLagHeatmap", {})
