@@ -180,6 +180,7 @@ type DashboardData = {
       recordCount?: number;
       matchedCveCount?: number;
       coveragePercent?: number | null;
+      thresholdPercentile?: number | null;
       contentFingerprintSha256?: string;
     };
     llmRegistry: {
@@ -690,13 +691,21 @@ function EpssHistoryPanel({ history }: { history?: EpssHistory }) {
 }
 
 
-function CvssEpssHeatmapPanel({ data }: { data?: DashboardData["cvssEpssHeatmap"] }) {
+function CvssEpssHeatmapPanel({
+  data,
+  coverage,
+  epss,
+}: {
+  data?: DashboardData["cvssEpssHeatmap"];
+  coverage?: DashboardData["coverage"];
+  epss?: DashboardData["sources"]["epss"];
+}) {
   const [metric, setMetric] = useState<"count" | "kevCount" | "exploitRefCount">("count");
   if (!data) return null;
 
   const rows = ["CRITICAL", "HIGH", "MEDIUM", "LOW", "NONE", "UNKNOWN"];
-  const cols = ["<1%", "1–5%", "5–10%", "10–30%", "30–70%", "≥70%"];
-  const colKeys = [0, 1, 2, 3, 4, 5];
+  const cols = ["Unscored", "<1%", "1–5%", "5–10%", "10–30%", "30–70%", "≥70%"];
+  const colKeys = [0, 1, 2, 3, 4, 5, 6];
 
   let maxValue = 1;
   rows.forEach((r) => {
@@ -722,11 +731,15 @@ function CvssEpssHeatmapPanel({ data }: { data?: DashboardData["cvssEpssHeatmap"
     }
   };
 
+  const startLabel = coverage ? dateLabel(coverage.start, true) : "";
+  const asOfLabel = coverage ? dateLabel(coverage.asOf, true) : "";
+  const scoreDateLabel = epss?.scoreDate ? timestampLabel(epss.scoreDate) : "";
+
   return (
     <article className="flat-panel heatmap-panel" id="cvss-epss-heatmap">
       <div className="panel-heading">
         <div>
-          <p className="eyebrow">Visual correlation / 6x6 Distribution</p>
+          <p className="eyebrow">Visual correlation / 6x7 Distribution</p>
           <h3>CVSS × EPSS distribution</h3>
         </div>
         <div className="metric-select-tabs">
@@ -738,9 +751,14 @@ function CvssEpssHeatmapPanel({ data }: { data?: DashboardData["cvssEpssHeatmap"
       <p className="panel-desc">
         Distribution of {number(data.total)} active NVD records across CVSS base severities and EPSS probability bands.
       </p>
+      {startLabel && asOfLabel && (
+        <p className="panel-note" style={{ marginTop: "-8px", marginBottom: "4px" }}>
+          Cohort: Active NVD records published {startLabel}–{asOfLabel}; current EPSS snapshot dated {scoreDateLabel || "N/A"}. Rejected CVEs are excluded.
+        </p>
+      )}
       
       <div className="heatmap-container">
-        <div className="heatmap-grid" style={{ display: "grid", gridTemplateColumns: "110px repeat(6, minmax(60px, 1fr))", gap: "2px" }}>
+        <div className="heatmap-grid" style={{ display: "grid", gridTemplateColumns: "110px repeat(7, minmax(60px, 1fr))", gap: "2px" }}>
           <div className="heatmap-label heatmap-label--corner">CVSS \ EPSS</div>
           {cols.map((col) => (
             <div key={col} className="heatmap-col-header">{col}</div>
@@ -763,7 +781,7 @@ function CvssEpssHeatmapPanel({ data }: { data?: DashboardData["cvssEpssHeatmap"
                         background: getBgColor(intensity),
                         color: intensity > 0.5 ? "#fff" : "var(--fg)",
                       }}
-                      title={`${row} severity & EPSS ${cols[colIdx]}: ${number(cell.count)} CVEs, ${number(cell.kevCount)} KEVs, ${number(cell.exploitRefCount)} Exploit Refs`}
+                      title={`${row} severity, EPSS ${cols[colIdx]}: ${number(val)} records in metric selection`}
                     >
                       <span>{number(val)}</span>
                     </div>
@@ -774,9 +792,6 @@ function CvssEpssHeatmapPanel({ data }: { data?: DashboardData["cvssEpssHeatmap"
           })}
         </div>
       </div>
-      <p className="panel-note">
-        Note: CVSS base severity reflects the preferred source score under VulnSignal preference hierarchy and may use different versions (v2, v3, v4). EPSS scores represent current active probabilities.
-      </p>
     </article>
   );
 }
@@ -816,7 +831,10 @@ function SignalOverlapPanel({ data }: { data?: DashboardData["signalOverlap"] })
         </div>
       </div>
       <p className="panel-desc">
-        Co-occurrence of key risk signals: CVSS High/Critical, EPSS ≥ 10%, public Exploit Ref tag, CISA KEV listing, and confirmed Ransomware use.
+        Co-occurrence of key risk signals: CVSS High/Critical, EPSS ≥ 10%, public Exploit Ref tag, CISA KEV listing, and confirmed Ransomware Campaign Use.
+      </p>
+      <p className="panel-note" style={{ marginTop: "-8px", marginBottom: "8px" }}>
+        Note: Each CVE appears in exactly one intersection row (intersections are mutually exclusive). An active dot means the CVE satisfies that signal; an inactive dot means it does not. An inactive EPSS signal includes both scores below 10% and records without a current EPSS score.
       </p>
 
       <div className="overlap-matrix-container">
@@ -827,7 +845,7 @@ function SignalOverlapPanel({ data }: { data?: DashboardData["signalOverlap"] })
               <th className="signal-header">EPSS ≥ 10%</th>
               <th className="signal-header">Exploit Ref</th>
               <th className="signal-header">CISA KEV</th>
-              <th className="signal-header">Ransomware</th>
+              <th className="signal-header">Ransomware Campaign Use</th>
               <th className="bar-header">Intersection Size</th>
             </tr>
           </thead>
@@ -859,12 +877,12 @@ function SignalOverlapPanel({ data }: { data?: DashboardData["signalOverlap"] })
 
 
 function KevLagHeatmapPanel({ data }: { data?: DashboardData["kevLagHeatmap"] }) {
-  const [viewMode, setViewMode] = useState<"count" | "percent">("count");
+  const [viewMode, setViewMode] = useState<"count" | "percent">("percent");
   if (!data) return null;
 
   const years = Object.keys(data.grid).sort((a, b) => {
-    if (a === "Older") return 1;
-    if (b === "Older") return -1;
+    if (a === "2017 & earlier") return 1;
+    if (b === "2017 & earlier") return -1;
     return b.localeCompare(a);
   });
 
@@ -907,8 +925,8 @@ function KevLagHeatmapPanel({ data }: { data?: DashboardData["kevLagHeatmap"] })
           <h3>CISA KEV addition lag</h3>
         </div>
         <div className="metric-select-tabs">
-          <button className={viewMode === "count" ? "active" : ""} onClick={() => setViewMode("count")}>Counts</button>
           <button className={viewMode === "percent" ? "active" : ""} onClick={() => setViewMode("percent")}>% of Year</button>
+          <button className={viewMode === "count" ? "active" : ""} onClick={() => setViewMode("count")}>Counts</button>
         </div>
       </div>
       <p className="panel-desc">
@@ -938,9 +956,9 @@ function KevLagHeatmapPanel({ data }: { data?: DashboardData["kevLagHeatmap"] })
                         background: getBgColor(val, total),
                         color: (viewMode === "count" ? val / maxVal : pct / maxVal) > 0.5 ? "#fff" : "var(--fg)",
                       }}
-                      title={`${y} cohort: ${number(val)} CVEs (${pct.toFixed(1)}%) added in {b.label} range`}
+                      title={`${pct.toFixed(1)}% — ${number(val)} of ${number(total)} KEV-matched CVEs`}
                     >
-                      <span>{viewMode === "count" ? number(val) : `${pct.toFixed(0)}%`}</span>
+                      <span>{viewMode === "count" ? number(val) : `${pct.toFixed(1)}%`}</span>
                     </div>
                   );
                 })}
@@ -962,84 +980,104 @@ function EnrichmentCompletenessPanel({ data }: { data?: DashboardData["enrichmen
       <div className="panel-heading">
         <div>
           <p className="eyebrow">Quality signals / Trailing 36 months</p>
-          <h3>Enrichment completeness trends</h3>
+          <h3>Enrichment availability &amp; observed security signals</h3>
         </div>
       </div>
       <p className="panel-desc">
-        Percentage of published CVE records having a primary CVSS score, specific CWE classification, public Exploit Reference tag, and EPSS score at the time of snapshot.
+        Availability metrics (CVSS, CWE, and EPSS coverage) track how completely records are enriched over time. The observed security signal (NVD exploit-reference share) tracks the prevalence of exploit-tagged references. Recent periods naturally have lower availability as CNA analysis is ongoing.
       </p>
 
       <div className="completeness-table-container">
         <table className="completeness-table">
           <thead>
             <tr>
-              <th className="month-header">Month</th>
-              <th className="num-header">CVEs</th>
-              <th className="num-header">CVSS Score</th>
-              <th className="num-header">CWE Code</th>
-              <th className="num-header">Exploit Tag</th>
-              <th className="num-header">EPSS Scored</th>
+              <th className="month-header" rowSpan={2} style={{ verticalAlign: "middle", borderBottom: "1px solid var(--rule-strong)" }}>Month</th>
+              <th className="num-header" rowSpan={2} style={{ verticalAlign: "middle", borderBottom: "1px solid var(--rule-strong)", textAlign: "right" }}>CVEs</th>
+              <th className="num-header" colSpan={3} style={{ textAlign: "center", borderBottom: "1px solid var(--rule-strong)", fontWeight: 600 }}>Enrichment availability</th>
+              <th className="num-header" colSpan={1} style={{ textAlign: "center", borderBottom: "1px solid var(--rule-strong)", fontWeight: 600 }}>Observed signal</th>
+            </tr>
+            <tr>
+              <th className="num-header" style={{ textAlign: "right" }}>CVSS coverage</th>
+              <th className="num-header" style={{ textAlign: "right" }}>Specific CWE coverage</th>
+              <th className="num-header" style={{ textAlign: "right" }}>EPSS coverage</th>
+              <th className="num-header" style={{ textAlign: "right" }}>NVD exploit-tag share</th>
             </tr>
           </thead>
           <tbody>
-            {[...data].reverse().map((row) => (
-              <tr key={row.month}>
-                <td className="month-cell">{row.month}</td>
-                <td className="num-cell">{number(row.total)}</td>
-                <td className="num-cell pct-cell">
-                  <div className="pct-bar-wrapper" title={`${row.cvssPercent}%`}>
-                    <div className="pct-bar cvss" style={{ width: `${row.cvssPercent}%` }} />
-                    <span>{row.cvssPercent}%</span>
-                  </div>
-                </td>
-                <td className="num-cell pct-cell">
-                  <div className="pct-bar-wrapper" title={`${row.cwePercent}%`}>
-                    <div className="pct-bar cwe" style={{ width: `${row.cwePercent}%` }} />
-                    <span>{row.cwePercent}%</span>
-                  </div>
-                </td>
-                <td className="num-cell pct-cell">
-                  <div className="pct-bar-wrapper" title={`${row.exploitRefPercent}%`}>
-                    <div className="pct-bar exploit" style={{ width: `${row.exploitRefPercent}%` }} />
-                    <span>{row.exploitRefPercent}%</span>
-                  </div>
-                </td>
-                <td className="num-cell pct-cell">
-                  <div className="pct-bar-wrapper" title={`${row.epssPercent}%`}>
-                    <div className="pct-bar epss" style={{ width: `${row.epssPercent}%` }} />
-                    <span>{row.epssPercent}%</span>
-                  </div>
-                </td>
-              </tr>
-            ))}
+            {[...data].reverse().map((row, idx) => {
+              let tag = "";
+              if (idx === 0) {
+                tag = " (Partial)";
+              } else if (idx < 6) {
+                tag = " (Enriching)";
+              } else {
+                tag = " (Mature)";
+              }
+              return (
+                <tr key={row.month}>
+                  <td className="month-cell">
+                    {row.month}
+                    <small style={{ display: "block", fontSize: "9px", color: "var(--muted)", marginTop: "2px" }}>{tag}</small>
+                  </td>
+                  <td className="num-cell">{number(row.total)}</td>
+                  <td className="num-cell pct-cell">
+                    <div className="pct-bar-wrapper" title={`${row.cvssPercent}%`}>
+                      <div className="pct-bar cvss" style={{ width: `${row.cvssPercent}%` }} />
+                      <span>{row.cvssPercent}%</span>
+                    </div>
+                  </td>
+                  <td className="num-cell pct-cell">
+                    <div className="pct-bar-wrapper" title={`${row.cwePercent}%`}>
+                      <div className="pct-bar cwe" style={{ width: `${row.cwePercent}%` }} />
+                      <span>{row.cwePercent}%</span>
+                    </div>
+                  </td>
+                  <td className="num-cell pct-cell">
+                    <div className="pct-bar-wrapper" title={`${row.epssPercent}%`}>
+                      <div className="pct-bar epss" style={{ width: `${row.epssPercent}%` }} />
+                      <span>{row.epssPercent}%</span>
+                    </div>
+                  </td>
+                  <td className="num-cell pct-cell">
+                    <div className="pct-bar-wrapper" title={`${row.exploitRefPercent}%`}>
+                      <div className="pct-bar exploit" style={{ width: `${row.exploitRefPercent}%` }} />
+                      <span>{row.exploitRefPercent}%</span>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
-      <p className="panel-note">
-        Note: Exploit tags and CVSS completeness naturally decline for very recent months due to CNA analysis lag.
-      </p>
     </article>
   );
 }
 
 
 function CweHeatmapPanel({ data, topCwes }: { data?: DashboardData["cweHeatmap"], topCwes: CweRow[] }) {
+  const [viewMode, setViewMode] = useState<"count" | "percent">("percent");
   if (!data) return null;
 
   const quarters = data.quarters;
   const cweIds = Object.keys(data.grid);
 
   let maxVal = 1;
+  let maxPct = 0.1;
   cweIds.forEach((cwe) => {
     quarters.forEach((q) => {
       const val = data.grid[cwe][q] || 0;
+      const total = data.quarterTotals[q] || 1;
+      const pct = (val / total) * 100;
       if (val > maxVal) maxVal = val;
+      if (pct > maxPct) maxPct = pct;
     });
   });
 
-  const getBgColor = (val: number) => {
+  const getBgColor = (val: number, total: number) => {
     if (val === 0) return "var(--rule-strong)";
-    const intensity = 0.1 + (val / maxVal) * 0.9;
+    const ratio = viewMode === "count" ? val / maxVal : ((val / total) * 100) / maxPct;
+    const intensity = 0.1 + ratio * 0.9;
     return `rgba(139, 92, 246, ${intensity})`;
   };
 
@@ -1050,16 +1088,25 @@ function CweHeatmapPanel({ data, topCwes }: { data?: DashboardData["cweHeatmap"]
           <p className="eyebrow">Weakness distribution / Top 6 CWEs by Quarter</p>
           <h3>CWE quarterly distribution</h3>
         </div>
+        <div className="metric-select-tabs">
+          <button className={viewMode === "percent" ? "active" : ""} onClick={() => setViewMode("percent")}>Shares (%)</button>
+          <button className={viewMode === "count" ? "active" : ""} onClick={() => setViewMode("count")}>Counts</button>
+        </div>
       </div>
       <p className="panel-desc">
-        Vulnerability counts for the current top 6 CWE classes over the last 8 quarters.
+        Distribution share or count for the current top 6 CWE classes over the last 8 quarters.
       </p>
 
       <div className="heatmap-container">
         <div className="heatmap-grid" style={{ display: "grid", gridTemplateColumns: "110px repeat(8, minmax(50px, 1fr))", gap: "2px" }}>
           <div className="heatmap-label heatmap-label--corner">CWE ID</div>
-          {quarters.map((q) => (
-            <div key={q} className="heatmap-col-header">{q}</div>
+          {quarters.map((q, qIdx) => (
+            <div key={q} className="heatmap-col-header">
+              {q}
+              {qIdx === quarters.length - 1 ? (
+                <small style={{ display: "block", fontSize: "9px", color: "var(--muted)", marginTop: "2px" }}>(Incomplete)</small>
+              ) : null}
+            </div>
           ))}
 
           {cweIds.map((cwe) => {
@@ -1075,12 +1122,12 @@ function CweHeatmapPanel({ data, topCwes }: { data?: DashboardData["cweHeatmap"]
                       key={q}
                       className="heatmap-cell"
                       style={{
-                        background: getBgColor(val),
-                        color: (val / maxVal) > 0.5 ? "#fff" : "var(--fg)",
+                        background: getBgColor(val, total),
+                        color: (viewMode === "count" ? val / maxVal : pct / maxPct) > 0.5 ? "#fff" : "var(--fg)",
                       }}
-                      title={`${cwe}: ${number(val)} CVEs (${pct.toFixed(1)}% of quarter's publications)`}
+                      title={`${cwe}: ${number(val)} of ${number(total)} CVEs (${pct.toFixed(1)}% of quarter's publications)`}
                     >
-                      <span>{number(val)}</span>
+                      <span>{viewMode === "count" ? number(val) : `${pct.toFixed(1)}%`}</span>
                     </div>
                   );
                 })}
@@ -1089,6 +1136,9 @@ function CweHeatmapPanel({ data, topCwes }: { data?: DashboardData["cweHeatmap"]
           })}
         </div>
       </div>
+      <p className="panel-note" style={{ marginTop: "12px", fontStyle: "italic" }}>
+        Warning: CWE shares can total &gt;100% since a single CVE can carry multiple weakness codes.
+      </p>
     </article>
   );
 }
@@ -1155,6 +1205,11 @@ function WeaknessAnalysisPanel({ data }: { data?: DashboardData["weaknessAnalysi
 
 
 export default function Home() {
+  const thresholdPercentile = dashboard.sources.epss?.thresholdPercentile;
+  const topPercentText = thresholdPercentile !== undefined && thresholdPercentile !== null
+    ? `approximately the top ${((1 - thresholdPercentile) * 100).toFixed(1)}%`
+    : "approximately the top 2.1%";
+
   const maxCwe = Math.max(
     ...dashboard.topCwes.map((item) => item.recentShare ?? item.count),
     1,
@@ -1508,7 +1563,7 @@ export default function Home() {
             <article><span>02</span><h3>Severity</h3><p>Primary CVSS assessments are used where available. A scored 0.0 is shown as “None”; records without a score remain “Unscored”.</p></article>
             <article><span>03</span><h3>Exploitation</h3><p>An NVD reference tagged “Exploit” indicates linked public material; it does not prove that the exploit works. Only CISA KEV entries are labelled “Known exploited”.</p></article>
             <article><span>04</span><h3>LLM evidence</h3><p>Report and reveal dates are not discovery dates. Counts from different programmes remain separate because they may overlap.</p></article>
-            <article><span>05</span><h3>EPSS probability</h3><p>Current FIRST EPSS scores estimate exploitation probability over the next 30 days. Scores are grouped by CVE publication month; ≥ 0.1 is a project-defined threshold, not an official severity band.</p></article>
+            <article><span>05</span><h3>EPSS probability</h3><p>Current FIRST EPSS scores estimate exploitation probability over the next 30 days. Scores are grouped by CVE publication month; ≥ 0.1 is a project-defined threshold, not an official severity band. In the current snapshot, this threshold dynamically corresponds to {topPercentText} of scored CVEs.</p></article>
           </div>
           <div className="source-strip">
             <span>SOURCES</span>

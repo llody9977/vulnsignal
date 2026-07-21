@@ -1149,6 +1149,29 @@ class PipelineUnitTests(unittest.TestCase):
         self.assertEqual(events[1]["count"], 2)
         self.assertEqual(events[1]["dateSemantics"], "first_party_revealed_at")
 
+    def test_ransomware_overlap_membership(self):
+        from scripts.sync_vulnerability_data import build_signal_overlap, Vulnerability
+        import datetime as dt
+
+        records = [
+            Vulnerability("CVE-2026-1000", dt.date(2026, 1, 1), "HIGH", 8.0, "3.1", False, (), 0.2),
+            Vulnerability("CVE-2026-1001", dt.date(2026, 1, 1), "HIGH", 8.0, "3.1", False, (), 0.2),
+            Vulnerability("CVE-2026-1002", dt.date(2026, 1, 1), "HIGH", 8.0, "3.1", False, (), 0.2),
+            Vulnerability("CVE-2026-1003", dt.date(2026, 1, 1), "HIGH", 8.0, "3.1", False, (), 0.2),
+        ]
+        kev_by_id = {
+            "CVE-2026-1000": {"cveID": "CVE-2026-1000", "knownRansomwareCampaignUse": "Known"},
+            "CVE-2026-1001": {"cveID": "CVE-2026-1001", "knownRansomwareCampaignUse": "Unknown"},
+            "CVE-2026-1002": {"cveID": "CVE-2026-1002"},
+        }
+        res = build_signal_overlap(records, kev_by_id)
+        
+        ransomware_entries = [r for r in res if r["sets"]["ransomware"]]
+        non_ransomware_entries = [r for r in res if not r["sets"]["ransomware"]]
+        
+        self.assertEqual(sum(r["count"] for r in ransomware_entries), 1)
+        self.assertEqual(sum(r["count"] for r in non_ransomware_entries), 3)
+
 
 if __name__ == "__main__":
     unittest.main()
