@@ -1,16 +1,16 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-21T13:38:58Z",
+  "generatedAt": "2026-07-21T13:56:30Z",
   "snapshot": {
-    "id": "VS-20260721-1338Z",
-    "generatedAt": "2026-07-21T13:38:58Z",
+    "id": "VS-20260721-1356Z",
+    "generatedAt": "2026-07-21T13:56:30Z",
     "inputCount": 43,
-    "inputFingerprintSha256": "b18fc8b7cb27d11ddc3e7903c69b23a1f10ddbe33dbd19b17da049f7d99df04a",
+    "inputFingerprintSha256": "1042220ff3117639c669a70287782592b7ead03c2f1b0cae93caccea1d79cbc6",
     "inputs": [
       {
         "id": "cve-list-delta",
         "kind": "downloaded_snapshot",
-        "sha256": "137018b0f7dfb9f37e61b49b2f70b4e6d4f99f60ab2d6abc1e07c0bd9df139db"
+        "sha256": "d926122e66c7e407b6d2cc036f266e5e15f3aa5e7b3be859c0658b53a6416697"
       },
       {
         "id": "nvd-2002",
@@ -242,11 +242,11 @@
     "cve": {
       "name": "CVE Program · CVE List V5",
       "url": "https://github.com/CVEProject/cvelistV5",
-      "contentFingerprintSha256": "137018b0f7dfb9f37e61b49b2f70b4e6d4f99f60ab2d6abc1e07c0bd9df139db",
-      "latestFetch": "2026-07-21T13:12:02.640000Z",
-      "changedRecords24h": 1737,
-      "newRecords24h": 319,
-      "updatedRecords24h": 1418
+      "contentFingerprintSha256": "d926122e66c7e407b6d2cc036f266e5e15f3aa5e7b3be859c0658b53a6416697",
+      "latestFetch": "2026-07-21T13:53:24.975000Z",
+      "changedRecords24h": 1711,
+      "newRecords24h": 325,
+      "updatedRecords24h": 1386
     },
     "nvd": {
       "name": "NIST NVD · CVE JSON 2.0 feeds",
@@ -1249,14 +1249,14 @@
     ]
   },
   "changeDigest": {
-    "generatedAt": "2026-07-21T13:38:58Z",
+    "generatedAt": "2026-07-21T13:56:30Z",
     "cve": {
       "period": "last_24_hours",
-      "start": "2026-07-20T13:38:58Z",
-      "end": "2026-07-21T13:38:58Z",
-      "newRecords": 319,
-      "updatedRecords": 1418,
-      "distinctChanged": 1737
+      "start": "2026-07-20T13:56:30Z",
+      "end": "2026-07-21T13:56:30Z",
+      "newRecords": 325,
+      "updatedRecords": 1386,
+      "distinctChanged": 1711
     },
     "kev": {
       "period": "latest_catalog_date",
