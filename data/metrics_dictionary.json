@@ -123,15 +123,16 @@
       "sourceFields": ["NVD cve.metrics cvssMetric type (Primary/Secondary)"],
       "knownBiases": "Assessor authority distribution reflects CNA assignment policies rather than intrinsic vulnerability severity."
     },
-    "epssPredictivePerformance": {
-      "name": "Historical EPSS KEV-Entry Predictive Performance",
-      "formula": "count(cve in candidate_cohort and 0 < (cisa_kev.dateAdded - snapshot_date).days <= 30|60|90) / candidate_cohort_count",
-      "numerator": "Count of CVEs exceeding historical EPSS threshold that subsequently entered CISA KEV within 30, 60, or 90 days",
+    "epssSubsequentKevEntryRate": {
+      "name": "Historical EPSS >= 0.10 Subsequent KEV-Entry Rate",
+      "formula": "conversionRate = candidateAdditions / candidateCount; baselineRate = totalKevAdditions / baselineCount; lift = conversionRate / baselineRate; recall = candidateAdditions / totalKevAdditions",
+      "numerator": "Count of CVEs exceeding historical EPSS threshold (or overall baseline) that subsequently entered CISA KEV within 30, 60, or 90 days",
       "denominator": "Historical EPSS candidate cohort (CVEs with EPSS >= 0.10 not yet in KEV at snapshot date)",
       "dateSemantics": "Dated historical EPSS snapshot date and CISA KEV dateAdded",
-      "censoringPolicy": "Evaluated on historical score snapshots at least 30/60/90 days old to avoid right-censoring.",
+      "censoringPolicy": "Each horizon (30d, 60d, 90d) is calculated ONLY when age_days >= horizon_days; incomplete horizons return null (Not mature) to eliminate right-censoring bias.",
+      "smallSampleThreshold": 30,
       "sourceFields": ["Historical FIRST EPSS snapshot files", "CISA KEV dateAdded"],
-      "knownBiases": "Measures historical prediction of CISA KEV listing, not exhaustive wild exploitation prediction."
+      "knownBiases": "Measures historical CISA KEV listing conversion, lift, and recall for EPSS >= 0.10 candidates; not an exhaustive index of all worldwide exploitation."
     }
   }
 }

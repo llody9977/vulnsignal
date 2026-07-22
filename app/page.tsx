@@ -88,12 +88,26 @@ type EpssPredictivePerformanceRecord = {
   snapshotDate: string;
   modelVersion: string;
   candidateCount: number;
-  kevAdditions30d: number;
-  conversionRate30d: number;
-  kevAdditions60d: number;
-  conversionRate60d: number;
-  kevAdditions90d: number;
-  conversionRate90d: number;
+  baselineCount: number;
+  ageDays: number;
+  isMature30d: boolean;
+  isMature60d: boolean;
+  isMature90d: boolean;
+  kevAdditions30d: number | null;
+  conversionRate30d: number | null;
+  baselineRate30d: number | null;
+  lift30d: number | null;
+  recall30d: number | null;
+  kevAdditions60d: number | null;
+  conversionRate60d: number | null;
+  baselineRate60d: number | null;
+  lift60d: number | null;
+  recall60d: number | null;
+  kevAdditions90d: number | null;
+  conversionRate90d: number | null;
+  baselineRate90d: number | null;
+  lift90d: number | null;
+  recall90d: number | null;
 };
 
 type EpssHistory = {
@@ -737,20 +751,32 @@ function EpssHistoryPanel({ history }: { history?: EpssHistory }) {
                 Historical score validation
               </p>
               <h4 style={{ fontSize: "13px", fontWeight: 600, margin: "0 0 4px 0" }}>
-                Historical EPSS KEV-entry predictive performance
+                Historical EPSS ≥ 0.10 subsequent KEV-entry rate
               </h4>
               <p style={{ fontSize: "11px", color: "var(--muted)", margin: "0 0 8px 0" }}>
-                Subsequent CISA KEV entry rate for candidates with EPSS ≥ 0.10 at historical snapshot date.
+                Subsequent KEV entry rate, lift over baseline, and recall for EPSS ≥ 0.10 candidates at historical score snapshot. Immature horizons (&lt;30/60/90d) are excluded from rate calculations.
               </p>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: "8px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "8px" }}>
                 {history.predictivePerformance.slice(-4).map((item) => (
                   <div key={item.snapshotDate} style={{ background: "var(--surface-muted, rgba(255,255,255,0.03))", padding: "8px", borderRadius: "6px", border: "1px solid var(--border)" }}>
                     <span style={{ display: "block", fontSize: "11px", fontWeight: 600 }}>{shortDateLabel(item.snapshotDate)}</span>
                     <span style={{ display: "block", fontSize: "10px", color: "var(--muted)" }}>{number(item.candidateCount)} candidates</span>
-                    <div style={{ marginTop: "4px", fontSize: "10px" }}>
-                      <div>30d: <strong>{item.conversionRate30d}%</strong> ({item.kevAdditions30d})</div>
-                      <div>60d: <strong>{item.conversionRate60d}%</strong> ({item.kevAdditions60d})</div>
-                      <div>90d: <strong>{item.conversionRate90d}%</strong> ({item.kevAdditions90d})</div>
+                    <div style={{ marginTop: "4px", fontSize: "10px", lineHeight: "1.4" }}>
+                      <div>
+                        30d: {item.isMature30d && item.conversionRate30d !== null ? (
+                          <><strong>{item.conversionRate30d}%</strong> ({item.lift30d}× lift, {item.recall30d}% recall)</>
+                        ) : <span style={{ color: "var(--muted)" }}>— (not mature)</span>}
+                      </div>
+                      <div>
+                        60d: {item.isMature60d && item.conversionRate60d !== null ? (
+                          <><strong>{item.conversionRate60d}%</strong> ({item.lift60d}× lift, {item.recall60d}% recall)</>
+                        ) : <span style={{ color: "var(--muted)" }}>— (not mature)</span>}
+                      </div>
+                      <div>
+                        90d: {item.isMature90d && item.conversionRate90d !== null ? (
+                          <><strong>{item.conversionRate90d}%</strong> ({item.lift90d}× lift, {item.recall90d}% recall)</>
+                        ) : <span style={{ color: "var(--muted)" }}>— (not mature)</span>}
+                      </div>
                     </div>
                   </div>
                 ))}

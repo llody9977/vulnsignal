@@ -1391,13 +1391,20 @@ class PipelineUnitTests(unittest.TestCase):
         kev_by_id = {
             "CVE-2025-0001": {"dateAdded": "2025-02-15"},
         }
-        as_of = dt.date(2025, 3, 31)
+        # 45 days after score_date (2025-01-31 -> 2025-03-17)
+        as_of = dt.date(2025, 3, 17)
         res = build_epss_predictive_performance(history, kev_by_id, as_of)
         self.assertEqual(len(res), 1)
         self.assertEqual(res[0]["snapshotDate"], "2025-01-31")
         self.assertEqual(res[0]["candidateCount"], 2)
+        self.assertTrue(res[0]["isMature30d"])
+        self.assertFalse(res[0]["isMature60d"])
+        self.assertFalse(res[0]["isMature90d"])
         self.assertEqual(res[0]["kevAdditions30d"], 1)
         self.assertEqual(res[0]["conversionRate30d"], 50.0)
+        self.assertEqual(res[0]["recall30d"], 100.0)
+        self.assertIsNone(res[0]["conversionRate60d"])
+        self.assertIsNone(res[0]["conversionRate90d"])
 
 
 if __name__ == "__main__":

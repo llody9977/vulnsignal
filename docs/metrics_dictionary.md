@@ -80,10 +80,13 @@ This document defines the formal metrics, formulas, numerators, denominators, da
 * **Date Semantics**: NVD JSON 2.0 metrics array type field.
 * **Known Biases**: Assessor authority distribution reflects CNA assignment policies rather than intrinsic vulnerability severity.
 
-### 11. Historical EPSS KEV-Entry Predictive Performance (`epssPredictivePerformance`)
-* **Formula**: `count(cve in candidate_cohort and 0 < (cisa_kev.dateAdded - snapshot_date).days <= 30|60|90) / candidate_cohort_count`
-* **Numerator**: Count of CVEs exceeding historical EPSS threshold that subsequently entered CISA KEV within 30, 60, or 90 days.
+### 11. Historical EPSS &ge; 0.10 Subsequent KEV-Entry Rate (`epssSubsequentKevEntryRate`)
+* **Formula**: `conversionRate = candidateAdditions / candidateCount`; `baselineRate = totalKevAdditions / baselineCount`; `lift = conversionRate / baselineRate`; `recall = candidateAdditions / totalKevAdditions`
+* **Numerator**: Count of CVEs exceeding historical EPSS threshold (or overall baseline) that subsequently entered CISA KEV within 30, 60, or 90 days.
 * **Denominator**: Historical EPSS candidate cohort (CVEs with EPSS &ge; 0.10 not yet in KEV at snapshot date).
 * **Date Semantics**: Dated historical EPSS snapshot date and CISA KEV `dateAdded`.
-* **Known Biases**: Evaluated on historical score snapshots at least 30/60/90 days old to avoid right-censoring.
+* **Censoring Policy**: Each horizon (30d, 60d, 90d) is calculated ONLY when `age_days >= horizon_days`; incomplete horizons return `null` (`Not mature`) to eliminate right-censoring bias.
+* **Small Sample Warning Threshold**: Declared in dictionary as `smallSampleThreshold: 30`. Metrics with sample size below 30 carry a small-sample indicator badge in the UI.
+* **Known Biases**: Measures historical CISA KEV listing conversion, lift, and recall for EPSS &ge; 0.10 candidates; not an exhaustive index of all worldwide exploitation.
+
 
