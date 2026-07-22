@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "dictionaryVersion": "1.0.0",
+  "updatedAt": "2026-07-22T00:00:00Z",
+  "metrics": {
+    "cvePublicationCount": {
+      "name": "Published CVE Count",
+      "formula": "count(active_nvd_records where start_date <= published <= end_date)",
+      "numerator": "Active (non-rejected) NVD CVE records published in window",
+      "denominator": "N/A (absolute count)",
+      "dateSemantics": "NVD publication date (record.published)",
+      "censoringPolicy": "Excludes REJECTED CVEs; incomplete current month is flagged as partial",
+      "sourceFields": ["NVD cve.published", "cve.vulnStatus"],
+      "knownBiases": "Increases when CNA reporting activity grows, regardless of true software vulnerability prevalence."
+    },
+    "severityShare": {
+      "name": "CVSS Base Severity Distribution Share",
+      "formula": "count(published_cves where severity == band) / count(scored_published_cves)",
+      "numerator": "Published CVEs assigned a specific CVSS base severity band (CRITICAL, HIGH, MEDIUM, LOW)",
+      "denominator": "All CVSS-scored published CVEs in window",
+      "dateSemantics": "NVD publication date",
+      "censoringPolicy": "Prefers primary assessment over secondary; selects v4.0 -> v3.1 -> v3.0 -> v2. Scores of 0.0 are assigned to NONE; records without CVSS remain UNKNOWN/Unscored.",
+      "sourceFields": ["NVD metrics.cvssMetricV40", "metrics.cvssMetricV31", "metrics.cvssMetricV30", "metrics.cvssMetricV2"],
+      "knownBiases": "Different CVSS versions (v2 vs v3 vs v4) use different baseline distributions and are not directly comparable."
+    },
+    "publicExploitShare": {
+      "name": "Public Exploit Reference Share",
+      "formula": "count(mature_published_cves where has_exploit_reference_tag) / count(mature_published_cves)",
+      "numerator": "CVEs with at least one NVD reference tagged with type 'Exploit'",
+      "denominator": "Mature published CVEs (published <= snapshot_date - 180 days)",
+      "dateSemantics": "NVD publication date",
+      "censoringPolicy": "Requires 180-day maturity window to avoid CNA tag ingestion lag. Comparison is withheld if either period lacks mature data.",
+      "sourceFields": ["NVD cve.references[].tags"],
+      "knownBiases": "Tags indicate linked public material on NVD references; they do not verify exploit validity or execution capability."
+    },
+    "observedKevShare": {
+      "name": "CISA KEV Listing Share",
+      "formula": "count(published_cves in CISA_KEV) / count(published_cves)",
+      "numerator": "Published CVEs listed in CISA Known Exploited Vulnerabilities catalog",
+      "denominator": "All active NVD published CVEs in window",
+      "dateSemantics": "NVD publication date for cohort; CISA dateAdded for KEV addition",
+      "censoringPolicy": "Filtered by observation date cutoff (added <= snapshot_date)",
+      "sourceFields": ["CISA KEV catalog cveID", "dateAdded"],
+      "knownBiases": "Reflects CISA prioritization and catalog addition criteria; not an exhaustive index of all worldwide exploitation."
+    },
+    "medianPublicationToKevGap": {
+      "name": "Median Publication-to-KEV Gap among KEV-listed CVEs",
+      "formula": "median((cisa_kev.dateAdded - nvd_cve.published).days for cve in mature_cohort if cve in KEV)",
+      "numerator": "Signed day difference between NVD publication date and CISA KEV dateAdded",
+      "denominator": "KEV-listed CVEs in mature cohort (kevTimingSample / matureCohort)",
+      "dateSemantics": "NVD publication date (cve.published) and CISA KEV listing date (dateAdded)",
+      "censoringPolicy": "Calculated only for mature cohort (published <= snapshot_date - 90 days) to prevent right-censoring bias. Retains signed difference (negative values indicate pre-publication KEV listing).",
+      "sourceFields": ["NVD cve.published", "CISA KEV dateAdded"],
+      "knownBiases": "This is a selected-outcome metric computed ONLY among KEV-listed CVEs; it does not measure the time-to-KEV for unlisted CVEs."
+    },
+    "nonNegativePublicationToKevGap": {
+      "name": "Post-Publication Median Gap to KEV",
+      "formula": "median((dateAdded - published).days for cve in mature_cohort if cve in KEV and (dateAdded - published).days >= 0)",
+      "numerator": "Non-negative day differences for KEV listings added on or after NVD publication date",
+      "denominator": "Post-publication KEV-listed CVEs in mature cohort",
+      "dateSemantics": "NVD publication date and CISA KEV listing date",
+      "censoringPolicy": "Excludes pre-publication KEV cases where dateAdded predates NVD publication.",
+      "sourceFields": ["NVD cve.published", "CISA KEV dateAdded"],
+      "knownBiases": "Excludes pre-publication listings caused by NVD publication lag or CNA advance disclosures."
+    },
+    "kevWithin90DayRate": {
+      "name": "Share of Mature Published CVEs Entering KEV within 90 Days",
+      "formula": "count(mature_cves listed in KEV within 90 days of publication) / count(mature_published_cves)",
+      "numerator": "Mature published CVEs with (dateAdded - published).days <= 90",
+      "denominator": "All mature published CVEs (published <= snapshot_date - 90 days)",
+      "dateSemantics": "NVD publication date and CISA KEV dateAdded",
+      "censoringPolicy": "Excludes CVEs published in the latest 90 days to prevent right-censoring bias.",
+      "sourceFields": ["NVD cve.published", "CISA KEV dateAdded"],
+      "knownBiases": "Measures overall cohort risk of KEV entry within 90 days; distinct from the share of KEVs added within 90 days."
+    },
+    "allCveKevConversionRate": {
+      "name": "All-CVE KEV Conversion Rate",
+      "formula": "count(mature_published_cves in KEV) / count(mature_published_cves)",
+      "numerator": "Mature published CVEs listed in CISA KEV",
+      "denominator": "All mature published CVEs",
+      "dateSemantics": "NVD publication date",
+      "censoringPolicy": "Evaluated on mature publication cohort (published <= snapshot_date - 90 days)",
+      "sourceFields": ["NVD cve.published", "CISA KEV cveID"],
+      "knownBiases": "Baseline conversion rate for any published vulnerability to enter KEV."
+    },
+    "exploitRefKevConversionRate": {
+      "name": "Exploit-Reference Tagged KEV Conversion Rate",
+      "formula": "count(mature_exploit_ref_cves in KEV) / count(mature_exploit_ref_cves)",
+      "numerator": "Mature published CVEs with NVD Exploit tag that are listed in CISA KEV",
+      "denominator": "All mature published CVEs with NVD Exploit reference tag",
+      "dateSemantics": "NVD publication date",
+      "censoringPolicy": "Evaluated on mature cohort (published <= snapshot_date - 180 days)",
+      "sourceFields": ["NVD cve.references[].tags", "CISA KEV cveID"],
+      "knownBiases": "Demonstrates the increased likelihood of KEV listing when a public exploit reference tag is present."
+    },
+    "epssHighNotInKevShare": {
+      "name": "EPSS Threshold Candidates Not in KEV",
+      "formula": "count(published_cves where epss >= 0.10 and cveNotInKEV) / count(published_cves where epss >= 0.10)",
+      "numerator": "Published CVEs with current EPSS >= 0.10 not listed in CISA KEV",
+      "denominator": "All published CVEs meeting current EPSS >= 0.10 threshold",
+      "dateSemantics": "NVD publication date for cohort; current FIRST EPSS snapshot score date",
+      "censoringPolicy": "Uses current score snapshot applied across publication cohorts; not historical EPSS scores.",
+      "sourceFields": ["FIRST EPSS probability", "CISA KEV cveID"],
+      "knownBiases": "EPSS >= 0.10 is a project-defined screening threshold (dynamically ~top 2.1% of scored CVEs), not an official severity band."
+    },
+    "epssScreeningWatch": {
+      "name": "EPSS Screening Watch",
+      "formula": "active_nvd_cves published in latest 90 days with current EPSS >= 0.10 and not listed in CISA KEV",
+      "numerator": "CVEs meeting screening criteria",
+      "denominator": "N/A (full list retained for tile inspection)",
+      "dateSemantics": "CVE published in latest 90 days; EPSS current snapshot date",
+      "censoringPolicy": "Retains every qualifying candidate row; filtered strictly by absence from CISA KEV",
+      "sourceFields": ["NVD cve.published", "FIRST EPSS score", "CISA KEV catalog"],
+      "knownBiases": "A project-defined analytical screening list based solely on current EPSS and KEV status; NOT an asset-specific remediation order or patch priority queue."
+    }
+  }
+}

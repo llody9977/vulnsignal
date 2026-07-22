@@ -17,11 +17,11 @@ I built VulnSignal as a personal project to examine trends in published vulnerab
 - Drill-down sheets for every headline tile, showing the exact denominator, selected-period monthly breakdown and relevant source limitations.
 - Monthly CVSS severity as counts or shares, CISA KEV additions, NVD exploit-tagged references and current EPSS signals.
 - Exact monthly values alongside the chart, including separate CVSS `NONE` and unscored records.
-- A searchable 90-day priority watch for recent CVEs with current EPSS scores at or above the project threshold that are not yet in KEV; every candidate row in the current cohort is retained.
+- A searchable 90-day EPSS screening watch for recent CVEs with current EPSS scores at or above the project threshold that are not yet in KEV; every candidate row in the current cohort is retained.
 - Official historical EPSS snapshots, sampled monthly, with model-version boundaries kept visible.
 - A short change digest that says exactly whether each item covers the previous 24 hours, the latest KEV release or two official EPSS snapshots.
 - Source dates, a snapshot ID and content fingerprints for the inputs used to build each release.
-- Median and 75th-percentile time to KEV for an explicitly stated mature cohort.
+- Median and 75th-percentile publication-to-KEV gap calculated for KEV-listed CVEs in an explicitly stated mature cohort, displayed alongside selection ratios (`177 KEV-listed / 51,367 mature CVEs`).
 - Ransomware use, accelerated remediation deadlines and the age of KEV additions over comparable 12-month windows.
 - Trailing-12-month CWE shares and the largest share movers, with official CWE names and links.
 - First-party LLM-assisted disclosure events shown as separate reported minimums, not a combined discovery total.
@@ -33,14 +33,14 @@ The upstream sources answer different questions and mature at different speeds. 
 VulnSignal brings these signals together while reducing known measurement artefacts:
 
 - Recent exploit-reference months remain visible but are marked as enriching. Comparisons are withheld until the selected periods contain mature data.
-- KEV timing is calculated only for CVEs with a complete observation period.
+- KEV timing is calculated only for CVEs with a complete observation period, and prominently discloses its selection denominator.
 - KEV-addition measures use their own latest-12-month window rather than borrowing the CVE maturity cohort.
 - Current EPSS screening and historical EPSS movement are kept separate. One groups today's scores by CVE publication month; the other reads the score that FIRST published on each sampled date.
 - LLM programme claims remain separate because the disclosed sets may overlap and the public sources do not support reliable deduplication.
 
 ## Scope and limitations
 
-VulnSignal is a daily analytical snapshot, not a real-time advisory or an organisation-specific patch queue. The priority watch is a screening list, not a replacement for asset exposure, business impact and compensating-control checks. An EPSS score is an estimate of exploitation probability, not severity. Absence from KEV does not mean absence of exploitation. Publication growth also does not necessarily mean that software is becoming vulnerable at the same rate, and an NVD reference tagged `Exploit` does not prove that linked code works.
+VulnSignal is a daily analytical snapshot, not a real-time advisory or an organisation-specific patch queue. The EPSS screening watch is a focused screening list based on project thresholds, NOT a replacement for asset exposure, business impact and compensating-control checks. An EPSS score is an estimate of exploitation probability, not severity. Absence from KEV does not mean absence of exploitation. Publication growth also does not necessarily mean that software is becoming vulnerable at the same rate, and an NVD reference tagged `Exploit` does not prove that linked code works.
 
 CVE, NVD and KEV do not reliably record how a vulnerability was discovered. The LLM timeline therefore contains only reviewed first-party programme reports or public CVE-ID releases. A blank month means that the registry has no recorded disclosure event; it does not mean zero LLM-assisted discoveries. Programme counts are never added together unless overlaps can be removed reliably.
 
@@ -88,9 +88,10 @@ This product uses NVD data feeds and is not endorsed or certified by the NVD.
 | Severity | Preferred source scores under the project hierarchy are used (preferring CVSS v4.0, v3.1, v3.0, then v2). Scores are not maximised. Base severity rankings are not directly comparable between different CVSS versions. CVSS `NONE` (0.0) is kept separate from records without a score. |
 | Public exploit reference | The NVD record has a reference tagged `Exploit`. Raw recent counts remain visible and marked as enriching; comparisons are withheld when either selected period lacks mature data. |
 | KEV | CISA has placed the CVE in its Known Exploited Vulnerabilities catalogue. This confirms known exploitation and is distinct from an NVD exploit-tagged reference. |
-| Time to KEV | Median and 75th-percentile days from NVD publication to CISA listing, calculated for KEV-matched records in the displayed mature cohort. Calculations retain the signed difference (listings that predate NVD publication retain negative values). |
-| Current EPSS ≥ 0.1 | A project-defined threshold applied to the current FIRST EPSS snapshot. Monthly and 36-month groups use each CVE's NVD publication month, so they are not historical EPSS scores as they stood in those months. EPSS coverage is measured relative to eligible active NVD records. The relative percentile corresponding to the 10% threshold is calculated from the current EPSS snapshot and displayed in the dashboard. |
-| Priority watch | NVD-published CVEs from the latest 90 days with current EPSS ≥ 0.1 and no CISA KEV listing in the downloaded catalogue. Every qualifying row is retained for the tile drill-down. It is a focused screening list, not a recommended remediation queue or patch priority list, and not proof of exploitability or a complete patch order. |
+| Publication-to-KEV gap | Median and 75th-percentile days from NVD publication to CISA listing, calculated ONLY among KEV-matched records in the mature cohort. Displays the selection ratio (`177 KEV-listed / 51,367 mature CVEs`) and provides both signed and post-publication median gaps. |
+| KEV conversion rate | Baseline KEV entry rate for all mature published CVEs (0.34%) compared to mature CVEs carrying an NVD Exploit reference tag. |
+| Current EPSS ≥ 0.10 | A project-defined threshold applied to the current FIRST EPSS snapshot. Monthly and 36-month groups use each CVE's NVD publication month, so they are not historical EPSS scores as they stood in those months. EPSS coverage is measured relative to eligible active NVD records. The relative percentile corresponding to the 0.10 threshold is calculated from the current EPSS snapshot and displayed in the dashboard (~top 2.1%). |
+| EPSS screening watch | NVD-published CVEs from the latest 90 days with current EPSS ≥ 0.10 and no CISA KEV listing in the downloaded catalogue. Every qualifying row is retained for tile drill-down. It is an analytical screening list, NOT a recommended remediation queue or patch priority list. |
 | Historical EPSS | Counts from official historical EPSS snapshots sampled at month end, plus the current score date. Model versions are shown because scores on different model versions are not strictly like-for-like. |
 | Accelerated KEV deadline | The share of KEV additions whose CISA due date is no more than seven days after `dateAdded`, compared with the previous 12-month window. The denominator is the additions that carry a usable due date on or after `dateAdded`, and it is shown alongside the share. |
 | What changed | Source-specific activity with an explicit clock: CVE List records in the previous 24 hours (with new and updated counts made mutually exclusive), additions on the latest KEV catalogue date, and EPSS threshold crossings between sampled official score files. These are update signals, not incident counts. |

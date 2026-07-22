@@ -1308,6 +1308,74 @@ class PipelineUnitTests(unittest.TestCase):
             self.assertTrue(0 <= row["exploitRefPercent"] <= 100)
             self.assertTrue(0 <= row["epssPercent"] <= 100)
 
+    def test_golden_fixture_pre_pub_kev_timing(self):
+        from scripts.sync_vulnerability_data import metric_window, Vulnerability
+        import datetime as dt
+
+        start = dt.date(2026, 1, 1)
+        end = dt.date(2026, 3, 31)
+        obs = dt.date(2026, 7, 1)
+
+        # Record 1: Listed 10 days BEFORE NVD publication (raw_days = -10)
+        # Record 2: Listed 20 days AFTER NVD publication (raw_days = 20)
+        records = [
+            Vulnerability("CVE-2026-0001", dt.date(2026, 2, 15), "HIGH", 8.0, "3.1", False, (), 0.2),
+            Vulnerability("CVE-2026-0002", dt.date(2026, 2, 1), "HIGH", 8.0, "3.1", False, (), 0.2),
+        ]
+        kev_by_id = {
+            "CVE-2026-0001": {"cveID": "CVE-2026-0001", "dateAdded": "2026-02-05"}, # -10 days
+            "CVE-2026-0002": {"cveID": "CVE-2026-0002", "dateAdded": "2026-02-21"}, # +20 days
+        }
+
+        res = metric_window(records, {r.cve_id: r for r in records}, kev_by_id, start, end, obs)
+        self.assertEqual(res["prePublicationKev"], 1)
+        self.assertEqual(res["prePublicationKevShare"], 50.0)
+        self.assertEqual(res["medianDaysToKev"], 5.0) # median(-10, 20) = 5.0
+        self.assertEqual(res["medianDaysToKevNonNegative"], 20.0) # median(20) = 20.0
+
+    def test_golden_fixture_cvss_version_hierarchy(self):
+        from scripts.sync_vulnerability_data import cvss_details
+
+        metrics = {
+            "cvssMetricV40": [
+                {"type": "Primary", "cvssData": {"baseScore": 9.2, "version": "4.0"}}
+            ],
+            "cvssMetricV31": [
+                {"type": "Primary", "cvssData": {"baseScore": 8.8, "version": "3.1"}}
+            ],
+            "cvssMetricV2": [
+                {"type": "Primary", "cvssData": {"baseScore": 7.5, "version": "2.0"}}
+            ],
+        }
+        severity, score, version = cvss_details(metrics)
+        self.assertEqual(severity, "CRITICAL")
+        self.assertEqual(score, 9.2)
+        self.assertEqual(version, "4.0")
+
+    def test_golden_fixture_duplicate_cwes(self):
+        from scripts.sync_vulnerability_data import cwe_values
+
+        item = {
+            "weaknesses": [
+                {"description": [{"value": "CWE-79"}]},
+                {"description": [{"value": "CWE-79"}]},
+                {"description": [{"value": "CWE-89"}]},
+            ]
+        }
+        cwes = cwe_values(item)
+        self.assertEqual(cwes, ("CWE-79", "CWE-89"))
+
+    def test_golden_fixture_metrics_dictionary_existence(self):
+        import json
+        import pathlib
+        path = pathlib.Path(__file__).parent.parent / "data" / "metrics_dictionary.json"
+        self.assertTrue(path.exists(), "data/metrics_dictionary.json must exist")
+        with open(path, "r", encoding="utf-8") as f:
+            dictionary = json.load(f)
+        self.assertIn("metrics", dictionary)
+        self.assertIn("medianPublicationToKevGap", dictionary["metrics"])
+        self.assertIn("epssScreeningWatch", dictionary["metrics"])
+
 
 if __name__ == "__main__":
     unittest.main()

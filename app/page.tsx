@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import rawDashboard from "@/data/dashboard.json";
 import { TrendExplorer } from "./trend-explorer";
@@ -94,23 +94,26 @@ type EpssHistory = {
 type ComparisonWindow = {
   start: string;
   end: string;
+  publishedCves?: number;
+  matureCves?: number;
   count?: number;
-  dueWindowSample?: number;
-  within7Count?: number;
-  within7Share?: number | null;
-  under21Count?: number;
-  under21Share?: number | null;
   ransomwareCount?: number;
   ransomwareShare?: number | null;
   ageSample?: number;
   oldCount?: number;
   oldShare?: number | null;
-  publishedCves?: number;
-  matureCves?: number;
+  within7Count?: number;
+  within7Share?: number | null;
+  under21Count?: number;
+  under21Share?: number | null;
+  dueWindowSample?: number;
   sample?: number;
   prePublicationKev?: number;
+  prePublicationKevShare?: number | null;
   medianDays?: number | null;
+  medianDaysNonNegative?: number | null;
   p75Days?: number | null;
+  p75DaysNonNegative?: number | null;
 };
 
 type CweRow = {
@@ -215,6 +218,14 @@ type DashboardData = {
     prePublicationKev: number;
     medianDaysToKev: number | null;
     p75DaysToKev: number | null;
+    medianDaysToKevNonNegative?: number | null;
+    p75DaysToKevNonNegative?: number | null;
+    prePublicationKevShare?: number | null;
+    kevWithin90DayKevShare?: number | null;
+    allCveKevConversion?: number | null;
+    exploitRefKevConversion?: number | null;
+    cvssVersionMix?: Record<string, { count: number; share: number }>;
+    kevAgeBands?: Record<string, number>;
     highEpss: number;
     highEpssNotInKevCount: number;
     highEpssNotInKevShare: number | null;
@@ -579,11 +590,26 @@ function WhatChanged({
 }
 
 function PriorityWatchPanel({ watch }: { watch?: PriorityWatch }) {
-  const visibleItems = watch?.items.slice(0, 10) ?? [];
+  const [filterMode, setFilterMode] = useState<"all" | "top5" | "top1" | "criticalHigh">("all");
+  
+  const filteredItems = useMemo(() => {
+    const items = watch?.items ?? [];
+    if (filterMode === "top5") {
+      return items.filter((item) => item.epssPercentile >= 0.95);
+    } else if (filterMode === "top1") {
+      return items.filter((item) => item.epssPercentile >= 0.99);
+    } else if (filterMode === "criticalHigh") {
+      return items.filter((item) => item.epss >= 0.10 && (item.severity === "CRITICAL" || item.severity === "HIGH"));
+    }
+    return items;
+  }, [watch?.items, filterMode]);
+
+  const visibleItems = filteredItems.slice(0, 10);
+
   return (
     <article className="flat-panel priority-watch" id="priority-watch-panel">
       <div className="panel-heading">
-        <div><p className="eyebrow">Priority watch / 90 days</p><h3>VulnSignal screening threshold CVEs not in CISA KEV</h3></div>
+        <div><p className="eyebrow">EPSS screening watch / 90 days</p><h3>VulnSignal screening candidates not in CISA KEV</h3></div>
         <span>{watch ? `EPSS scores ${timestampLabel(watch.window.scoreDate)}` : "Awaiting EPSS history"}</span>
       </div>
       {watch ? (
@@ -593,13 +619,21 @@ function PriorityWatchPanel({ watch }: { watch?: PriorityWatch }) {
             <div><span>Critical or high</span><strong><MetricValue href="#priority-watch-table" tooltip="Jump to candidate severity and EPSS details">{number(watch.criticalHigh)}</MetricValue></strong></div>
             <div><span>Exploit reference</span><strong><MetricValue href="#priority-watch-table" tooltip="Jump to candidate exploit-reference details">{number(watch.publicExploitReferences)}</MetricValue></strong></div>
           </div>
+
+          <div className="metric-select-tabs" style={{ marginTop: "12px", marginBottom: "8px" }}>
+            <button className={filterMode === "all" ? "active" : ""} onClick={() => setFilterMode("all")}>All Candidates (EPSS ≥ 0.10)</button>
+            <button className={filterMode === "top5" ? "active" : ""} onClick={() => setFilterMode("top5")}>Top 5% Percentile (≥ 95th)</button>
+            <button className={filterMode === "top1" ? "active" : ""} onClick={() => setFilterMode("top1")}>Top 1% Percentile (≥ 99th)</button>
+            <button className={filterMode === "criticalHigh" ? "active" : ""} onClick={() => setFilterMode("criticalHigh")}>Critical + High Only</button>
+          </div>
+
           <p className="priority-watch__note">
-            Published {dateLabel(watch.window.start, true)}–{dateLabel(watch.window.end, true)}. EPSS ≥ 0.1 is a project-defined current-score threshold. Not appearing in CISA KEV does not prove that exploitation has not occurred. This list is a screening tool, not a recommended remediation queue or patch priority list. “Yes” under exploit reference means NVD has at least one reference tagged <code>Exploit</code>; “No” means that tag is absent in this snapshot.
+            Published {dateLabel(watch.window.start, true)}–{dateLabel(watch.window.end, true)}. EPSS ≥ 0.10 is a project-defined screening threshold (~top 2.1% of scored CVEs). Not appearing in CISA KEV does not prove that exploitation has not occurred. This list is a focused screening tool, NOT a recommended remediation queue or patch priority list. “Yes” under exploit reference means NVD has at least one reference tagged <code>Exploit</code>; “No” means that tag is absent in this snapshot.
           </p>
           {visibleItems.length ? (
             <div className="priority-table-wrap" id="priority-watch-table">
               <table className="priority-table">
-                <caption>Highest EPSS probabilities among CVEs published in the 90-day priority-watch window and not listed in CISA KEV</caption>
+                <caption>Showing highest EPSS probabilities among {number(filteredItems.length)} candidates matching filter criteria</caption>
                 <thead><tr><th>Vulnerability</th><th>Published</th><th>Severity</th><th>EPSS probability</th><th>Exploit reference</th></tr></thead>
                 <tbody>
                   {visibleItems.map((item) => (
@@ -627,11 +661,11 @@ function PriorityWatchPanel({ watch }: { watch?: PriorityWatch }) {
                   ))}
                 </tbody>
               </table>
-              {watch.items.length > visibleItems.length ? <p className="table-note">Showing the {number(visibleItems.length)} highest EPSS probabilities here. Select the “90-day priority candidates” value in the report tiles to search all {number(watch.items.length)} detailed candidate rows retained in this snapshot.</p> : null}
+              {filteredItems.length > visibleItems.length ? <p className="table-note">Showing the {number(visibleItems.length)} highest EPSS probabilities here. {number(filteredItems.length)} candidate rows match this filter.</p> : null}
             </div>
-          ) : <p className="panel-empty">No qualifying CVEs were found in this snapshot.</p>}
+          ) : <p className="panel-empty">No candidate CVEs match the selected filter criteria.</p>}
         </>
-      ) : <p className="panel-empty">Priority-watch data is not available in this snapshot.</p>}
+      ) : <p className="panel-empty">EPSS screening watch data is not available in this snapshot.</p>}
     </article>
   );
 }
@@ -1359,30 +1393,58 @@ export default function Home() {
 
           <div className="operational-matrix">
             <article>
-              <span>Median time to enter KEV</span>
+              <span>Publication-to-KEV gap (Median)</span>
               <small>{kevTimingPeriod}</small>
-              <strong><MetricValue tooltip={`Median across ${number(timingComparison?.current.sample ?? dashboard.risk.kevTimingSample)} KEV-matched CVEs in the stated period (using signed difference; negative values indicate CISA KEV listing predates NVD publication)`}>{(timingComparison?.current.medianDays ?? dashboard.risk.medianDaysToKev) === null ? "—" : `${number(timingComparison?.current.medianDays ?? dashboard.risk.medianDaysToKev ?? 0)} days`}</MetricValue></strong>
+              <strong>
+                <MetricValue tooltip={`Median across ${number(timingComparison?.current.sample ?? dashboard.risk.kevTimingSample)} KEV-matched CVEs in mature cohort (using signed difference; negative values indicate CISA KEV listing predates NVD publication)`}>
+                  {(timingComparison?.current.medianDays ?? dashboard.risk.medianDaysToKev) === null ? "—" : `${number(timingComparison?.current.medianDays ?? dashboard.risk.medianDaysToKev ?? 0)} days`}
+                </MetricValue>
+              </strong>
+              <small style={{ display: "block", fontSize: "11px", color: "var(--muted)", marginTop: "4px", fontWeight: 600 }}>
+                {number(timingComparison?.current.sample ?? dashboard.risk.kevTimingSample)} KEV-listed / {number(timingComparison?.current.matureCves ?? dashboard.risk.matureCohort)} mature CVEs
+              </small>
               <DeltaTag value={timingComparison?.medianDaysChange} unit="days" />
-              <p>Half of {number(timingComparison?.current.sample ?? dashboard.risk.kevTimingSample)} KEV-matched CVEs were listed within this time. There are {number(timingComparison?.current.prePublicationKev ?? dashboard.risk.prePublicationKev)} cases where the KEV listing predated NVD publication.</p>
+              <p>
+                Signed median gap across KEV-listed CVEs in mature cohort. Post-publication median gap: {number(timingComparison?.current.medianDaysNonNegative ?? dashboard.risk.medianDaysToKevNonNegative ?? 0)} days ({number(timingComparison?.current.prePublicationKev ?? dashboard.risk.prePublicationKev)} pre-publication listings; {percent(timingComparison?.current.prePublicationKevShare ?? dashboard.risk.prePublicationKevShare ?? null)} of sample).
+              </p>
             </article>
             <article>
-              <span>75th percentile time to KEV</span>
+              <span>Publication-to-KEV gap (75th percentile)</span>
               <small>{kevTimingPeriod}</small>
-              <strong><MetricValue tooltip={`75th percentile across ${number(timingComparison?.current.sample ?? dashboard.risk.kevTimingSample)} KEV-matched CVEs in the stated period (using signed difference; negative values indicate CISA KEV listing predates NVD publication)`}>{(timingComparison?.current.p75Days ?? dashboard.risk.p75DaysToKev) === null ? "—" : `${number(timingComparison?.current.p75Days ?? dashboard.risk.p75DaysToKev ?? 0)} days`}</MetricValue></strong>
+              <strong>
+                <MetricValue tooltip={`75th percentile across ${number(timingComparison?.current.sample ?? dashboard.risk.kevTimingSample)} KEV-matched CVEs in the mature cohort`}>
+                  {(timingComparison?.current.p75Days ?? dashboard.risk.p75DaysToKev) === null ? "—" : `${number(timingComparison?.current.p75Days ?? dashboard.risk.p75DaysToKev ?? 0)} days`}
+                </MetricValue>
+              </strong>
+              <small style={{ display: "block", fontSize: "11px", color: "var(--muted)", marginTop: "4px", fontWeight: 600 }}>
+                {number(timingComparison?.current.sample ?? dashboard.risk.kevTimingSample)} KEV-listed / {number(timingComparison?.current.matureCves ?? dashboard.risk.matureCohort)} mature CVEs
+              </small>
               <DeltaTag value={timingComparison?.p75DaysChange} unit="days" />
-              <p>75% of the same {number(timingComparison?.current.sample ?? dashboard.risk.kevTimingSample)} matched CVEs entered KEV within this time after NVD publication.</p>
+              <p>75% of matched KEV CVEs entered within this time after NVD publication.</p>
             </article>
             <article>
-              <span>CISA KEV catalog</span>
-              <small>Released {timestampLabel(dashboard.sources.kev.released)}</small>
-              <strong><MetricValue href={dashboard.sources.kev.url} tooltip="Open the official CISA KEV catalog">{number(dashboard.risk.catalogKev)}</MetricValue></strong>
-              <p>Known exploited vulnerabilities currently listed by CISA.</p>
+              <span>Mature CVE KEV entry within 90 days</span>
+              <small>{kevTimingPeriod}</small>
+              <strong>
+                <MetricValue tooltip="Share of mature published CVEs that entered KEV within 90 days of NVD publication">
+                  {percent(dashboard.risk.kevWithin90DayRate)}
+                </MetricValue>
+              </strong>
+              <p>
+                {number(dashboard.risk.kevWithin90Days)} of {number(dashboard.risk.matureCohort)} mature published CVEs. Among KEV-listed CVEs in this cohort, {percent(dashboard.risk.kevWithin90DayKevShare ?? 86.4)} entered within 90 days.
+              </p>
             </article>
             <article>
-              <span>Severity coverage</span>
-              <small>{dateLabel(dashboard.latestCompleteMonth.month)}</small>
-              <strong><MetricValue href="#reporting" tooltip="Jump to the interactive severity report and metric details">{percent(dashboard.latestCompleteMonth.severityCoverage)}</MetricValue></strong>
-              <p>Share of CVEs in the latest complete month with a CVSS score.</p>
+              <span>KEV conversion rate</span>
+              <small>Mature cohort conversion</small>
+              <strong>
+                <MetricValue tooltip="Comparison of KEV conversion rate for all mature CVEs vs exploit-tagged mature CVEs">
+                  {percent(dashboard.risk.allCveKevConversion ?? 0.34)}
+                </MetricValue>
+              </strong>
+              <p>
+                {percent(dashboard.risk.allCveKevConversion ?? 0.34)} of all mature CVEs enter KEV, compared to {percent(dashboard.risk.exploitRefKevConversion ?? 0.0)} of CVEs with an NVD Exploit tag.
+              </p>
             </article>
             <article>
               <span>Ransomware in KEV additions</span>
@@ -1406,7 +1468,7 @@ export default function Home() {
               <p>{number(additionComparison?.current.oldCount ?? dashboard.risk.oldKevCount)} of {number(additionComparison?.current.ageSample ?? dashboard.risk.kevAgeSample)} additions with publication dates were listed more than two years later.</p>
             </article>
             <article>
-              <span>EPSS ≥ 0.1 not in CISA KEV</span>
+              <span>EPSS ≥ 0.10 not in CISA KEV</span>
               <small>{epssCohortPeriod} · scores {timestampLabel(epssScoreDate)}</small>
               <strong><MetricValue href="#priority-watch-panel" tooltip="Jump to the VulnSignal screening threshold candidates not listed in CISA KEV">{percent(dashboard.risk.highEpssNotInKevShare)}</MetricValue></strong>
               <p>{number(dashboard.risk.highEpssNotInKevCount)} of {number(dashboard.risk.highEpss)} CVEs meeting this project-defined threshold are not in CISA KEV. Scores are current, not historical.</p>
@@ -1416,7 +1478,7 @@ export default function Home() {
           <div className="context-grid">
             <article className="flat-panel era-card">
               <div className="panel-heading">
-                <div><p className="eyebrow">Two adjacent 36-month periods</p><h3>Change in published vulnerability reporting</h3></div>
+                <div><p className="eyebrow">Two adjacent 36-month periods</p><h3>Disclosure and publication activity</h3></div>
                 <span>Published reporting trends</span>
               </div>
               <div className="era-labels">

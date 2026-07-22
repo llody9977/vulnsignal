@@ -601,8 +601,8 @@ function IndicatorDrilldown({
     <>
       <div className="indicator-drilldown__intro">
         <p className="eyebrow">Current snapshot / independent of report filters</p>
-        <h2 id="indicator-drilldown-title">90-day priority candidates</h2>
-        <p>Current EPSS ≥ {priorityWatch?.window.threshold ?? 0.1}, published in the previous {priorityWatch?.window.days ?? 90} days and absent from the downloaded CISA KEV catalogue. This is a review queue, not proof of exploitability or a complete patch order.</p>
+        <h2 id="indicator-drilldown-title">90-day EPSS screening watch</h2>
+        <p>Current EPSS ≥ {priorityWatch?.window.threshold ?? 0.1}, published in the previous {priorityWatch?.window.days ?? 90} days and absent from the downloaded CISA KEV catalogue. This is an analytical screening list based on project thresholds, NOT a recommended remediation queue or patch priority order.</p>
       </div>
       <DrilldownFacts items={[
         { label: "Candidates", value: number(priorityWatch?.total ?? 0), detail: priorityWatch ? `${shortDateLabel(priorityWatch.window.start)}–${shortDateLabel(priorityWatch.window.end)}` : undefined },
@@ -626,7 +626,7 @@ function IndicatorDrilldown({
       </div>
       {filteredPriority.length ? (
         <DrilldownTable
-          caption="Current 90-day priority candidates sorted by EPSS probability"
+          caption="Current 90-day EPSS screening watch candidates sorted by EPSS probability"
           headers={["CVE", "Published", "Severity", "EPSS", "Exploit reference"]}
           rows={filteredPriority.map((item) => ({
             key: item.cveId,
@@ -1444,7 +1444,7 @@ export function TrendExplorer({
         />
         <MetricCell
           metric="priorityWatch"
-          label="90-day priority candidates"
+          label="90-day EPSS screening watch"
           value={priorityWatch ? number(priorityWatch.total) : "—"}
           detail={priorityWatch
             ? `${number(priorityWatch.criticalHigh)} are critical or high; published ${shortDateLabel(priorityWatch.window.start)}–${shortDateLabel(priorityWatch.window.end)}`
