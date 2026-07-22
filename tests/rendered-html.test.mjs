@@ -26,12 +26,12 @@ test("static export renders the VulnSignal intelligence dashboard", async () => 
   assert.match(html, /Confirmed exploitation · CISA KEV/);
   assert.doesNotMatch(html, /Confirmed exploitation · latest catalog date/);
   assert.match(html, /Critical \+ high share/);
-  assert.match(html, /Change in published vulnerability reporting/);
+  assert.match(html, /Disclosure and publication activity/);
   assert.match(html, /does not measure an LLM discovery rate/);
-  assert.match(html, /Median time to enter KEV/);
-  assert.match(html, /75th percentile time to KEV/);
+  assert.match(html, /Publication-to-KEV gap \(Median\)/);
+  assert.match(html, /Publication-to-KEV gap \(75th percentile\)/);
   assert.match(html, /KEV deadlines within 7 days/);
-  assert.match(html, /90-day priority candidates/);
+  assert.match(html, /90-day EPSS screening watch/);
   assert.doesNotMatch(html, /View breakdown/);
   assert.equal((html.match(/indicator-cell__value-link/g) ?? []).length, 6);
   assert.equal((html.match(/aria-haspopup="dialog"/g) ?? []).length, 6);
@@ -41,7 +41,7 @@ test("static export renders the VulnSignal intelligence dashboard", async () => 
   assert.match(html, /href="#priority-watch-table"/);
   assert.match(html, /id="indicator-drilldown"/);
   assert.match(html, /aria-labelledby="indicator-drilldown-title"/);
-  assert.match(html, /VulnSignal screening threshold CVEs not in CISA KEV/);
+  assert.match(html, /VulnSignal screening candidates not in CISA KEV/);
   assert.match(html, /Exploit reference<\/th>/);
   assert.match(html, /NVD-tagged exploit reference/);
   assert.match(html, /No NVD exploit tag in this snapshot/);
