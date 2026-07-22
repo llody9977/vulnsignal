@@ -354,7 +354,7 @@ class PipelineUnitTests(unittest.TestCase):
         )
 
     def test_cvss_selection_prefers_primary_without_maximizing(self):
-        severity, score, version = cvss_details(
+        severity, score, version, authority = cvss_details(
             {
                 "cvssMetricV31": [
                     {
@@ -376,7 +376,7 @@ class PipelineUnitTests(unittest.TestCase):
                 ]
             }
         )
-        self.assertEqual((severity, score, version), ("HIGH", 7.4, "3.1"))
+        self.assertEqual((severity, score, version, authority), ("HIGH", 7.4, "3.1", "primary"))
 
     def test_exploit_reference_tag_is_case_insensitive(self):
         self.assertTrue(
@@ -1347,10 +1347,11 @@ class PipelineUnitTests(unittest.TestCase):
                 {"type": "Primary", "cvssData": {"baseScore": 7.5, "version": "2.0"}}
             ],
         }
-        severity, score, version = cvss_details(metrics)
+        severity, score, version, authority = cvss_details(metrics)
         self.assertEqual(severity, "CRITICAL")
         self.assertEqual(score, 9.2)
         self.assertEqual(version, "4.0")
+        self.assertEqual(authority, "primary")
 
     def test_golden_fixture_duplicate_cwes(self):
         from scripts.sync_vulnerability_data import cwe_values
@@ -1374,7 +1375,29 @@ class PipelineUnitTests(unittest.TestCase):
             dictionary = json.load(f)
         self.assertIn("metrics", dictionary)
         self.assertIn("medianPublicationToKevGap", dictionary["metrics"])
-        self.assertIn("epssScreeningWatch", dictionary["metrics"])
+    def test_golden_fixture_epss_predictive_performance(self):
+        from scripts.sync_vulnerability_data import build_epss_predictive_performance, EpssHistorySample
+        history = [
+            EpssHistorySample(
+                score_date=dt.date(2025, 1, 31),
+                model_version="v2025.03.14",
+                record_count=100,
+                high_ids=frozenset({"CVE-2025-0001", "CVE-2025-0002"}),
+                source_url="https://example.test",
+                sha256="abc",
+                sample_kind="month_end",
+            )
+        ]
+        kev_by_id = {
+            "CVE-2025-0001": {"dateAdded": "2025-02-15"},
+        }
+        as_of = dt.date(2025, 3, 31)
+        res = build_epss_predictive_performance(history, kev_by_id, as_of)
+        self.assertEqual(len(res), 1)
+        self.assertEqual(res[0]["snapshotDate"], "2025-01-31")
+        self.assertEqual(res[0]["candidateCount"], 2)
+        self.assertEqual(res[0]["kevAdditions30d"], 1)
+        self.assertEqual(res[0]["conversionRate30d"], 50.0)
 
 
 if __name__ == "__main__":

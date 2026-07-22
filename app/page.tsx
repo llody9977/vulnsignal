@@ -84,11 +84,24 @@ type EpssHistoryPoint = {
   sha256: string;
 };
 
+type EpssPredictivePerformanceRecord = {
+  snapshotDate: string;
+  modelVersion: string;
+  candidateCount: number;
+  kevAdditions30d: number;
+  conversionRate30d: number;
+  kevAdditions60d: number;
+  conversionRate60d: number;
+  kevAdditions90d: number;
+  conversionRate90d: number;
+};
+
 type EpssHistory = {
   threshold: number;
   semantics: string;
   modelBoundaryPolicy: string;
   points: EpssHistoryPoint[];
+  predictivePerformance?: EpssPredictivePerformanceRecord[];
 };
 
 type ComparisonWindow = {
@@ -628,7 +641,7 @@ function PriorityWatchPanel({ watch }: { watch?: PriorityWatch }) {
           </div>
 
           <p className="priority-watch__note">
-            Published {dateLabel(watch.window.start, true)}–{dateLabel(watch.window.end, true)}. EPSS ≥ 0.10 is a project-defined screening threshold (~top 2.1% of scored CVEs). Not appearing in CISA KEV does not prove that exploitation has not occurred. This list is a focused screening tool, NOT a recommended remediation queue or patch priority list. “Yes” under exploit reference means NVD has at least one reference tagged <code>Exploit</code>; “No” means that tag is absent in this snapshot.
+            Published {dateLabel(watch.window.start, true)}–{dateLabel(watch.window.end, true)}. EPSS ≥ 0.10 is a project-defined screening threshold (~top 2.1% of scored CVEs). Not appearing in CISA KEV does not prove that exploitation has not occurred. This list is a focused screening tool, not a recommended remediation queue or patch priority list. “Yes” under exploit reference means NVD has at least one reference tagged <code>Exploit</code>; “No” means that tag is absent in this snapshot.
           </p>
           {visibleItems.length ? (
             <div className="priority-table-wrap" id="priority-watch-table">
@@ -718,6 +731,32 @@ function EpssHistoryPanel({ history }: { history?: EpssHistory }) {
           <div className="epss-models"><span>Model versions</span>{models.map((model) => <em key={model}>{model}</em>)}</div>
           <a className="panel-source-link" href={points.at(-1)?.sourceUrl}>View latest historical source ↗</a>
           <p className="panel-note">Each point comes from its dated official EPSS snapshot. Dashed markers show model changes and lines stop at those boundaries; current scores are not applied backwards.</p>
+          {history?.predictivePerformance && history.predictivePerformance.length > 0 ? (
+            <div className="predictive-performance-panel" style={{ marginTop: "16px", paddingTop: "12px", borderTop: "1px solid var(--border)" }}>
+              <p className="eyebrow" style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--muted)", marginBottom: "4px" }}>
+                Historical score validation
+              </p>
+              <h4 style={{ fontSize: "13px", fontWeight: 600, margin: "0 0 4px 0" }}>
+                Historical EPSS KEV-entry predictive performance
+              </h4>
+              <p style={{ fontSize: "11px", color: "var(--muted)", margin: "0 0 8px 0" }}>
+                Subsequent CISA KEV entry rate for candidates with EPSS ≥ 0.10 at historical snapshot date.
+              </p>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: "8px" }}>
+                {history.predictivePerformance.slice(-4).map((item) => (
+                  <div key={item.snapshotDate} style={{ background: "var(--surface-muted, rgba(255,255,255,0.03))", padding: "8px", borderRadius: "6px", border: "1px solid var(--border)" }}>
+                    <span style={{ display: "block", fontSize: "11px", fontWeight: 600 }}>{shortDateLabel(item.snapshotDate)}</span>
+                    <span style={{ display: "block", fontSize: "10px", color: "var(--muted)" }}>{number(item.candidateCount)} candidates</span>
+                    <div style={{ marginTop: "4px", fontSize: "10px" }}>
+                      <div>30d: <strong>{item.conversionRate30d}%</strong> ({item.kevAdditions30d})</div>
+                      <div>60d: <strong>{item.conversionRate60d}%</strong> ({item.kevAdditions60d})</div>
+                      <div>90d: <strong>{item.conversionRate90d}%</strong> ({item.kevAdditions90d})</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </>
       ) : <p className="panel-empty">Historical EPSS samples are not available in this snapshot.</p>}
     </article>

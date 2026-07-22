@@ -111,7 +111,27 @@
       "dateSemantics": "CVE published in latest 90 days; EPSS current snapshot date",
       "censoringPolicy": "Retains every qualifying candidate row; filtered strictly by absence from CISA KEV",
       "sourceFields": ["NVD cve.published", "FIRST EPSS score", "CISA KEV catalog"],
-      "knownBiases": "A project-defined analytical screening list based solely on current EPSS and KEV status; NOT an asset-specific remediation order or patch priority queue."
+      "knownBiases": "A project-defined analytical screening list based solely on current EPSS and KEV status; not an asset-specific remediation order or patch priority queue."
+    },
+    "cvssAuthorityMix": {
+      "name": "CVSS Assessment Authority Composition",
+      "formula": "primaryCount / scoredCVEs and secondaryCount / scoredCVEs",
+      "numerator": "Count of scored CVEs evaluated by Primary (NVD) vs Secondary (CNA/Vendor) assessment authorities",
+      "denominator": "All scored active NVD CVEs",
+      "dateSemantics": "Current NVD JSON 2.0 metrics array type field",
+      "censoringPolicy": "Takes Primary assessment authority first when available; falls back to Secondary when Primary is absent.",
+      "sourceFields": ["NVD cve.metrics cvssMetric type (Primary/Secondary)"],
+      "knownBiases": "Assessor authority distribution reflects CNA assignment policies rather than intrinsic vulnerability severity."
+    },
+    "epssPredictivePerformance": {
+      "name": "Historical EPSS KEV-Entry Predictive Performance",
+      "formula": "count(cve in candidate_cohort and 0 < (cisa_kev.dateAdded - snapshot_date).days <= 30|60|90) / candidate_cohort_count",
+      "numerator": "Count of CVEs exceeding historical EPSS threshold that subsequently entered CISA KEV within 30, 60, or 90 days",
+      "denominator": "Historical EPSS candidate cohort (CVEs with EPSS >= 0.10 not yet in KEV at snapshot date)",
+      "dateSemantics": "Dated historical EPSS snapshot date and CISA KEV dateAdded",
+      "censoringPolicy": "Evaluated on historical score snapshots at least 30/60/90 days old to avoid right-censoring.",
+      "sourceFields": ["Historical FIRST EPSS snapshot files", "CISA KEV dateAdded"],
+      "knownBiases": "Measures historical prediction of CISA KEV listing, not exhaustive wild exploitation prediction."
     }
   }
 }

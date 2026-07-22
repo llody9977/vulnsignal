@@ -71,4 +71,19 @@ This document defines the formal metrics, formulas, numerators, denominators, da
 * **Numerator**: CVEs meeting screening criteria.
 * **Denominator**: N/A (full list retained for tile inspection).
 * **Date Semantics**: CVE published in latest 90 days; EPSS current snapshot date.
-* **Known Biases**: A project-defined analytical screening list based solely on current EPSS and KEV status; **NOT** an asset-specific remediation order or patch priority queue.
+* **Known Biases**: A project-defined analytical screening list based solely on current EPSS and KEV status; not an asset-specific remediation order or patch priority queue.
+
+### 10. CVSS Assessment Authority Composition (`cvssAuthorityMix`)
+* **Formula**: `primaryCount / scoredCVEs` and `secondaryCount / scoredCVEs`
+* **Numerator**: Count of scored CVEs evaluated by Primary (NVD) vs Secondary (CNA/Vendor) assessment authorities.
+* **Denominator**: All scored active NVD CVEs.
+* **Date Semantics**: NVD JSON 2.0 metrics array type field.
+* **Known Biases**: Assessor authority distribution reflects CNA assignment policies rather than intrinsic vulnerability severity.
+
+### 11. Historical EPSS KEV-Entry Predictive Performance (`epssPredictivePerformance`)
+* **Formula**: `count(cve in candidate_cohort and 0 < (cisa_kev.dateAdded - snapshot_date).days <= 30|60|90) / candidate_cohort_count`
+* **Numerator**: Count of CVEs exceeding historical EPSS threshold that subsequently entered CISA KEV within 30, 60, or 90 days.
+* **Denominator**: Historical EPSS candidate cohort (CVEs with EPSS &ge; 0.10 not yet in KEV at snapshot date).
+* **Date Semantics**: Dated historical EPSS snapshot date and CISA KEV `dateAdded`.
+* **Known Biases**: Evaluated on historical score snapshots at least 30/60/90 days old to avoid right-censoring.
+

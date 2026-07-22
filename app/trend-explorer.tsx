@@ -602,7 +602,7 @@ function IndicatorDrilldown({
       <div className="indicator-drilldown__intro">
         <p className="eyebrow">Current snapshot / independent of report filters</p>
         <h2 id="indicator-drilldown-title">90-day EPSS screening watch</h2>
-        <p>Current EPSS ≥ {priorityWatch?.window.threshold ?? 0.1}, published in the previous {priorityWatch?.window.days ?? 90} days and absent from the downloaded CISA KEV catalogue. This is an analytical screening list based on project thresholds, NOT a recommended remediation queue or patch priority order.</p>
+        <p>Current EPSS ≥ {priorityWatch?.window.threshold ?? 0.1}, published in the previous {priorityWatch?.window.days ?? 90} days and absent from the downloaded CISA KEV catalogue. This is an analytical screening list based on project thresholds, not a recommended remediation queue or patch priority order.</p>
       </div>
       <DrilldownFacts items={[
         { label: "Candidates", value: number(priorityWatch?.total ?? 0), detail: priorityWatch ? `${shortDateLabel(priorityWatch.window.start)}–${shortDateLabel(priorityWatch.window.end)}` : undefined },
