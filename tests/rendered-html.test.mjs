@@ -120,7 +120,7 @@ test("project metadata and generated dataset are repo-ready", async () => {
   assert.match(packageJson.author, /llody9977/);
   assert.ok(packageJson.scripts["data:sync"]);
   assert.ok(packageJson.scripts["build:pages"]);
-  assert.equal(dataset.schemaVersion, 1);
+  assert.equal(dataset.schemaVersion, 2);
   assert.match(dataset.snapshot.id, /^VS-\d{8}-\d{4}Z$/);
   assert.equal(dataset.snapshot.generatedAt, dataset.generatedAt);
   assert.equal(dataset.snapshot.inputCount, dataset.snapshot.inputs.length);
