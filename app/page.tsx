@@ -644,7 +644,7 @@ function PriorityWatchPanel({ watch, topPercentText }: { watch?: PriorityWatch; 
           <div className="priority-watch__summary">
             <div><span>Candidates</span><strong><MetricValue href="#priority-watch-table" tooltip="Jump to the highest-probability candidate records">{number(watch.total)}</MetricValue></strong></div>
             <div><span>Critical or high</span><strong><MetricValue href="#priority-watch-table" tooltip="Jump to candidate severity and EPSS details">{number(watch.criticalHigh)}</MetricValue></strong></div>
-            <div><span>NVD reference tagged "Exploit"</span><strong><MetricValue href="#priority-watch-table" tooltip="Jump to candidate exploit-reference details">{number(watch.publicExploitReferences)}</MetricValue></strong></div>
+            <div><span>NVD reference tagged &quot;Exploit&quot;</span><strong><MetricValue href="#priority-watch-table" tooltip="Jump to candidate exploit-reference details">{number(watch.publicExploitReferences)}</MetricValue></strong></div>
           </div>
 
           <div className="metric-select-tabs" style={{ marginTop: "12px", marginBottom: "8px" }}>
@@ -661,7 +661,7 @@ function PriorityWatchPanel({ watch, topPercentText }: { watch?: PriorityWatch; 
             <div className="priority-table-wrap" id="priority-watch-table">
               <table className="priority-table">
                 <caption>Showing highest EPSS probabilities among {number(filteredItems.length)} candidates matching filter criteria</caption>
-                <thead><tr><th>Vulnerability</th><th>Published</th><th>Severity</th><th>EPSS probability</th><th>NVD reference tagged "Exploit"</th></tr></thead>
+                <thead><tr><th>Vulnerability</th><th>Published</th><th>Severity</th><th>EPSS probability</th><th>NVD reference tagged &quot;Exploit&quot;</th></tr></thead>
                 <tbody>
                   {visibleItems.map((item) => (
                     <tr key={item.cveId}>
