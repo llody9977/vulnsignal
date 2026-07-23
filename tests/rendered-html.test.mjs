@@ -42,7 +42,7 @@ test("static export renders the VulnSignal intelligence dashboard", async () => 
   assert.match(html, /id="indicator-drilldown"/);
   assert.match(html, /aria-labelledby="indicator-drilldown-title"/);
   assert.match(html, /VulnSignal screening candidates not in CISA KEV/);
-  assert.match(html, /Exploit reference<\/th>/);
+  assert.match(html, /NVD reference tagged.*Exploit.*<\/th>/);
   assert.match(html, /NVD-tagged exploit reference/);
   assert.match(html, /No NVD exploit tag in this snapshot/);
   assert.match(html, /EPSS threshold history/);

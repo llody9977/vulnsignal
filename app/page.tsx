@@ -616,7 +616,7 @@ function WhatChanged({
   );
 }
 
-function PriorityWatchPanel({ watch }: { watch?: PriorityWatch }) {
+function PriorityWatchPanel({ watch, topPercentText }: { watch?: PriorityWatch; topPercentText?: string }) {
   const [filterMode, setFilterMode] = useState<"all" | "top5" | "top1" | "criticalHigh">("all");
   
   const filteredItems = useMemo(() => {
@@ -644,7 +644,7 @@ function PriorityWatchPanel({ watch }: { watch?: PriorityWatch }) {
           <div className="priority-watch__summary">
             <div><span>Candidates</span><strong><MetricValue href="#priority-watch-table" tooltip="Jump to the highest-probability candidate records">{number(watch.total)}</MetricValue></strong></div>
             <div><span>Critical or high</span><strong><MetricValue href="#priority-watch-table" tooltip="Jump to candidate severity and EPSS details">{number(watch.criticalHigh)}</MetricValue></strong></div>
-            <div><span>Exploit reference</span><strong><MetricValue href="#priority-watch-table" tooltip="Jump to candidate exploit-reference details">{number(watch.publicExploitReferences)}</MetricValue></strong></div>
+            <div><span>NVD reference tagged "Exploit"</span><strong><MetricValue href="#priority-watch-table" tooltip="Jump to candidate exploit-reference details">{number(watch.publicExploitReferences)}</MetricValue></strong></div>
           </div>
 
           <div className="metric-select-tabs" style={{ marginTop: "12px", marginBottom: "8px" }}>
@@ -655,13 +655,13 @@ function PriorityWatchPanel({ watch }: { watch?: PriorityWatch }) {
           </div>
 
           <p className="priority-watch__note">
-            Published {dateLabel(watch.window.start, true)}–{dateLabel(watch.window.end, true)}. EPSS ≥ 0.10 is a project-defined screening threshold (~top 2.1% of scored CVEs). Not appearing in CISA KEV does not prove that exploitation has not occurred. This list is a focused screening tool, not a recommended remediation queue or patch priority list. “Yes” under exploit reference means NVD has at least one reference tagged <code>Exploit</code>; “No” means that tag is absent in this snapshot.
+            Published {dateLabel(watch.window.start, true)}–{dateLabel(watch.window.end, true)}. EPSS ≥ 0.10 is a project-defined screening threshold ({topPercentText || "approximately the top 4.9%"} of scored CVEs). Not appearing in CISA KEV does not prove that exploitation has not occurred. This list is a focused screening tool, not a recommended remediation queue or patch priority list. “Yes” under exploit reference means NVD has at least one reference tagged <code>Exploit</code>; “No” means that tag is absent in this snapshot.
           </p>
           {visibleItems.length ? (
             <div className="priority-table-wrap" id="priority-watch-table">
               <table className="priority-table">
                 <caption>Showing highest EPSS probabilities among {number(filteredItems.length)} candidates matching filter criteria</caption>
-                <thead><tr><th>Vulnerability</th><th>Published</th><th>Severity</th><th>EPSS probability</th><th>Exploit reference</th></tr></thead>
+                <thead><tr><th>Vulnerability</th><th>Published</th><th>Severity</th><th>EPSS probability</th><th>NVD reference tagged "Exploit"</th></tr></thead>
                 <tbody>
                   {visibleItems.map((item) => (
                     <tr key={item.cveId}>
@@ -669,7 +669,7 @@ function PriorityWatchPanel({ watch }: { watch?: PriorityWatch }) {
                       <td data-label="Published"><strong>{dateLabel(item.published, true)}</strong><span>{ageLabel(item.published, watch.window.scoreDate)}</span></td>
                       <td data-label="Severity"><span className={`severity-badge severity-badge--${item.severity.toLowerCase()}`}>{item.severity === "UNKNOWN" ? "Unscored" : `${item.severity}${item.score === null ? "" : ` ${item.score}`}`}</span>{item.cvssVersion ? <small>CVSS {item.cvssVersion}</small> : null}</td>
                       <td data-label="EPSS probability"><strong>{probability(item.epss)}</strong><span>{percentileLabel(item.epssPercentile)}</span></td>
-                      <td data-label="Exploit reference">
+                      <td data-label="NVD reference tagged 'Exploit'">
                         {item.publicExploitReference ? (
                           <a
                             href={`https://nvd.nist.gov/vuln/detail/${item.cveId}#vulnHyperlinksSection`}
@@ -748,7 +748,7 @@ function EpssHistoryPanel({ history }: { history?: EpssHistory }) {
           {history?.predictivePerformance && history.predictivePerformance.length > 0 ? (
             <div className="predictive-performance-panel" style={{ marginTop: "16px", paddingTop: "12px", borderTop: "1px solid var(--border)" }}>
               <p className="eyebrow" style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--muted)", marginBottom: "4px" }}>
-                Historical score validation
+                Association between historical EPSS scores and later KEV listing
               </p>
               <h4 style={{ fontSize: "13px", fontWeight: 600, margin: "0 0 4px 0" }}>
                 Historical EPSS ≥ 0.10 subsequent KEV-entry rate
@@ -1327,7 +1327,7 @@ export default function Home() {
   const thresholdPercentile = dashboard.sources.epss?.thresholdPercentile;
   const topPercentText = thresholdPercentile !== undefined && thresholdPercentile !== null
     ? `approximately the top ${((1 - thresholdPercentile) * 100).toFixed(1)}%`
-    : "approximately the top 2.1%";
+    : "approximately the top 4.9%";
 
   const maxCwe = Math.max(
     ...dashboard.topCwes.map((item) => item.recentShare ?? item.count),
@@ -1442,7 +1442,7 @@ export default function Home() {
           </div>
 
           <div className="priority-history-grid">
-            <PriorityWatchPanel watch={dashboard.priorityWatch} />
+            <PriorityWatchPanel watch={dashboard.priorityWatch} topPercentText={topPercentText} />
             <EpssHistoryPanel history={dashboard.epssHistory} />
           </div>
 
