@@ -19,12 +19,12 @@
       "numerator": "Published CVEs assigned a specific CVSS base severity band (CRITICAL, HIGH, MEDIUM, LOW)",
       "denominator": "All CVSS-scored published CVEs in window",
       "dateSemantics": "NVD publication date",
-      "censoringPolicy": "Prefers primary assessment over secondary; selects v4.0 -> v3.1 -> v3.0 -> v2. Scores of 0.0 are assigned to NONE; records without CVSS remain UNKNOWN/Unscored.",
+      "censoringPolicy": "Prefers primary assessment over secondary; selects v4.0 -> v3.1 -> v3.0 -> v2. Scores of 0.0 under CVSS v3/v4 are assigned to NONE, while under CVSS v2 0.0 maps to LOW; records without CVSS remain UNKNOWN/Unscored.",
       "sourceFields": ["NVD metrics.cvssMetricV40", "metrics.cvssMetricV31", "metrics.cvssMetricV30", "metrics.cvssMetricV2"],
       "knownBiases": "Different CVSS versions (v2 vs v3 vs v4) use different baseline distributions and are not directly comparable."
     },
     "publicExploitShare": {
-      "name": "Public Exploit Reference Share",
+      "name": "NVD Reference Tagged 'Exploit' Share",
       "formula": "count(mature_published_cves where has_exploit_reference_tag) / count(mature_published_cves)",
       "numerator": "CVEs with at least one NVD reference tagged with type 'Exploit'",
       "denominator": "Mature published CVEs (published <= snapshot_date - 180 days)",
@@ -101,7 +101,7 @@
       "dateSemantics": "NVD publication date for cohort; current FIRST EPSS snapshot score date",
       "censoringPolicy": "Uses current score snapshot applied across publication cohorts; not historical EPSS scores.",
       "sourceFields": ["FIRST EPSS probability", "CISA KEV cveID"],
-      "knownBiases": "EPSS >= 0.10 is a project-defined screening threshold (dynamically ~top 2.1% of scored CVEs), not an official severity band."
+      "knownBiases": "EPSS >= 0.10 is a project-defined screening threshold (dynamically calculated relative percentile, e.g. ~top 4.9% of scored CVEs), not an official severity band."
     },
     "epssScreeningWatch": {
       "name": "EPSS Screening Watch",

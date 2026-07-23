@@ -19,10 +19,10 @@ This document defines the formal metrics, formulas, numerators, denominators, da
 * **Numerator**: Published CVEs assigned a specific CVSS base severity band (`CRITICAL`, `HIGH`, `MEDIUM`, `LOW`).
 * **Denominator**: All CVSS-scored published CVEs in window.
 * **Date Semantics**: NVD publication date.
-* **Censoring Policy**: Prefers primary assessment over secondary; hierarchy: `v4.0` &rarr; `v3.1` &rarr; `v3.0` &rarr; `v2`. Scores of `0.0` are assigned to `NONE`; records without CVSS remain `UNKNOWN`/Unscored.
+* **Censoring Policy**: Prefers primary assessment over secondary; hierarchy: `v4.0` &rarr; `v3.1` &rarr; `v3.0` &rarr; `v2`. Scores of `0.0` under CVSS v3/v4 map to `NONE`, while under CVSS v2 `0.0` maps to `LOW`; records without CVSS remain `UNKNOWN`/Unscored.
 * **Known Biases**: Different CVSS versions use different baseline distributions and are not directly comparable.
 
-### 3. Public Exploit Reference Share (`publicExploitShare`)
+### 3. NVD Reference Tagged "Exploit" Share (`publicExploitShare`)
 * **Formula**: `count(mature_published_cves with Exploit tag) / count(mature_published_cves)`
 * **Numerator**: CVEs with at least one NVD reference tagged with type `Exploit`.
 * **Denominator**: Mature published CVEs (`published <= snapshot_date - 180 days`).

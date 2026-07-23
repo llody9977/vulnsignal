@@ -1407,5 +1407,39 @@ class PipelineUnitTests(unittest.TestCase):
         self.assertIsNone(res[0]["conversionRate90d"])
 
 
+    def test_cvss_v2_version_aware_severity_fallback(self):
+        from scripts.sync_vulnerability_data import cvss_details
+        v2_metrics = {
+            "cvssMetricV2": [
+                {
+                    "type": "Primary",
+                    "cvssData": {
+                        "version": "2.0",
+                        "baseScore": 0.0,
+                    }
+                }
+            ]
+        }
+        severity, score, version, authority = cvss_details(v2_metrics)
+        self.assertEqual(severity, "LOW")
+        self.assertEqual(score, 0.0)
+
+        v3_metrics = {
+            "cvssMetricV31": [
+                {
+                    "type": "Primary",
+                    "cvssData": {
+                        "version": "3.1",
+                        "baseScore": 0.0,
+                    }
+                }
+            ]
+        }
+        severity_v3, score_v3, version_v3, authority_v3 = cvss_details(v3_metrics)
+        self.assertEqual(severity_v3, "NONE")
+        self.assertEqual(score_v3, 0.0)
+
+
 if __name__ == "__main__":
     unittest.main()
+
