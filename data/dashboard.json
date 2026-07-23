@@ -1,9 +1,9 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-07-23T00:24:27Z",
+  "generatedAt": "2026-07-23T00:39:52Z",
   "snapshot": {
-    "id": "VS-20260723-0024Z",
-    "generatedAt": "2026-07-23T00:24:27Z",
+    "id": "VS-20260723-0039Z",
+    "generatedAt": "2026-07-23T00:39:52Z",
     "inputCount": 43,
     "inputFingerprintSha256": "05a950aab7324bfecbf4d9a48e6a63dcf27236ca0b82b5fda45f7cfb8e045e7f",
     "inputs": [
@@ -1517,11 +1517,11 @@
     ]
   },
   "changeDigest": {
-    "generatedAt": "2026-07-23T00:24:27Z",
+    "generatedAt": "2026-07-23T00:39:52Z",
     "cve": {
       "period": "last_24_hours",
-      "start": "2026-07-22T00:24:27Z",
-      "end": "2026-07-23T00:24:27Z",
+      "start": "2026-07-22T00:39:52Z",
+      "end": "2026-07-23T00:39:52Z",
       "newRecords": 200,
       "updatedRecords": 1247,
       "distinctChanged": 1447
