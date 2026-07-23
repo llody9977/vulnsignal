@@ -73,12 +73,13 @@ This document defines the formal metrics, formulas, numerators, denominators, da
 * **Date Semantics**: CVE published in latest 90 days; EPSS current snapshot date.
 * **Known Biases**: A project-defined analytical screening list based solely on current EPSS and KEV status; not an asset-specific remediation order or patch priority queue.
 
-### 10. CVSS Assessment Authority Composition (`cvssAuthorityMix`)
+### 10. CVSS Assessment-Type Mix (`cvssAssessmentTypeMix`)
 * **Formula**: `primaryCount / scoredCVEs` and `secondaryCount / scoredCVEs`
-* **Numerator**: Count of scored CVEs evaluated by Primary (NVD) vs Secondary (CNA/Vendor) assessment authorities.
+* **Numerator**: Count of scored CVEs classified by NVD as Primary or Secondary assessment types.
 * **Denominator**: All scored active NVD CVEs.
 * **Date Semantics**: NVD JSON 2.0 metrics array type field.
-* **Known Biases**: Assessor authority distribution reflects CNA assignment policies rather than intrinsic vulnerability severity.
+* **Known Biases**: Primary assessments originate from NVD or provider-level CNAs; Secondary assessments originate from other CNAs/vendors.
+
 
 ### 11. Historical EPSS &ge; 0.10 Subsequent KEV-Entry Rate (`epssSubsequentKevEntryRate`)
 * **Formula**: `conversionRate = candidateAdditions / candidateCount`; `baselineRate = totalKevAdditions / baselineCount`; `lift = conversionRate / baselineRate`; `recall = candidateAdditions / totalKevAdditions`

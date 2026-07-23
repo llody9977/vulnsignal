@@ -1707,7 +1707,7 @@ export default function Home() {
           </div>
           <div className="method-grid">
             <article><span>01</span><h3>CVE publication</h3><p>Active NVD records are grouped by publication month; rejected records are excluded.</p></article>
-            <article><span>02</span><h3>Severity</h3><p>Primary CVSS assessments are used where available. A scored 0.0 is shown as “None”; records without a score remain “Unscored”.</p></article>
+            <article><span>02</span><h3>Severity</h3><p>Selects Primary assessments where available (originating from NVD or provider-level CNAs), falling back to Secondary assessments. A scored 0.0 is shown as “None”; records without a score remain “Unscored”.</p></article>
             <article><span>03</span><h3>Exploitation</h3><p>An NVD reference tagged “Exploit” indicates linked public material; it does not prove that the exploit works. Only CISA KEV entries are labelled “Known exploited”.</p></article>
             <article><span>04</span><h3>LLM evidence</h3><p>Report and reveal dates are not discovery dates. Counts from different programmes remain separate because they may overlap.</p></article>
             <article><span>05</span><h3>EPSS probability</h3><p>Current FIRST EPSS scores estimate exploitation probability over the next 30 days. Scores are grouped by CVE publication month; ≥ 0.1 is a project-defined threshold, not an official severity band. In the current snapshot, this threshold dynamically corresponds to {topPercentText} of scored CVEs.</p></article>

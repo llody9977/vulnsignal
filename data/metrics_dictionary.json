@@ -114,14 +114,14 @@
       "knownBiases": "A project-defined analytical screening list based solely on current EPSS and KEV status; not an asset-specific remediation order or patch priority queue."
     },
     "cvssAuthorityMix": {
-      "name": "CVSS Assessment Authority Composition",
+      "name": "CVSS Assessment-Type Mix",
       "formula": "primaryCount / scoredCVEs and secondaryCount / scoredCVEs",
-      "numerator": "Count of scored CVEs evaluated by Primary (NVD) vs Secondary (CNA/Vendor) assessment authorities",
+      "numerator": "Count of scored CVEs classified as Primary or Secondary assessment type",
       "denominator": "All scored active NVD CVEs",
       "dateSemantics": "Current NVD JSON 2.0 metrics array type field",
-      "censoringPolicy": "Takes Primary assessment authority first when available; falls back to Secondary when Primary is absent.",
+      "censoringPolicy": "Takes Primary assessment type first when available; falls back to Secondary when Primary is absent.",
       "sourceFields": ["NVD cve.metrics cvssMetric type (Primary/Secondary)"],
-      "knownBiases": "Assessor authority distribution reflects CNA assignment policies rather than intrinsic vulnerability severity."
+      "knownBiases": "Primary assessments originate from NVD or provider-level CNAs; Secondary assessments originate from other CNAs/vendors."
     },
     "epssSubsequentKevEntryRate": {
       "name": "Historical EPSS >= 0.10 Subsequent KEV-Entry Rate",
