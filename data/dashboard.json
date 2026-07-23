@@ -1,16 +1,16 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-07-23T12:08:14Z",
+  "generatedAt": "2026-07-23T12:09:44Z",
   "snapshot": {
-    "id": "VS-20260723-1208Z",
-    "generatedAt": "2026-07-23T12:08:14Z",
+    "id": "VS-20260723-1209Z",
+    "generatedAt": "2026-07-23T12:09:44Z",
     "inputCount": 43,
-    "inputFingerprintSha256": "a33a6d6f31d87708bc54edef8deb2c5229565e04dfe8115f3702df4a7d428883",
+    "inputFingerprintSha256": "c6b67eeedc030b89e941512a5b50829d9121d91a06abe025cb3eae22061ef74b",
     "inputs": [
       {
         "id": "cve-list-delta",
         "kind": "downloaded_snapshot",
-        "sha256": "69ad38c4953a6d3c6e04fa291bf2ec17a29cd6e8fbad61899bc5d59f8a530613"
+        "sha256": "e33e8efd23f90782305b10892e70a29561a392fe03613d0187f57372964e9b36"
       },
       {
         "id": "nvd-2002",
@@ -242,7 +242,7 @@
     "cve": {
       "name": "CVE Program · CVE List V5",
       "url": "https://github.com/CVEProject/cvelistV5",
-      "contentFingerprintSha256": "69ad38c4953a6d3c6e04fa291bf2ec17a29cd6e8fbad61899bc5d59f8a530613",
+      "contentFingerprintSha256": "e33e8efd23f90782305b10892e70a29561a392fe03613d0187f57372964e9b36",
       "latestFetch": "2026-07-23T11:34:17.874000Z",
       "changedRecords24h": 1714,
       "newRecords24h": 376,
@@ -1517,11 +1517,11 @@
     ]
   },
   "changeDigest": {
-    "generatedAt": "2026-07-23T12:08:14Z",
+    "generatedAt": "2026-07-23T12:09:44Z",
     "cve": {
       "period": "last_24_hours",
-      "start": "2026-07-22T12:08:14Z",
-      "end": "2026-07-23T12:08:14Z",
+      "start": "2026-07-22T12:09:44Z",
+      "end": "2026-07-23T12:09:44Z",
       "newRecords": 376,
       "updatedRecords": 1338,
       "distinctChanged": 1714
