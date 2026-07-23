@@ -136,7 +136,7 @@ class PipelineUnitTests(unittest.TestCase):
         )
         with self.assertRaisesRegex(ValueError, "stale"):
             validate_epss_freshness(
-                EpssFeed({}, "v2026.06.15", now - dt.timedelta(hours=73), 0), now
+                EpssFeed({}, "v2026.06.15", now - dt.timedelta(hours=175), 0), now
             )
         with self.assertRaisesRegex(ValueError, "after"):
             validate_epss_freshness(
@@ -155,12 +155,12 @@ class PipelineUnitTests(unittest.TestCase):
         }
         validate_deploy_freshness(payload, checked_at)
 
-        payload["sources"]["epss"]["scoreDate"] = "2026-07-15T11:59:59Z"
+        payload["sources"]["epss"]["scoreDate"] = "2026-07-10T11:59:59Z"
         with self.assertRaisesRegex(ValueError, "EPSS source score date is stale"):
             validate_deploy_freshness(payload, checked_at)
 
         payload["sources"]["epss"]["scoreDate"] = "2026-07-17T12:00:00Z"
-        payload["generatedAt"] = "2026-07-15T11:59:59Z"
+        payload["generatedAt"] = "2026-07-10T11:59:59Z"
         with self.assertRaisesRegex(ValueError, "dashboard snapshot is stale"):
             validate_deploy_freshness(payload, checked_at)
 
