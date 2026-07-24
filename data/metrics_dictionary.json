@@ -101,7 +101,7 @@
       "dateSemantics": "NVD publication date for cohort; current FIRST EPSS snapshot score date",
       "censoringPolicy": "Uses current score snapshot applied across publication cohorts; not historical EPSS scores.",
       "sourceFields": ["FIRST EPSS probability", "CISA KEV cveID"],
-      "knownBiases": "EPSS >= 0.10 is a project-defined screening threshold (dynamically calculated relative percentile, e.g. ~top 4.9% of scored CVEs), not an official severity band."
+      "knownBiases": "EPSS >= 0.10 is a project-defined screening threshold, not an official severity band. Its relative percentile is calculated dynamically from the current snapshot and shown on the page, expressed over all CVEs scored in the current FIRST EPSS feed."
     },
     "epssScreeningWatch": {
       "name": "EPSS Screening Watch",

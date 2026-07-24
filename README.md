@@ -20,8 +20,8 @@ I built VulnSignal as a personal project to examine trends in published vulnerab
 - A searchable 90-day EPSS screening watch for recent CVEs with current EPSS scores at or above the project threshold that are not yet in KEV; every candidate row in the current cohort is retained.
 - Official historical EPSS snapshots, sampled monthly, with model-version boundaries kept visible.
 - A short change digest that says exactly whether each item covers the previous 24 hours, the latest KEV release or two official EPSS snapshots.
-- Source dates, a snapshot ID and content fingerprints for the inputs used to build each release.
-- Median and 75th-percentile publication-to-KEV gap calculated for KEV-listed CVEs in an explicitly stated mature cohort, displayed alongside selection ratios (`177 KEV-listed / 51,367 mature CVEs`).
+- Source dates and a snapshot ID for each release, with per-input SHA-256 fingerprints recorded in the dataset.
+- Median and 75th-percentile publication-to-KEV gap calculated for KEV-listed CVEs in an explicitly stated mature cohort, displayed alongside the current selection ratio (KEV-listed count over the mature-cohort size, taken from the dataset rather than hard-coded here).
 - Ransomware use, accelerated remediation deadlines and the age of KEV additions over comparable 12-month windows.
 - Trailing-12-month CWE shares and the largest share movers, with official CWE names and links.
 - First-party LLM-assisted disclosure events shown as separate reported minimums, not a combined discovery total.
@@ -38,6 +38,10 @@ VulnSignal brings these signals together while reducing known measurement artefa
 - Current EPSS screening and historical EPSS movement are kept separate. One groups today's scores by CVE publication month; the other reads the score that FIRST published on each sampled date.
 - LLM programme claims remain separate because the disclosed sets may overlap and the public sources do not support reliable deduplication.
 
+## Who it's for
+
+VulnSignal is aimed at people who already read vulnerability data — security engineers, threat and vulnerability analysts, and researchers — and who want the published signals lined up on one timeline with the denominators and clocks made explicit. It is good for seeing how CVE publication volume, CVSS severity mix, CISA KEV activity and EPSS screening move over comparable periods, for spotting which recent CVEs clear the EPSS screening threshold without a KEV listing, and for understanding the measurement caveats behind each number. It is not built to rank or prioritise fixes for a specific estate: it has no view of your assets, exposure, business impact or compensating controls, so treat every panel as context for a decision, not the decision itself.
+
 ## Scope and limitations
 
 VulnSignal is a daily analytical snapshot, not a real-time advisory or an organisation-specific patch queue. The EPSS screening watch is a focused screening list based on project thresholds, not a replacement for asset exposure, business impact and compensating-control checks. An EPSS score is an estimate of exploitation probability, not severity. Absence from KEV does not mean absence of exploitation. Publication growth also does not necessarily mean that software is becoming vulnerable at the same rate, and an NVD reference tagged `Exploit` does not prove that linked code works.
@@ -45,20 +49,6 @@ VulnSignal is a daily analytical snapshot, not a real-time advisory or an organi
 CVE, NVD and KEV do not reliably record how a vulnerability was discovered. The LLM timeline therefore contains only reviewed first-party programme reports or public CVE-ID releases. A blank month means that the registry has no recorded disclosure event; it does not mean zero LLM-assisted discoveries. Programme counts are never added together unless overlaps can be removed reliably.
 
 The optional `--as-of` value is a report cutoff, not a complete historical archive. It excludes later NVD publications and KEV events, while source freshness, NVD severity, CWE, exploit-reference and current EPSS fields still reflect the downloaded source snapshots. The dataset build time remains the actual time when the report was generated.
-
-## Disclaimer
-
-VulnSignal is a personal, experimental project provided for general information only. It is not legal, compliance, security, risk-management or remediation advice, and it should not be used as the sole basis for operational decisions. Important findings should be checked against the linked original sources, vendor guidance and the user's own environment.
-
-Data and derived metrics may be incomplete, delayed, revised or incorrect. The project is provided “as is”, without guarantees of accuracy, completeness, timeliness, availability or fitness for a particular purpose. Use it at your own risk. No service level, response time, uninterrupted refresh schedule or continuing availability is promised. Source names and trademarks belong to their respective owners; their inclusion does not imply affiliation, endorsement or certification.
-
-The software is released under the [Apache License 2.0](LICENSE), which contains the applicable warranty and liability terms.
-
-## Licence and attribution
-
-VulnSignal is free to use, modify and redistribute under the Apache License 2.0. Redistributions and derivative works must comply with the licence, retain applicable copyright and attribution notices, state significant changes, and include the attribution from [NOTICE](NOTICE) in a permitted readable form.
-
-Copyright 2026 [llody9977](https://github.com/llody9977). See [AUTHORS.md](AUTHORS.md) for the project authorship and AI-assistance disclosure. The use of OpenAI Codex as a development assistant does not change the attribution and licence requirements for this repository.
 
 ## Data sources and freshness
 
@@ -89,17 +79,31 @@ This product uses NVD data feeds and is not endorsed or certified by the NVD.
 | CVSS assessment-type mix | Distribution of selected CVSS metrics classified by NVD as Primary or Secondary. The separate source field identifies the organization that supplied the assessment; Primary assessments may originate from NVD or eligible provider-level CNAs. |
 | Public exploit reference | The NVD record has a reference tagged `Exploit`. Raw recent counts remain visible and marked as enriching; comparisons are withheld when either selected period lacks mature data. |
 | KEV | CISA has placed the CVE in its Known Exploited Vulnerabilities catalogue. This confirms known exploitation and is distinct from an NVD exploit-tagged reference. |
-| Publication-to-KEV gap | Median and 75th-percentile days from NVD publication to CISA listing, calculated ONLY among KEV-matched records in the mature cohort. Displays the selection ratio (e.g., `178 KEV-listed / 51,367 mature CVEs` in the July 2026 snapshot) and provides both signed and post-publication median gaps. |
-| KEV conversion rate | Baseline KEV entry rate for all mature published CVEs (e.g. 0.34%) compared to mature CVEs carrying an NVD Exploit reference tag. |
-| Current EPSS ≥ 0.10 | A project-defined threshold applied to the current FIRST EPSS snapshot. Monthly and 36-month groups use each CVE's NVD publication month, so they are not historical EPSS scores as they stood in those months. EPSS coverage is measured relative to eligible active NVD records. The relative percentile corresponding to the 0.10 threshold is calculated dynamically from the current EPSS snapshot (e.g., approximately top 2.1% of scored CVEs in the July 2026 snapshot). |
+| Publication-to-KEV gap | Median and 75th-percentile days from NVD publication to CISA listing, calculated ONLY among KEV-matched records in the mature cohort. Here the mature cohort is the 12 months of publications that have had a full ~90-day observation window for KEV listing as of the snapshot. Displays the current selection ratio (KEV-listed count / mature-cohort size, read from the dataset) and provides both signed and post-publication median gaps. |
+| KEV conversion rate | Baseline KEV entry rate for all mature published CVEs compared with the rate among mature CVEs that carry an NVD Exploit reference tag. Both rates are well under 1% and are shown to two decimals on the page so the two denominators stay distinguishable. |
+| Current EPSS ≥ 0.10 | A project-defined threshold applied to the current FIRST EPSS snapshot. Monthly and 36-month groups use each CVE's NVD publication month, so they are not historical EPSS scores as they stood in those months. EPSS coverage is measured relative to eligible active NVD records. The relative percentile corresponding to the 0.10 threshold is calculated dynamically from the current EPSS snapshot and shown on the page, expressed over all CVEs scored in the current FIRST EPSS feed. |
 | EPSS screening watch | NVD-published CVEs from the latest 90 days with current EPSS ≥ 0.10 and no CISA KEV listing in the downloaded catalogue. Every qualifying row is retained for tile drill-down. It is an analytical screening list, not a recommended remediation queue or patch priority list. |
 | Historical EPSS | Counts from official historical EPSS snapshots sampled at month end, plus the current score date. Model versions are shown because scores on different model versions are not strictly like-for-like. |
 | Historical EPSS KEV-entry rate | Evaluates subsequent KEV entry, baseline rate, lift over baseline, and recall for historical EPSS ≥ 0.10 candidates at dated snapshot dates. Incomplete horizons (<30d, 60d, 90d) are excluded to prevent right-censoring bias. Candidate populations differ across dates due to new disclosures, feed coverage, and model updates. |
-| Accelerated KEV deadline | The share of KEV additions whose CISA due date is no more than seven days after `dateAdded`, compared with the previous 12-month window. The denominator is the additions that carry a usable due date on or after `dateAdded`, and it is shown alongside the share. |
+| Accelerated KEV deadline | The share of KEV additions whose CISA due date is no more than seven days after `dateAdded`, compared with the previous 12-month window. The denominator is the additions that carry a usable due date on or after `dateAdded`, and it is shown alongside the share. CISA replaced BOD 22-01 with the risk-scored BOD 26-04 on 10 June 2026, so a 12-month window can straddle both deadline regimes; the page flags this where the metric is shown, because a large year-on-year move here is partly a directive artefact rather than a threat signal. |
 | What changed | Source-specific activity with an explicit clock: CVE List records in the previous 24 hours (with new and updated counts made mutually exclusive), additions on the latest KEV catalogue date, and EPSS threshold crossings between sampled official score files. These are update signals, not incident counts. |
 | Common CWE classes | Each CVE contributes once to every distinct valid CWE assigned in NVD. Warning: CWE shares can total >100% since a single CVE can carry multiple weakness codes. In addition, VulnSignal separates specific CWE allocations from placeholder classifications (NVD-CWE-noinfo, NVD-CWE-Other, and records with no weakness data). |
 | Earlier versus recent | Two adjacent 36-month publication periods ending at the latest complete month. This compares publication, severity, matured exploit-reference and current-snapshot EPSS signals; it does not measure an LLM discovery rate. |
 | LLM evidence | Sparse first-party programme report or public-CVE-ID release events. Dates are disclosure dates rather than discovery dates, and programme totals are not summed. |
+
+## Disclaimer
+
+VulnSignal is a personal, experimental project provided for general information only. It is not legal, compliance, security, risk-management or remediation advice, and it should not be used as the sole basis for operational decisions. Important findings should be checked against the linked original sources, vendor guidance and the user's own environment.
+
+Data and derived metrics may be incomplete, delayed, revised or incorrect. The project is provided “as is”, without guarantees of accuracy, completeness, timeliness, availability or fitness for a particular purpose. Use it at your own risk. No service level, response time, uninterrupted refresh schedule or continuing availability is promised. Source names and trademarks belong to their respective owners; their inclusion does not imply affiliation, endorsement or certification.
+
+The software is released under the [Apache License 2.0](LICENSE), which contains the applicable warranty and liability terms.
+
+## Licence and attribution
+
+VulnSignal is free to use, modify and redistribute under the Apache License 2.0. Redistributions and derivative works must comply with the licence, retain applicable copyright and attribution notices, state significant changes, and include the attribution from [NOTICE](NOTICE) in a permitted readable form.
+
+Copyright 2026 [llody9977](https://github.com/llody9977). See [AUTHORS.md](AUTHORS.md) for the project authorship and AI-assistance disclosure. The use of OpenAI Codex as a development assistant does not change the attribution and licence requirements for this repository.
 
 ## Data pipeline
 
