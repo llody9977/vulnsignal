@@ -28,7 +28,7 @@ I built VulnSignal as a personal project to examine trends in published vulnerab
 
 ## Why I built it
 
-The upstream sources answer different questions and mature at different speeds. NVD publication volume measures published records rather than the underlying incidence of vulnerable software. Recent exploit-reference counts can also appear lower while NVD continues enriching those records. Changes in CNA participation and reporting processes may increase publication counts even when the underlying security environment has not changed at the same rate.
+The upstream sources answer different questions and mature at different speeds. NVD publication volume measures published records rather than the underlying incidence of vulnerable software. Recent exploit-reference counts can also appear lower while NVD continues enriching those records. Growth in published CVE records does not by itself prove that the underlying security environment has worsened at the same rate. Publication totals may also be influenced by expansion of the CNA program, improved reporting coverage, and changes in the timing or operation of CVE publication processes.
 
 VulnSignal brings these signals together while reducing known measurement artefacts:
 
