@@ -94,16 +94,19 @@ type EpssPredictivePerformanceRecord = {
   isMature60d: boolean;
   isMature90d: boolean;
   kevAdditions30d: number | null;
+  totalKev30d?: number | null;
   conversionRate30d: number | null;
   baselineRate30d: number | null;
   lift30d: number | null;
   recall30d: number | null;
   kevAdditions60d: number | null;
+  totalKev60d?: number | null;
   conversionRate60d: number | null;
   baselineRate60d: number | null;
   lift60d: number | null;
   recall60d: number | null;
   kevAdditions90d: number | null;
+  totalKev90d?: number | null;
   conversionRate90d: number | null;
   baselineRate90d: number | null;
   lift90d: number | null;
@@ -705,6 +708,29 @@ function PriorityWatchPanel({ watch, topPercentText }: { watch?: PriorityWatch; 
   );
 }
 
+function PredictiveHorizon({ label, mature, added, candidates, totalKev, lift, recall }: {
+  label: string;
+  mature: boolean;
+  added: number | null;
+  candidates: number;
+  totalKev?: number | null;
+  lift: number | null;
+  recall: number | null;
+}) {
+  if (!mature || added === null) {
+    return <div>{label}: <span style={{ color: "var(--muted)" }}>— (not mature)</span></div>;
+  }
+  return (
+    <div>
+      {label}: <strong>{number(added)}</strong> of {number(candidates)} entered KEV ({percentFromCounts(added, candidates)}
+      {lift !== null ? <>, {lift}× lift</> : null})
+      {recall !== null ? (
+        <>; recall {totalKev != null ? <>{number(added)} of {number(totalKev)} </> : null}({recall}%)</>
+      ) : null}
+    </div>
+  );
+}
+
 function EpssHistoryPanel({ history }: { history?: EpssHistory }) {
   const points = history?.points ?? [];
   const shares = points.map((point) => point.recordCount
@@ -762,7 +788,7 @@ function EpssHistoryPanel({ history }: { history?: EpssHistory }) {
                 Historical EPSS ≥ 0.10 subsequent KEV-entry rate
               </h4>
               <p style={{ fontSize: "11px", color: "var(--muted)", margin: "0 0 8px 0" }}>
-                Subsequent KEV entry rate, lift over baseline, and recall for EPSS ≥ 0.10 candidates at historical score snapshot. Immature horizons (&lt;30/60/90d) are excluded from rate calculations. Counts here are very small — the KEV numerators behind each rate are in the single to low double digits, so differences between dates and the two-decimal rates are not statistically distinguishable and should be read as directional only.
+                For each snapshot, this shows how many EPSS ≥ 0.10 candidates later entered CISA KEV within each horizon. Immature horizons (&lt;30/60/90d) are excluded. Recall is that KEV count divided by all CVEs that entered KEV in the same window among those already published at the snapshot date — a narrower denominator than monthly KEV additions, which also include CVEs published after the snapshot. Counts are shown because they are very small: the numerators are in the single to low double digits, so differences between dates are not statistically distinguishable and should be read as directional only.
               </p>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "8px" }}>
                 {history.predictivePerformance.slice(-4).map((item) => (
@@ -770,21 +796,9 @@ function EpssHistoryPanel({ history }: { history?: EpssHistory }) {
                     <span style={{ display: "block", fontSize: "11px", fontWeight: 600 }}>{shortDateLabel(item.snapshotDate)}</span>
                     <span style={{ display: "block", fontSize: "10px", color: "var(--muted)" }}>{number(item.candidateCount)} candidates</span>
                     <div style={{ marginTop: "4px", fontSize: "10px", lineHeight: "1.4" }}>
-                      <div>
-                        30d: {item.isMature30d && item.conversionRate30d !== null ? (
-                          <><strong>{item.conversionRate30d}%</strong> ({item.lift30d}× lift, {item.recall30d}% recall)</>
-                        ) : <span style={{ color: "var(--muted)" }}>— (not mature)</span>}
-                      </div>
-                      <div>
-                        60d: {item.isMature60d && item.conversionRate60d !== null ? (
-                          <><strong>{item.conversionRate60d}%</strong> ({item.lift60d}× lift, {item.recall60d}% recall)</>
-                        ) : <span style={{ color: "var(--muted)" }}>— (not mature)</span>}
-                      </div>
-                      <div>
-                        90d: {item.isMature90d && item.conversionRate90d !== null ? (
-                          <><strong>{item.conversionRate90d}%</strong> ({item.lift90d}× lift, {item.recall90d}% recall)</>
-                        ) : <span style={{ color: "var(--muted)" }}>— (not mature)</span>}
-                      </div>
+                      <PredictiveHorizon label="30d" mature={item.isMature30d} added={item.kevAdditions30d} candidates={item.candidateCount} totalKev={item.totalKev30d} lift={item.lift30d} recall={item.recall30d} />
+                      <PredictiveHorizon label="60d" mature={item.isMature60d} added={item.kevAdditions60d} candidates={item.candidateCount} totalKev={item.totalKev60d} lift={item.lift60d} recall={item.recall60d} />
+                      <PredictiveHorizon label="90d" mature={item.isMature90d} added={item.kevAdditions90d} candidates={item.candidateCount} totalKev={item.totalKev90d} lift={item.lift90d} recall={item.recall90d} />
                     </div>
                   </div>
                 ))}
