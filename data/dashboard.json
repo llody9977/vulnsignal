@@ -448,6 +448,9 @@
       "manifestSha3": "b7a0c5362f95291c017a1a208ae5d9ca3f44f7f0560ca3553ec88d46636999aafcf4ebbbe4fd344703e36dc33d492a58a1c965b8198801d5775e4d85f69ff8e4",
       "reportedCves": 28,
       "publicCveRecords": 14,
+      "firstDisclosureAt": "2026-03-20T23:27:58.155000Z",
+      "truePositiveRatePct": 90.8,
+      "falsePositiveRatePct": 9.3,
       "contentFingerprintSha256": "783ab38b8cd39ab274b9d4e197e57132cdd58a13217d71eacb873ba6d79f2598"
     },
     "epss": {

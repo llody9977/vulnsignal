@@ -200,6 +200,9 @@ type DashboardData = {
       revision: number | null;
       reportedCves: number;
       publicCveRecords: number;
+      firstDisclosureAt?: string | null;
+      truePositiveRatePct?: number | null;
+      falsePositiveRatePct?: number | null;
     };
     epss?: {
       name: string;
@@ -422,6 +425,11 @@ function number(value: number) {
   return new Intl.NumberFormat("en-SG").format(value);
 }
 
+function percentFromCounts(numerator: number, denominator: number) {
+  if (!denominator) return "—";
+  const pct = (numerator / denominator) * 100;
+  return `${pct.toFixed(pct < 1 ? 2 : 1)}%`;
+}
 function percent(value: number | null) {
   return value === null ? "—" : `${value.toFixed(1)}%`;
 }
@@ -655,7 +663,7 @@ function PriorityWatchPanel({ watch, topPercentText }: { watch?: PriorityWatch; 
           </div>
 
           <p className="priority-watch__note">
-            Published {dateLabel(watch.window.start, true)}–{dateLabel(watch.window.end, true)}. EPSS ≥ 0.10 is a project-defined screening threshold ({topPercentText || "approximately the top 4.9%"} of scored CVEs). Not appearing in CISA KEV does not prove that exploitation has not occurred. This list is a focused screening tool, not a recommended remediation queue or patch priority list. “Yes” under exploit reference means NVD has at least one reference tagged <code>Exploit</code>; “No” means that tag is absent in this snapshot.
+            Published {dateLabel(watch.window.start, true)}–{dateLabel(watch.window.end, true)}. EPSS ≥ 0.10 is a project-defined screening threshold ({topPercentText || "approximately the top 4.9%"} of all CVEs scored in the current FIRST EPSS feed). Not appearing in CISA KEV does not prove that exploitation has not occurred. This list is a focused screening tool, not a recommended remediation queue or patch priority list. “Yes” under exploit reference means NVD has at least one reference tagged <code>Exploit</code>; “No” means that tag is absent in this snapshot.
           </p>
           {visibleItems.length ? (
             <div className="priority-table-wrap" id="priority-watch-table">
@@ -754,7 +762,7 @@ function EpssHistoryPanel({ history }: { history?: EpssHistory }) {
                 Historical EPSS ≥ 0.10 subsequent KEV-entry rate
               </h4>
               <p style={{ fontSize: "11px", color: "var(--muted)", margin: "0 0 8px 0" }}>
-                Subsequent KEV entry rate, lift over baseline, and recall for EPSS ≥ 0.10 candidates at historical score snapshot. Immature horizons (&lt;30/60/90d) are excluded from rate calculations.
+                Subsequent KEV entry rate, lift over baseline, and recall for EPSS ≥ 0.10 candidates at historical score snapshot. Immature horizons (&lt;30/60/90d) are excluded from rate calculations. Counts here are very small — the KEV numerators behind each rate are in the single to low double digits, so differences between dates and the two-decimal rates are not statistically distinguishable and should be read as directional only.
               </p>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "8px" }}>
                 {history.predictivePerformance.slice(-4).map((item) => (
@@ -999,11 +1007,13 @@ function KevLagHeatmapPanel({ data }: { data?: DashboardData["kevLagHeatmap"] })
   const [viewMode, setViewMode] = useState<"count" | "percent">("percent");
   if (!data) return null;
 
-  const years = Object.keys(data.grid).sort((a, b) => {
-    if (a === "2017 & earlier") return 1;
-    if (b === "2017 & earlier") return -1;
-    return b.localeCompare(a);
-  });
+  const years = Object.keys(data.grid)
+    .filter((y) => (data.cohortTotals[y] || 0) > 0)
+    .sort((a, b) => {
+      if (a === "2017 & earlier") return 1;
+      if (b === "2017 & earlier") return -1;
+      return b.localeCompare(a);
+    });
 
   const buckets = [
     { key: "pre_pub", label: "Pre-pub" },
@@ -1049,7 +1059,7 @@ function KevLagHeatmapPanel({ data }: { data?: DashboardData["kevLagHeatmap"] })
         </div>
       </div>
       <p className="panel-desc">
-        Time delta between NVD publication and CISA KEV addition, grouped by CVE publication year. Pre-publication indicates KEV listing preceded NVD metadata publication.
+        Time delta between NVD publication and CISA KEV addition, grouped by CVE publication year. Pre-publication indicates KEV listing preceded NVD metadata publication. Only publication years with at least one KEV-matched CVE in this cohort are shown.
       </p>
 
       <div className="heatmap-container">
@@ -1103,7 +1113,7 @@ function EnrichmentCompletenessPanel({ data }: { data?: DashboardData["enrichmen
         </div>
       </div>
       <p className="panel-desc">
-        Availability metrics (CVSS, CWE, and EPSS coverage) track how completely records are enriched over time. The observed security signal (NVD exploit-reference share) tracks the prevalence of exploit-tagged references. Recent periods naturally have lower availability as source records and downstream enrichment continue to mature.
+        Availability metrics (CVSS, CWE, and EPSS coverage) track how completely records are enriched over time. The observed security signal (NVD exploit-reference share) tracks the prevalence of exploit-tagged references. The most recent months typically show lower availability as records continue to mature, but availability also varies month to month with NVD analysis backlogs, so it is not strictly monotonic with recency.
       </p>
 
       <div className="completeness-table-container">
@@ -1169,6 +1179,9 @@ function EnrichmentCompletenessPanel({ data }: { data?: DashboardData["enrichmen
           </tbody>
         </table>
       </div>
+      <p className="panel-note">
+        Here &ldquo;Mature&rdquo; means enrichment maturity: the latest month is <em>Partial</em>, the five months before it are <em>Enriching</em> (roughly the last ~6 months from the latest complete month, where NVD fields are still settling), and earlier months are <em>Mature</em>. This is a different threshold from the publication-to-KEV cohort, which calls a month mature once it has had a ~90-day observation window for KEV listing. The two definitions can therefore label the same month differently.
+      </p>
     </article>
   );
 }
@@ -1402,7 +1415,7 @@ export default function Home() {
           <div className="hero__status">
             <div><span>Snapshot built</span><strong><MetricValue tooltip="UTC time when this validated dashboard snapshot was generated">{timestampLabel(dashboard.generatedAt)}</MetricValue></strong></div>
             <div><span>Latest complete month</span><strong><MetricValue href="#reporting" tooltip="Jump to the interactive monthly and yearly report">{dateLabel(dashboard.coverage.latestCompleteMonth)}</MetricValue></strong></div>
-            <div><span>CVE records covered</span><strong><MetricValue href={dashboard.sources.nvd.url} tooltip="Open the official NVD source used for CVE trend records">{number(dashboard.coverage.recordCount)}</MetricValue></strong></div>
+            <div><span>CVE records covered (all years)</span><strong><MetricValue href={dashboard.sources.nvd.url} tooltip="Total active NVD records ingested across every covered year, not a single-period or single-cohort figure. Open the official NVD source used for CVE trend records.">{number(dashboard.coverage.recordCount)}</MetricValue></strong></div>
             <div><span>Refresh schedule</span><strong><MetricValue tooltip="Normally refreshed daily. The displayed snapshot may be up to 72 hours old if an upstream source or validation step fails.">{dashboard.project.refreshSchedule || "Daily"}</MetricValue></strong></div>
           </div>
           <div className="source-snapshot" aria-label="Source dates included in this snapshot">
@@ -1492,7 +1505,7 @@ export default function Home() {
               <small>{kevTimingPeriod}</small>
               <strong>
                 <MetricValue tooltip="Share of mature published CVEs that entered KEV within 90 days of NVD publication">
-                  {percent(dashboard.risk.kevWithin90DayRate)}
+                  {percentFromCounts(dashboard.risk.kevWithin90Days, dashboard.risk.matureCohort)}
                 </MetricValue>
               </strong>
               <p>
@@ -1504,11 +1517,11 @@ export default function Home() {
               <small>Mature cohort conversion</small>
               <strong>
                 <MetricValue tooltip="Comparison of KEV conversion rate for all mature CVEs vs exploit-tagged mature CVEs">
-                  {percent(dashboard.risk.allCveKevConversion ?? 0.34)}
+                  {percentFromCounts(dashboard.risk.kevTimingSample, dashboard.risk.matureCohort)}
                 </MetricValue>
               </strong>
               <p>
-                {percent(dashboard.risk.allCveKevConversion ?? 0.34)} of all mature CVEs enter KEV, compared to {percent(dashboard.risk.exploitRefKevConversion ?? 0.0)} of CVEs with an NVD Exploit tag.
+                {percentFromCounts(dashboard.risk.kevTimingSample, dashboard.risk.matureCohort)} of all mature CVEs enter KEV, compared to {percent(dashboard.risk.exploitRefKevConversion ?? 0.0)} of CVEs with an NVD Exploit tag.
               </p>
             </article>
             <article>
@@ -1524,6 +1537,7 @@ export default function Home() {
               <strong><MetricValue href={dashboard.sources.kev.url} tooltip="Open the official CISA KEV catalog containing required-action due dates">{percent(deadlineComparison?.current.within7Share ?? null)}</MetricValue></strong>
               <DeltaTag value={deadlineComparison?.within7ShareChangePoints} unit="points" />
               <p>{number(deadlineComparison?.current.within7Count ?? 0)} of {number(deadlineComparison?.current.dueWindowSample ?? 0)} additions required accelerated remediation within seven days.</p>
+              <p className="panel-note">This 12-month window spans a policy change: CISA issued BOD 26-04 on 10 June 2026, revoking BOD 22-01&rsquo;s flat deadline in favour of risk-scored due dates (as short as three days). Much of the year-on-year jump reflects that directive change rather than a shift in threat activity.</p>
             </article>
             <article>
               <span>KEV additions &gt;2 years old</span>
@@ -1554,6 +1568,7 @@ export default function Home() {
               <ComparisonRow label="Critical + high share of scored CVEs" earlier={dashboard.comparison.earlier.criticalHighShare} recent={dashboard.comparison.recent.criticalHighShare} suffix="%" changeMode="points" />
               <ComparisonRow label="CVEs with public exploit references" earlier={dashboard.comparison.earlier.publicExploitShare} recent={dashboard.comparison.recent.publicExploitShare} suffix="%" changeMode="points" />
               <ComparisonRow label="Current EPSS ≥ 0.1 share (project threshold)" earlier={dashboard.comparison.earlier.epssHighShare} recent={dashboard.comparison.recent.epssHighShare} suffix="%" changeMode="points" />
+              <p className="panel-note">A rising critical + high share is not only a threat signal: it also reflects scoring-practice changes over these periods, including growth in CNA self-scoring and CVSS v4.0 adoption. Base scores are not directly comparable across CVSS versions.</p>
               <p className="panel-note">EPSS scores use the current snapshot dated {timestampLabel(epssScoreDate)} and are grouped by CVE publication period; this is not a historical EPSS trend.</p>
               <p className="panel-note">{dashboard.comparison.note}</p>
             </article>
@@ -1576,6 +1591,17 @@ export default function Home() {
                   </a>
                 ))}
               </div>
+              <p className="panel-note">
+                Of the reported minimum, {number(dashboard.sources.anthropic.publicCveRecords)} carry a public CVE identifier that can be individually enumerated in the source payload.
+                {dashboard.sources.anthropic.truePositiveRatePct != null && dashboard.sources.anthropic.falsePositiveRatePct != null ? (
+                  <> The same payload reports a {dashboard.sources.anthropic.truePositiveRatePct}% true-positive rate and a {dashboard.sources.anthropic.falsePositiveRatePct}% false-positive rate for the programme&rsquo;s own analysis.</>
+                ) : null}
+              </p>
+              <p className="panel-note">
+                Dates are disclosure or report-publication dates, not discovery dates.{dashboard.sources.anthropic.asOf ? (
+                  <> The Anthropic figure is a snapshot boundary (payload <code>as_of</code> {dateLabel(dashboard.sources.anthropic.asOf.slice(0, 10), true)}), not a single disclosure event{dashboard.sources.anthropic.firstDisclosureAt ? <>; that programme&rsquo;s first disclosure is dated {dateLabel(dashboard.sources.anthropic.firstDisclosureAt.slice(0, 10), true)}</> : null}.</>
+                ) : null}
+              </p>
               <p className="panel-note">{dashboard.llmDiscovery.basis}</p>
             </article>
           </div>
@@ -1710,7 +1736,7 @@ export default function Home() {
             <article><span>02</span><h3>Severity</h3><p>Selects Primary assessments where available (originating from NVD or provider-level CNAs), falling back to Secondary assessments. A scored 0.0 is shown as “None”; records without a score remain “Unscored”.</p></article>
             <article><span>03</span><h3>Exploitation</h3><p>An NVD reference tagged “Exploit” indicates linked public material; it does not prove that the exploit works. Only CISA KEV entries are labelled “Known exploited”.</p></article>
             <article><span>04</span><h3>LLM evidence</h3><p>Report and reveal dates are not discovery dates. Counts from different programmes remain separate because they may overlap.</p></article>
-            <article><span>05</span><h3>EPSS probability</h3><p>Current FIRST EPSS scores estimate exploitation probability over the next 30 days. Scores are grouped by CVE publication month; ≥ 0.1 is a project-defined threshold, not an official severity band. In the current snapshot, this threshold dynamically corresponds to {topPercentText} of scored CVEs.</p></article>
+            <article><span>05</span><h3>EPSS probability</h3><p>Current FIRST EPSS scores estimate exploitation probability over the next 30 days. Scores are grouped by CVE publication month; ≥ 0.1 is a project-defined threshold, not an official severity band. In the current snapshot, this threshold dynamically corresponds to {topPercentText} of all CVEs scored in the current FIRST EPSS feed.</p></article>
           </div>
           <div className="source-strip">
             <span>SOURCES</span>
