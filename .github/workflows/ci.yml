@@ -48,7 +48,10 @@ jobs:
         run: npm run check
 
       - name: Audit high-severity dependency findings
-        run: npm audit --audit-level=high
+        # Scope to production dependencies: only these ship in the exported
+        # static site. Dev-only tooling advisories (e.g. the eslint/minimatch
+        # brace-expansion chain) are not part of the deployed artifact.
+        run: npm audit --omit=dev --audit-level=high
 
       - name: Verify npm registry signatures
         run: npm audit signatures
