@@ -132,8 +132,8 @@ jobs:
       - name: Commit the refreshed aggregate
         shell: bash
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "llody9977"
+          git config user.email "llody9977@gmail.com"
           git add data/dashboard.json
 
           if git diff --cached --quiet; then
