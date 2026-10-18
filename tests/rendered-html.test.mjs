@@ -6,6 +6,91 @@ async function render() {
   return readFile(new URL("../out/index.html", import.meta.url), "utf8");
 }
 
+// The initial watch filter is "all", and only the first ten candidates render.
+// Check actual table cells, not incidental text in scripts or other panels.
+function assertPriorityWatchRows(html, watch) {
+  const expectedItems = watch.items.slice(0, 10);
+  const table = html.match(/<table class="priority-table">([\s\S]*?)<\/table>/)?.[1];
+  if (!expectedItems.length) {
+    assert.equal(table, undefined, "An empty watch must not render candidate rows");
+    assert.match(html, /No candidate CVEs match the selected filter criteria\./);
+    return;
+  }
+
+  assert.ok(table, "The populated watch must render its candidate table");
+  assert.match(table, /<th>NVD reference tagged.*Exploit.*<\/th>/);
+  const body = table.match(/<tbody>([\s\S]*?)<\/tbody>/)?.[1];
+  assert.ok(body, "The watch table must have a body");
+  const rows = [...body.matchAll(/<tr>([\s\S]*?)<\/tr>/g)];
+  assert.equal(rows.length, expectedItems.length, "Render exactly the first ten candidates");
+  expectedItems.forEach((item, index) => {
+    const cells = [...rows[index][1].matchAll(/<td\b[^>]*>([\s\S]*?)<\/td>/g)].map((match) => match[1]);
+    assert.equal(cells.length, 5, `${item.cveId}: expected five table cells`);
+    assert.ok(cells[0].includes(`>${item.cveId}</a>`), `${item.cveId}: candidate order must match the snapshot`);
+    const exploitCell = cells[4];
+    if (item.publicExploitReference) {
+      assert.match(exploitCell, /<a\b[^>]*class="signal signal--active"[^>]*>Yes<\/a>/);
+      assert.ok(exploitCell.includes(`href="https://nvd.nist.gov/vuln/detail/${item.cveId}#vulnHyperlinksSection"`), `${item.cveId}: link to its NVD reference section`);
+      assert.match(exploitCell, /<small>NVD-tagged exploit reference<\/small>/);
+      assert.doesNotMatch(exploitCell, /No NVD exploit tag in this snapshot/);
+    } else {
+      assert.match(exploitCell, /<span class="signal">No<\/span>/);
+      assert.match(exploitCell, /<small>No NVD exploit tag in this snapshot<\/small>/);
+      assert.doesNotMatch(exploitCell, /<a\b|NVD-tagged exploit reference/);
+    }
+  });
+}
+
+function watchItems(flags) {
+  return flags.map((publicExploitReference, index) => ({
+    cveId: `CVE-2026-${10000 + index}`,
+    publicExploitReference,
+  }));
+}
+
+function watchTableFixture(items) {
+  if (!items.length) return '<p class="panel-empty">No candidate CVEs match the selected filter criteria.</p>';
+  const rows = items.map((item) => `<tr>
+    <td><a href="https://nvd.nist.gov/vuln/detail/${item.cveId}">${item.cveId}</a></td>
+    <td>Published</td><td>Severity</td><td>EPSS probability</td>
+    <td>${item.publicExploitReference
+      ? `<a href="https://nvd.nist.gov/vuln/detail/${item.cveId}#vulnHyperlinksSection" class="signal signal--active">Yes</a><small>NVD-tagged exploit reference</small>`
+      : '<span class="signal">No</span><small>No NVD exploit tag in this snapshot</small>'}</td>
+  </tr>`).join("");
+  return `<table class="priority-table"><thead><tr><th>NVD reference tagged &quot;Exploit&quot;</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+for (const { name, flags } of [
+  { name: "no tagged references in the first ten, with a tagged eleventh candidate", flags: [...Array(10).fill(false), true] },
+  { name: "all first ten tagged, with an untagged eleventh candidate", flags: [...Array(10).fill(true), false] },
+  { name: "mixed tagged and untagged candidates", flags: [true, false, true] },
+  { name: "no candidates", flags: [] },
+]) {
+  test(`watch assertions accept ${name}`, () => {
+    const items = watchItems(flags);
+    assertPriorityWatchRows(watchTableFixture(items.slice(0, 10)), { items });
+  });
+}
+
+for (const { name, mutate } of [
+  { name: "a tagged label missing from its cell even when present outside the table", mutate: (html) => `NVD-tagged exploit reference${html.replace("<small>NVD-tagged exploit reference</small>", "")}` },
+  { name: "an incorrect NVD reference link", mutate: (html) => html.replace("CVE-2026-10000#vulnHyperlinksSection", "CVE-2026-99999#vulnHyperlinksSection") },
+  { name: "an incorrect untagged status", mutate: (html) => html.replace('<span class="signal">No</span>', '<span class="signal">Yes</span>') },
+  { name: "a missing untagged explanation", mutate: (html) => html.replace("<small>No NVD exploit tag in this snapshot</small>", "") },
+  { name: "a missing candidate row", mutate: (html) => html.replace(/<tbody><tr>[\s\S]*?<\/tr>/, "<tbody>") },
+  { name: "a different candidate identity", mutate: (html) => html.replace(">CVE-2026-10000</a>", ">CVE-2026-99999</a>") },
+]) {
+  test(`watch assertions reject ${name}`, () => {
+    const items = watchItems([true, false]);
+    assert.throws(() => assertPriorityWatchRows(mutate(watchTableFixture(items)), { items }), assert.AssertionError);
+  });
+}
+
+test("watch assertions reject rendering candidates beyond the first ten", () => {
+  const items = watchItems([...Array(10).fill(false), true]);
+  assert.throws(() => assertPriorityWatchRows(watchTableFixture(items), { items }), assert.AssertionError);
+});
+
 test("static export renders the VulnSignal intelligence dashboard", async () => {
   const html = await render();
   assert.match(html, /<title>VulnSignal — CVE, KEV and EPSS Exploitation Signals<\/title>/i);
@@ -42,9 +127,8 @@ test("static export renders the VulnSignal intelligence dashboard", async () => 
   assert.match(html, /id="indicator-drilldown"/);
   assert.match(html, /aria-labelledby="indicator-drilldown-title"/);
   assert.match(html, /VulnSignal screening candidates not in CISA KEV/);
-  assert.match(html, /NVD reference tagged.*Exploit.*<\/th>/);
-  assert.match(html, /NVD-tagged exploit reference/);
-  assert.match(html, /No NVD exploit tag in this snapshot/);
+  const dataset = JSON.parse(await readFile(new URL("../data/dashboard.json", import.meta.url), "utf8"));
+  assertPriorityWatchRows(html, dataset.priorityWatch);
   assert.match(html, /EPSS threshold history/);
   assert.match(html, /current scores are not applied backwards/i);
   assert.match(html, /Largest share risers/);
