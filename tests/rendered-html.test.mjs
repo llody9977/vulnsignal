@@ -94,11 +94,11 @@ test("watch assertions reject rendering candidates beyond the first ten", () => 
 function assertLlmHeadline(html, value) {
   const headline = html.match(/<div class="evidence-score"><strong>([\s\S]*?)<\/strong>/)?.[1];
   assert.ok(headline, "The LLM evidence card must render its headline");
-  const text = headline
-    .replace(/<b\b[^>]*aria-hidden="true"[^>]*>[\s\S]*?<\/b>/g, "")
-    .replace(/<[^>]*>/g, "");
+  const textNodes = [...headline.matchAll(/(?:^|>)([^<>]+)(?=<|$)/g)]
+    .map((match) => match[1])
+    .filter((text) => text !== "↗");
   const expected = value === null ? "—" : `≥ ${new Intl.NumberFormat("en-SG").format(value)}`;
-  assert.equal(text, expected, "The headline must show the snapshot's reported minimum");
+  assert.deepEqual(textNodes, [expected], "The headline must show the snapshot's reported minimum");
 }
 
 for (const { value, rendered } of [
