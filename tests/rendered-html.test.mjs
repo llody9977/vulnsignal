@@ -91,6 +91,37 @@ test("watch assertions reject rendering candidates beyond the first ten", () => 
   assert.throws(() => assertPriorityWatchRows(watchTableFixture(items), { items }), assert.AssertionError);
 });
 
+function assertLlmHeadline(html, value) {
+  const headline = html.match(/<div class="evidence-score"><strong>([\s\S]*?)<\/strong>/)?.[1];
+  assert.ok(headline, "The LLM evidence card must render its headline");
+  const textNodes = [...headline.matchAll(/(?:^|>)([^<>]+)(?=<|$)/g)]
+    .map((match) => match[1])
+    .filter((text) => text !== "↗");
+  const expected = value === null ? "—" : `≥ ${new Intl.NumberFormat("en-SG").format(value)}`;
+  assert.deepEqual(textNodes, [expected], "The headline must show the snapshot's reported minimum");
+}
+
+for (const { value, rendered } of [
+  { value: 28, rendered: "≥ 28" },
+  { value: 1250, rendered: "≥ 1,250" },
+  { value: null, rendered: "—" },
+]) {
+  test(`LLM headline assertions accept snapshot value ${value}`, () => {
+    assertLlmHeadline(`<div class="evidence-score"><strong><a><span>${rendered}</span><b aria-hidden="true">↗</b></a></strong></div>`, value);
+  });
+}
+
+for (const { name, html, value } of [
+  { name: "an outdated count even when the current value appears elsewhere", html: '<div class="evidence-score"><strong>≥ 28</strong></div><em>≥ 1,250</em>', value: 1250 },
+  { name: "a count without its lower-bound qualifier", html: '<div class="evidence-score"><strong>1,250</strong></div>', value: 1250 },
+  { name: "a missing headline", html: "≥ 1,250", value: 1250 },
+  { name: "a fabricated zero for missing evidence", html: '<div class="evidence-score"><strong>≥ 0</strong></div>', value: null },
+]) {
+  test(`LLM headline assertions reject ${name}`, () => {
+    assert.throws(() => assertLlmHeadline(html, value), assert.AssertionError);
+  });
+}
+
 test("static export renders the VulnSignal intelligence dashboard", async () => {
   const html = await render();
   assert.match(html, /<title>VulnSignal — CVE, KEV and EPSS Exploitation Signals<\/title>/i);
@@ -155,7 +186,7 @@ test("static export renders the VulnSignal intelligence dashboard", async () => 
   assert.match(html, /This product uses NVD data feeds and is not endorsed or certified by the NVD/);
   assert.match(html, /href="#disclaimer"/);
   assert.match(html, /chart-point--event/);
-  assert.match(html, /≥ 28/);
+  assertLlmHeadline(html, dataset.llmDiscovery.value);
   assert.match(html, /Counts from different programmes remain separate/);
   assert.doesNotMatch(html, /LLM CVE evidence disclosed/);
   assert.doesNotMatch(html, /Reported LLM-assisted CVEs/);
